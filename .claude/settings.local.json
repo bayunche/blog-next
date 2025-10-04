@@ -1,0 +1,27 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//d/code/react-blog/src/views/**)",
+      "Read(//d/code/react-blog/src/components/**)",
+      "Read(//d/code/react-blog/server/controllers/**)",
+      "Read(//d/code/react-blog/server/models/**)",
+      "Read(//d/code/react-blog/src/utils/**)",
+      "Bash(curl:*)",
+      "Read(//d/code/react-blog/server/config/**)",
+      "Read(//d/code/react-blog/**)",
+      "Bash(docker-compose restart:*)",
+      "Bash(docker-compose:*)",
+      "Bash(yarn build)",
+      "Bash(cat:*)",
+      "Bash(awk:*)",
+      "Bash(xargs -r docker rmi -f)",
+      "Bash(docker builder:*)",
+      "Bash(python:*)",
+      "Bash(docker cp:*)",
+      "Bash(docker logs:*)",
+      "Bash(git add:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

@@ -1,0 +1,142 @@
+/**
+ * 全局主题配置
+ * 参考 diygod.cc 的设计风格
+ */
+
+// ==================== 色彩变量 ====================
+:root {
+  // 主色调（暖橙色 - diygod.cc）
+  --primary-color: #d67f47;
+  --primary-hover: #c46d3a;
+  --primary-light: #e8a378;
+
+  // 背景色（diygod.cc 风格）
+  --bg-primary: #faf8f5;
+  --bg-secondary: #ffffff;
+  --bg-card: #ffffff;
+  --bg-hover: #ece6e3;
+  --bg-banner: #c3b0a6;
+
+  // 文字色
+  --text-primary: #2c3e50;
+  --text-secondary: #7f8c8d;
+  --text-muted: #95a5a6;
+
+  // 边框色（极简风格，减少边框使用）
+  --border-color: #e8e8e8;
+  --border-light: #f0f0f0;
+
+  // 阴影（柔和）
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.06);
+  --shadow-md: 0 2px 8px rgba(0, 0, 0, 0.08);
+  --shadow-lg: 0 4px 16px rgba(0, 0, 0, 0.1);
+
+  // 圆角（较大圆角）
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+
+  // 间距
+  --spacing-xs: 0.5rem;
+  --spacing-sm: 1rem;
+  --spacing-md: 1.5rem;
+  --spacing-lg: 2rem;
+  --spacing-xl: 3rem;
+  --spacing-2xl: 4rem;
+}
+
+// 暗色主题（diygod.cc 暗色风格）
+[data-theme='dark'] {
+  // 背景色
+  --bg-primary: #161413;
+  --bg-secondary: #1f1d1c;
+  --bg-card: #2a2624;
+  --bg-hover: #2a2624;
+  --bg-banner: #161413;
+
+  // 文字色
+  --text-primary: #e8e8e8;
+  --text-secondary: #a8a8a8;
+  --text-muted: #888888;
+
+  // 边框色
+  --border-color: #3a3a3a;
+  --border-light: #2a2a2a;
+
+  // 阴影（暗色模式下减弱）
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 2px 8px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 4px 16px rgba(0, 0, 0, 0.5);
+}
+
+// ==================== 全局样式 ====================
+body {
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB',
+    'Microsoft YaHei', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+// ==================== 卡片通用样式 ====================
+.card {
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  transition: all 0.3s ease;
+  border: 1px solid var(--border-light);
+
+  &:hover {
+    box-shadow: var(--shadow-md);
+    transform: translateY(-2px);
+  }
+}
+
+// ==================== 按钮样式 ====================
+.btn-primary {
+  background: var(--primary-color);
+  color: #ffffff;
+  border: none;
+  border-radius: var(--radius-md);
+  padding: 0.5rem 1.5rem;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+
+  &:hover {
+    background: var(--primary-hover);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-sm);
+  }
+}
+
+// ==================== 链接样式 ====================
+a {
+  color: var(--primary-color);
+  text-decoration: none;
+  transition: color 0.3s ease;
+
+  &:hover {
+    color: var(--primary-hover);
+  }
+}
+
+// ==================== 滚动条样式 ====================
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-primary);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: var(--radius-sm);
+
+  &:hover {
+    background: var(--text-muted);
+  }
+}

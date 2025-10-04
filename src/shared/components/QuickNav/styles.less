@@ -1,0 +1,114 @@
+/**
+ * 快速导航样式
+ * 基于 diygod.cc 的暖色调设计
+ */
+
+// 大屏幕：固定右侧导航
+.quick-nav-desktop {
+  display: none;
+
+  @media (min-width: 1300px) {
+    display: block;
+    position: fixed;
+    right: var(--spacing-lg);
+    top: 50%;
+    transform: translateY(-50%);
+    background: var(--bg-card);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-md);
+    box-shadow: var(--shadow-md);
+    min-width: 200px;
+    max-width: 280px;
+    max-height: 60vh;
+    overflow-y: auto;
+    z-index: 100;
+    transition: all 0.3s ease;
+
+    &:hover {
+      box-shadow: var(--shadow-lg);
+    }
+  }
+}
+
+// 小屏幕：抽屉按钮
+.quick-nav-mobile-btn {
+  display: block;
+  position: fixed;
+  right: var(--spacing-md);
+  bottom: var(--spacing-lg);
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--primary-color), var(--primary-light));
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  box-shadow: var(--shadow-lg);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  z-index: 99;
+  border: 3px solid rgba(255, 255, 255, 0.3);
+
+  &:hover {
+    background: linear-gradient(135deg, var(--primary-hover), var(--primary-color));
+    transform: scale(1.1) rotate(90deg);
+    box-shadow: 0 8px 20px rgba(214, 127, 71, 0.5);
+  }
+
+  &:active {
+    transform: scale(0.95);
+  }
+
+  @media (min-width: 1300px) {
+    display: none;
+  }
+}
+
+// 文章列表
+.quick-nav-list {
+  ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+
+    li {
+      margin-bottom: var(--spacing-xs);
+
+      a {
+        color: var(--text-primary);
+        text-decoration: none;
+        font-size: 0.9rem;
+        display: block;
+        padding: var(--spacing-xs) var(--spacing-sm);
+        border-radius: var(--radius-sm);
+        border-left: 3px solid transparent;
+        transition: all 0.3s ease;
+        line-height: 1.6;
+
+        &:hover {
+          background: var(--bg-secondary);
+          color: var(--primary-color);
+          border-left-color: var(--primary-color);
+          padding-left: calc(var(--spacing-sm) + 4px);
+        }
+      }
+    }
+  }
+}
+
+// 抽屉样式
+.quick-nav-drawer {
+  .quick-nav-list {
+    ul li {
+      margin-bottom: var(--spacing-sm);
+
+      a {
+        padding: var(--spacing-sm) var(--spacing-md);
+        font-size: 1rem;
+      }
+    }
+  }
+}

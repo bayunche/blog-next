@@ -1,0 +1,189 @@
+/**
+ * 侧边栏样式
+ * 基于 diygod.cc 的极简设计
+ */
+
+.app-sidebar {
+  background: transparent;
+  border-radius: 0;
+  padding: var(--spacing-md) 0;
+  box-shadow: none;
+  border: none;
+  transition: all 0.3s ease;
+
+  .sidebar-profile {
+    text-align: left;
+    margin-bottom: var(--spacing-xl);
+    padding-bottom: 0;
+    border-bottom: none;
+
+    .sidebar-avatar {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      object-fit: cover;
+      margin-bottom: var(--spacing-md);
+      border: none;
+      box-shadow: var(--shadow-sm);
+      transition: all 0.4s ease;
+
+      &:hover {
+        transform: scale(1.08);
+        box-shadow: var(--shadow-md);
+      }
+    }
+
+    .sidebar-title {
+      font-size: 1.25rem;
+      font-weight: 600;
+      margin: 0 0 var(--spacing-xs) 0;
+      color: var(--text-primary);
+      letter-spacing: -0.02em;
+    }
+
+    .sidebar-subtitle {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      margin: 0;
+      opacity: 0.75;
+    }
+  }
+
+  .sidebar-links {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 var(--spacing-xl) 0;
+    display: flex;
+    justify-content: flex-start;
+    gap: var(--spacing-md);
+
+    li {
+      a {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: transparent;
+        color: var(--text-secondary);
+        text-decoration: none;
+        transition: all 0.3s ease;
+        font-size: 1.125rem;
+
+        &:hover {
+          background: var(--bg-hover);
+          color: var(--primary-color);
+          transform: scale(1.1);
+        }
+      }
+    }
+  }
+
+  .sidebar-article-list {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 var(--spacing-xl) 0;
+
+    li {
+      margin-bottom: var(--spacing-sm);
+      padding-left: 0;
+      position: relative;
+      line-height: 1.6;
+
+      &::before {
+        display: none;
+      }
+
+      a {
+        color: var(--text-primary);
+        text-decoration: none;
+        font-size: 0.875rem;
+        display: block;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        transition: all 0.3s ease;
+        padding: var(--spacing-xs) 0;
+
+        &:hover {
+          color: var(--primary-color);
+          padding-left: 0;
+        }
+      }
+    }
+  }
+
+  .sidebar-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-xs);
+    margin-bottom: var(--spacing-xl);
+
+    .ant-tag {
+      margin: 0;
+      border-radius: var(--radius-md);
+      border: none;
+      background: rgba(0, 0, 0, 0.04);
+      color: var(--text-secondary);
+      transition: all 0.3s ease;
+      font-size: 0.8125rem;
+      padding: 4px 12px;
+
+      &:hover {
+        background: var(--primary-color);
+        color: white;
+        transform: translateY(-2px);
+      }
+
+      a {
+        color: inherit;
+        text-decoration: none;
+      }
+    }
+  }
+
+  .sidebar-friends {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+
+    li {
+      display: flex;
+      align-items: center;
+      margin-bottom: var(--spacing-sm);
+      padding: 0;
+      border-radius: 0;
+      transition: all 0.3s ease;
+
+      &:hover {
+        background: transparent;
+        transform: none;
+
+        a {
+          color: var(--primary-color);
+        }
+      }
+
+      .friend-avatar {
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        margin-right: var(--spacing-sm);
+        object-fit: cover;
+        border: none;
+      }
+
+      a {
+        color: var(--text-primary);
+        text-decoration: none;
+        font-size: 0.875rem;
+        transition: color 0.3s;
+      }
+    }
+  }
+
+  @media (max-width: 768px) {
+    margin-bottom: var(--spacing-xl);
+  }
+}

@@ -1,0 +1,72 @@
+/**
+ * Web 前台布局样式
+ */
+
+.web-layout {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+
+  // 头部导航
+  .web-header {
+    background: #fff;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    padding: 0;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+
+    .header-content {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 64px;
+
+      .logo {
+        font-size: 20px;
+        font-weight: 600;
+        color: #ff69b4;
+        cursor: pointer;
+      }
+    }
+  }
+
+  // 主内容区
+  .web-content {
+    flex: 1;
+    padding: 24px 0;
+    background: #f5f5f5;
+
+    .content-wrapper {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+  }
+
+  // 页脚
+  .web-footer {
+    background: #fff;
+    border-top: 1px solid #e8e8e8;
+    text-align: center;
+    padding: 24px 0;
+
+    .footer-content {
+      color: #666;
+      font-size: 14px;
+    }
+  }
+}
+
+// 响应式设计
+@media (max-width: 768px) {
+  .web-layout {
+    .web-header .header-content,
+    .web-content .content-wrapper {
+      padding: 0 16px;
+    }
+  }
+}

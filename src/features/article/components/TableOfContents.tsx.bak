@@ -1,0 +1,172 @@
+/**
+ * 文章目录组件
+ * 从 Markdown 内容中提取标题生成目录导航
+ */
+
+import { useEffect, useState } from 'react'
+import { Anchor } from 'antd'
+import type { TocItem } from '../types'
+
+/**
+ * 目录组件 Props
+ */
+export interface TableOfContentsProps {
+  /** Markdown 内容 */
+  content: string
+  /** 自定义 className */
+  className?: string
+}
+
+/**
+ * 从 Markdown 内容提取目录
+ */
+function extractToc(content: string): TocItem[] {
+  const headingRegex = /^(#{1,6})\s+(.+)$/gm
+  const toc: TocItem[] = []
+  let match
+
+  while ((match = headingRegex.exec(content)) !== null) {
+    const level = match[1].length
+    const text = match[2].trim()
+    const anchor = text
+      .toLowerCase()
+      .replace(/[^\w\u4e00-\u9fa5]+/g, '-')
+      .replace(/^-|-$/g, '')
+
+    toc.push({
+      level,
+      text,
+      anchor,
+    })
+  }
+
+  return toc
+}
+
+/**
+ * 将扁平的目录转换为树形结构
+ */
+function buildTocTree(items: TocItem[]): TocItem[] {
+  const tree: TocItem[] = []
+  const stack: TocItem[] = []
+
+  items.forEach((item) => {
+    const newItem = { ...item, children: [] }
+
+    // 找到父节点
+    while (stack.length > 0 && stack[stack.length - 1].level >= item.level) {
+      stack.pop()
+    }
+
+    if (stack.length === 0) {
+      tree.push(newItem)
+    } else {
+      const parent = stack[stack.length - 1]
+      if (!parent.children) parent.children = []
+      parent.children.push(newItem)
+    }
+
+    stack.push(newItem)
+  })
+
+  return tree
+}
+
+/**
+ * 目录组件
+ *
+ * @example
+ * ```tsx
+ * <TableOfContents content={article.content} />
+ * ```
+ */
+export function TableOfContents({
+  content,
+  className = '',
+}: TableOfContentsProps) {
+  const [toc, setToc] = useState<TocItem[]>([])
+  const [activeAnchor, setActiveAnchor] = useState<string>('')
+
+  useEffect(() => {
+    const items = extractToc(content)
+    const tree = buildTocTree(items)
+    setToc(tree)
+
+    // 监听滚动，高亮当前标题
+    const handleScroll = () => {
+      const headings = document.querySelectorAll(
+        '.markdown-renderer h1, .markdown-renderer h2, .markdown-renderer h3'
+      )
+
+      let current = ''
+      headings.forEach((heading) => {
+        const rect = heading.getBoundingClientRect()
+        if (rect.top <= 100) {
+          current = heading.id
+        }
+      })
+
+      setActiveAnchor(current)
+    }
+
+    window.addEventListener('scroll', handleScroll)
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [content])
+
+  // 将目录转换为 Ant Design Anchor 的格式
+  const convertToAnchorItems = (items: TocItem[]): any[] => {
+    return items.map((item) => ({
+      key: item.anchor,
+      href: `#${item.anchor}`,
+      title: item.text,
+      children: item.children ? convertToAnchorItems(item.children) : undefined,
+    }))
+  }
+
+  if (toc.length === 0) {
+    return null
+  }
+
+  return (
+    <div className={`table-of-contents ${className}`}>
+      <div style={{ marginBottom: '1rem', fontWeight: 600, fontSize: '1rem' }}>
+        目录
+      </div>
+      <Anchor
+        affix={false}
+        items={convertToAnchorItems(toc)}
+        getCurrentAnchor={() => activeAnchor}
+      />
+
+      <style>{`
+        .table-of-contents {
+          padding: 1rem;
+          background-color: var(--bg-secondary);
+          border-radius: var(--radius-md);
+          position: sticky;
+          top: 80px;
+          max-height: calc(100vh - 100px);
+          overflow-y: auto;
+        }
+
+        .table-of-contents .ant-anchor {
+          font-size: 0.875rem;
+        }
+
+        .table-of-contents .ant-anchor-link-title {
+          color: var(--text-secondary);
+          transition: color 0.2s;
+        }
+
+        .table-of-contents .ant-anchor-link-active > .ant-anchor-link-title {
+          color: var(--primary-color);
+          font-weight: 500;
+        }
+
+        .table-of-contents .ant-anchor-link-title:hover {
+          color: var(--primary-color);
+        }
+      `}</style>
+    </div>
+  )
+}
