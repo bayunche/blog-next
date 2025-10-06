@@ -1,0 +1,25 @@
+﻿{
+  "question_id": "Q1",
+  "focus": "旧版前台模块与新版功能映射",
+  "findings": [
+    "旧版 web 层划分 home/article/archives/categories/tag/about/fragments (见 ../src/views/web/* )，大多由多个子组件组成，包含 GitHub 贡献热力图、快速导览抽屉、文章导航等富交互元素。",
+    "旧版首页 quick link (../src/views/web/home/QuickLink.jsx) 提供视口自适应抽屉与备案信息链接，新版 ArticleListPage 暂未出现对应实现。",
+    "旧版 home/contribution (../src/views/web/home/Contribution.jsx) 调用 /user/github/contributions 接口渲染 react-calendar-heatmap，新版未发现对应组件或依赖。",
+    "旧版 routes 中 /categories/:name 与 /tags/:name 复用 TagPage 展示文章列表 (../src/views/web/tag/index.jsx)，新版路由保持占位 Placeholder。",
+    "旧版 About 页面等静态页完整存在 (../src/views/web/about)，新版虽然存在 AboutPage 组件 (src/features/about/pages/AboutPage.tsx)，但路由仍指向 Placeholder。"
+  ],
+  "evidence": [
+    {"file": "..\\src\\views\\web\\home\\QuickLink.jsx", "description": "提供桌面与移动端不同的快速导航 UI"},
+    {"file": "..\\src\\views\\web\\home\\Contribution.jsx", "description": "GitHub 贡献图依赖 /user/github/contributions API"},
+    {"file": "src\\app\\routes\\routes.config.tsx", "description": "新版 categories/tags/about 等路由仍为 Placeholder"},
+    {"file": "src\\features\\about\\pages\\AboutPage.tsx", "description": "新版已有 AboutPage 但未挂载"}
+  ],
+  "gaps": [
+    "需要系统梳理旧版每个视图文件夹的功能点与接口调用列表，形成映射表",
+    "需确认新版是否计划替换或舍弃旧版的 GitHub 贡献、音乐播放器等组件"
+  ],
+  "next_actions": [
+    "列出旧版 views/web 下各组件与 API，逐项对照新版 features 模块",
+    "评估新版是否保留第三方依赖 (react-calendar-heatmap, aplayer 等) 并确认设计取舍"
+  ]
+}

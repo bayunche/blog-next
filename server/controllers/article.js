@@ -14,6 +14,7 @@ const {
 
 const fs = require('fs')
 const { uploadPath, outputPath, findOrCreateFilePath, decodeFile, generateFile } = require('../utils/file')
+const { buildArchiveTimeline } = require('../utils/archive')
 const archiver = require('archiver') // 打包 zip
 const send = require('koa-send') // 文件下载
 const { v4: uuidv4, stringify } = require('uuid')
@@ -481,6 +482,43 @@ class ArticleController {
     }
   }
 
+  // 获取归档数据
+  static async getArchives(ctx) {
+    try {
+      const articles = await ArticleModel.findAll({
+        where: {
+          id: {
+            $not: -1,
+          },
+          type: true,
+        },
+        attributes: [
+          'id',
+          'title',
+          'description',
+          'cover',
+          'viewCount',
+          'likeCount',
+          'createdAt',
+          'updatedAt',
+        ],
+        include: [
+          { model: TagModel, attributes: ['id', 'name'] },
+          { model: CategoryModel, attributes: ['id', 'name'] },
+          { model: CommentModel, attributes: ['id'] },
+        ],
+        order: [['createdAt', 'DESC']],
+      })
+
+      const archiveData = buildArchiveTimeline(articles)
+
+      ctx.body = archiveData
+    } catch (error) {
+      console.error('获取归档数据失败', error)
+      ctx.throw(500, '获取归档数据失败')
+    }
+  }
+
   // 导出文章
   static async output(ctx) {
     const validator = ctx.validate(ctx.params, {
@@ -572,6 +610,55 @@ class ArticleController {
 
     ctx.attachment(decodeURI(zipName))
     await send(ctx, zipName, { root: outputPath })
+  }
+
+  // 批量更新文章状态
+  static async batchUpdateStatus(ctx) {
+    const validator = ctx.validate(ctx.request.body, {
+      ids: Joi.array().items(Joi.number()).required(),
+      type: Joi.boolean(),
+      top: Joi.boolean(),
+    })
+
+    if (validator) {
+      const { ids, type, top } = ctx.request.body
+
+      if (ids.length === 0) {
+        ctx.throw(400, '文章 ID 列表不能为空')
+      }
+
+      // 构建更新对象
+      const updateData = {}
+      if (typeof type === 'boolean') {
+        updateData.type = type
+      }
+      if (typeof top === 'boolean') {
+        updateData.top = top
+      }
+
+      if (Object.keys(updateData).length === 0) {
+        ctx.throw(400, '至少需要提供 type 或 top 参数')
+      }
+
+      try {
+        const [affectedCount] = await ArticleModel.update(updateData, {
+          where: {
+            id: ids,
+            id: {
+              $not: -1, // 过滤关于页面
+            },
+          },
+        })
+
+        ctx.body = {
+          message: `成功更新 ${affectedCount} 篇文章`,
+          affectedCount,
+        }
+      } catch (error) {
+        console.error('批量更新文章状态失败', error)
+        ctx.throw(500, '批量更新失败')
+      }
+    }
   }
 }
 

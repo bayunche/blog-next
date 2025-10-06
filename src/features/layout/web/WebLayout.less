@@ -1,5 +1,6 @@
 /**
  * Web 前台布局样式
+ * 基于 diygod.cc 的极简风格
  */
 
 .web-layout {
@@ -9,12 +10,13 @@
 
   // 头部导航
   .web-header {
-    background: #fff;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    background: var(--bg-secondary);
+    box-shadow: var(--shadow-sm);
     padding: 0;
     position: sticky;
     top: 0;
     z-index: 100;
+    border-bottom: none; // 极简风格，无边框
 
     .header-content {
       max-width: 1200px;
@@ -28,8 +30,22 @@
       .logo {
         font-size: 20px;
         font-weight: 600;
-        color: #ff69b4;
+        color: var(--primary-color);
         cursor: pointer;
+        transition: color 0.3s var(--ease-out-cubic);
+        user-select: none;
+
+        &:hover {
+          color: var(--primary-dark);
+        }
+      }
+
+      // 用户名样式
+      .user-name {
+        color: var(--text-primary);
+        font-size: 14px;
+        font-weight: 500;
+        transition: color 0.3s var(--ease-out-cubic);
       }
     }
   }
@@ -38,7 +54,7 @@
   .web-content {
     flex: 1;
     padding: 24px 0;
-    background: #f5f5f5;
+    background: var(--bg-primary); // 使用米白背景
 
     .content-wrapper {
       max-width: 1200px;
@@ -49,13 +65,13 @@
 
   // 页脚
   .web-footer {
-    background: #fff;
-    border-top: 1px solid #e8e8e8;
+    background: var(--bg-secondary);
+    border-top: none; // 极简风格，无边框
     text-align: center;
     padding: 24px 0;
 
     .footer-content {
-      color: #666;
+      color: var(--text-secondary);
       font-size: 14px;
     }
   }

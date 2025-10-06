@@ -15,8 +15,12 @@ import {
   batchPublishArticlesAPI,
   unpublishArticleAPI,
   uploadImageAPI,
+  batchExportArticlesAPI,
+  exportAllArticlesAPI,
+  batchUpdateArticleStatusAPI,
   type ArticleManageParams,
   type ArticleFormData,
+  type BatchUpdateStatusParams,
 } from '../api/article'
 
 /**
@@ -165,6 +169,54 @@ export function useUnpublishArticle() {
     },
     onError: (error: Error) => {
       message.error(error.message || '操作失败')
+    },
+  })
+}
+
+/**
+ * 批量导出文章 Hook
+ */
+export function useBatchExportArticles() {
+  return useMutation({
+    mutationFn: (ids: number[]) => batchExportArticlesAPI(ids),
+    onSuccess: () => {
+      message.success('文章导出已开始，请稍候下载')
+    },
+    onError: (error: Error) => {
+      message.error(error.message || '导出失败')
+    },
+  })
+}
+
+/**
+ * 导出所有文章 Hook
+ */
+export function useExportAllArticles() {
+  return useMutation({
+    mutationFn: () => exportAllArticlesAPI(),
+    onSuccess: () => {
+      message.success('全部文章导出已开始，请稍候下载')
+    },
+    onError: (error: Error) => {
+      message.error(error.message || '导出失败')
+    },
+  })
+}
+
+/**
+ * 批量更新文章状态 Hook
+ */
+export function useBatchUpdateArticleStatus() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (params: BatchUpdateStatusParams) => batchUpdateArticleStatusAPI(params),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-articles'] })
+      message.success('批量更新成功')
+    },
+    onError: (error: Error) => {
+      message.error(error.message || '批量更新失败')
     },
   })
 }

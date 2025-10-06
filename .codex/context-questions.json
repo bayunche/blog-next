@@ -1,0 +1,32 @@
+﻿{
+  "questions": [
+    {
+      "id": "Q1",
+      "topic": "Admin monitor integration",
+      "known": "Socket hook pushes cpuUsage/memoryUsage (0-1) into performanceStore.systemPerformance; usePerformanceMonitor tracks metrics/fps/navigation/memory.",
+      "unknown": "What UI layout do we want for dynamic data (charts? tables?) and which metrics from store should feed each AntD card? Need to decide mapping and smoothing, plus offline fallback.",
+      "priority": "high"
+    },
+    {
+      "id": "Q2",
+      "topic": "Socket availability",
+      "known": "useSystemMonitor fetches /api/monitor/start and listens to 'systemUpdate'; no error handling on Monitor page.",
+      "unknown": "How to display connection status / empty states when socket offline? Should we keep last known metrics or show skeleton?",
+      "priority": "medium"
+    },
+    {
+      "id": "Q3",
+      "topic": "GitHub contributions widget",
+      "known": "Backend endpoint GET /user/github/contributions returns array of {date,count}; legacy used react-calendar-heatmap.",
+      "unknown": "What visual library to use now? Should we reintroduce react-calendar-heatmap or use Ant Design/plots? Need to confirm dependency policy & theming integration.",
+      "priority": "high"
+    },
+    {
+      "id": "Q4",
+      "topic": "Data fetching strategy",
+      "known": "Project relies on TanStack Query; need new hook for contributions and query key defined in @shared/api/queryKeys.ts.",
+      "unknown": "Existing query key definition? Should we extend queryKeys.user.contributions? ensure caching & error states.",
+      "priority": "medium"
+    }
+  ]
+}

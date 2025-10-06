@@ -1,0 +1,134 @@
+﻿{
+  "web_frontend": [
+    {
+      "feature": "首页文章列表",
+      "legacy": "../src/views/web/home/index.jsx + 子组件 QuickLink/Contribution",
+      "current": "src/features/article/pages/ArticleListPage.tsx + @shared/components",
+      "status": "partial",
+      "notes": "列表与侧边栏已重写，但 GitHub 贡献热图 (Contribution.jsx) 与备案信息抽屉未在新版实现。"
+    },
+    {
+      "feature": "文章详情",
+      "legacy": "../src/views/web/article/index.jsx",
+      "current": "src/features/article/pages/ArticleDetailPage.tsx",
+      "status": "unknown",
+      "notes": "需进一步验证评论、点赞、目录等交互是否保留。"
+    },
+    {
+      "feature": "文章分享",
+      "legacy": "旧版 /article/share/:uuid 重用 ArticlePage",
+      "current": "ShareArticlePage + routes.config.tsx",
+      "status": "complete",
+      "notes": "ShareArticlePage 已接入数据流并列于 REIMPLEMENTATION_STATUS 已完成列表。"
+    },
+    {
+      "feature": "归档页面",
+      "legacy": "../src/views/web/archives/index.jsx",
+      "current": "src/features/article/pages/ArchivesPage.tsx",
+      "status": "broken",
+      "notes": "前端调用 /article/archives，但新版 server/router/article.js 缺少该接口。"
+    },
+    {
+      "feature": "分类详情",
+      "legacy": "../src/views/web/categories/index.jsx + routes /categories/:name",
+      "current": "CategoryDetailPage 存在但路由仍为 Placeholder",
+      "status": "missing",
+      "notes": "需要在 routes.config.tsx 挂载 CategoryDetailPage 并补测试。"
+    },
+    {
+      "feature": "标签详情",
+      "legacy": "../src/views/web/tag/index.jsx",
+      "current": "TagDetailPage 已实现但未接入路由",
+      "status": "missing",
+      "notes": "routes.config.tsx 中 tags/:name 仍引用 Placeholder。"
+    },
+    {
+      "feature": "关于页面",
+      "legacy": "../src/views/web/about/index.jsx",
+      "current": "src/features/about/pages/AboutPage.tsx",
+      "status": "missing",
+      "notes": "路由暂用 Placeholder，需要接入 AboutPage 并校验内容。"
+    },
+    {
+      "feature": "登录/授权流程",
+      "legacy": "GithubLogining 组件 + /github 路由",
+      "current": "GithubCallbackPage 处理 OAuth",
+      "status": "partial",
+      "notes": "需确认用户登录状态提示、Loading 页面是否迁移。"
+    },
+    {
+      "feature": "碎片列表",
+      "legacy": "../src/views/web/fragments/index.jsx",
+      "current": "FragmentPage + FragmentAnalytics",
+      "status": "complete",
+      "notes": "REIMPLEMENTATION_STATUS 已标记完成，路由已统一。"
+    }
+  ],
+  "admin": [
+    {
+      "feature": "仪表盘",
+      "legacy": "../src/views/admin/home/index.jsx",
+      "current": "src/features/admin/pages/Dashboard.tsx",
+      "status": "unknown",
+      "notes": "需确认指标、图表与旧版一致。"
+    },
+    {
+      "feature": "文章管理",
+      "legacy": "../src/views/admin/article/manager/index.jsx",
+      "current": "src/features/admin/pages/ArticleManager.tsx",
+      "status": "partial",
+      "notes": "缺少旧版导出、分享、置顶等批量操作；界面/面包屑差异需评估。"
+    },
+    {
+      "feature": "文章统计图表",
+      "legacy": "../src/views/admin/article/graph/index.jsx",
+      "current": "routes.config.tsx Placeholder",
+      "status": "missing",
+      "notes": "需重写统计页（类似 FragmentAnalytics）。"
+    },
+    {
+      "feature": "碎片管理/统计",
+      "legacy": "../src/views/admin/fragment",
+      "current": "FragmentManager/FragmentEditor/FragmentAnalytics",
+      "status": "complete",
+      "notes": "功能已经迁移并带有单测。"
+    },
+    {
+      "feature": "用户管理",
+      "legacy": "../src/views/admin/user/index.jsx",
+      "current": "src/features/admin/pages/UserManager.tsx",
+      "status": "unknown",
+      "notes": "需确认角色编辑、搜索等是否保留。"
+    },
+    {
+      "feature": "系统监控",
+      "legacy": "../src/views/admin/monitor/index.jsx (socket.io 实时日志)",
+      "current": "src/features/admin/pages/Monitor.tsx",
+      "status": "unknown",
+      "notes": "需确认新版是否仍连接实时日志或仅占位。"
+    }
+  ],
+  "backend": [
+    {
+      "feature": "文章接口",
+      "legacy": "../server/router/article.js + controllers/article.js",
+      "current": "server/router/article.js",
+      "status": "regression",
+      "notes": "缺少 /article/archives 路由与 getArchives 实现，导致归档页不可用。"
+    },
+    {
+      "feature": "记录/统计接口",
+      "legacy": "../server/router/record.js",
+      "current": "server/router/record.js",
+      "status": "unknown",
+      "notes": "需确认返回格式与新版统计页数据需求匹配。"
+    },
+    {
+      "feature": "第三方服务集成",
+      "legacy": "socket.io、GitHub API、邮件通知",
+      "current": "server 配置与 utils 目录保留",
+      "status": "unknown",
+      "notes": "需验证配置读取与新版前端调用。"
+    }
+  ]
+}

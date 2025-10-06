@@ -122,6 +122,35 @@ export const unpublishArticleAPI = (id: number): Promise<ArticleManageItem> => {
 }
 
 /**
+ * 批量导出文章
+ */
+export const batchExportArticlesAPI = async (ids: number[]): Promise<void> => {
+  const { downloadArticles } = await import('@shared/utils/download')
+  return downloadArticles(ids)
+}
+
+/**
+ * 导出所有文章
+ */
+export const exportAllArticlesAPI = async (): Promise<void> => {
+  const { downloadAllArticles } = await import('@shared/utils/download')
+  return downloadAllArticles()
+}
+
+/**
+ * 批量更新文章状态
+ */
+export interface BatchUpdateStatusParams {
+  ids: number[]
+  type?: boolean // true: 公开, false: 私密
+  top?: boolean // true: 置顶, false: 取消置顶
+}
+
+export const batchUpdateArticleStatusAPI = (params: BatchUpdateStatusParams): Promise<void> => {
+  return request.put('/article/batch/status', params)
+}
+
+/**
  * 上传图片
  */
 export const uploadImageAPI = (file: File): Promise<{ url: string }> => {

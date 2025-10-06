@@ -72,7 +72,7 @@ export default defineConfig(({ mode }) => {
         less: {
           javascriptEnabled: true,
           modifyVars: {
-            '@primary-color': '#ff69b4',
+            '@primary-color': '#d67f47',
             '@border-radius-base': '8px',
             '@font-size-base': '14px',
           },

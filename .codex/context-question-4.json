@@ -1,0 +1,22 @@
+{
+  "question_id": "Q4",
+  "focus": "归档接口数据格式与前端期望",
+  "findings": [
+    "类型定义 src/features/article/types/index.ts 将 ArchiveData 描述为包含 years 数组和 total 总数的对象。",
+    "ArchivesPage 组件当前直接把响应当作数组使用（length、map），与类型定义不符。",
+    "旧版控制器 ..\\server\\controllers\\article.js#getArchives 返回纯年份数组且不含总数字段。",
+    "现有新后端缺少 getArchives，useArchives 钩子会遭遇 404，提供实现时可顺便填充 total 字段供页面使用。"
+  ],
+  "evidence": [
+    {"file": "src\\features\\article\\types\\index.ts", "description": "ArchiveData 定义"},
+    {"file": "src\\features\\article\\pages\\ArchivesPage.tsx", "description": "组件按数组使用归档数据"},
+    {"file": "..\\server\\controllers\\article.js", "description": "旧版 getArchives 返回数组"}
+  ],
+  "gaps": [
+    "需要决定是调整前端消费方式还是让新接口兼容旧数组结构。"
+  ],
+  "next_actions": [
+    "实现 getArchives 返回 { years, total } 并在 ArchivesPage 中改用 archives?.years 访问。",
+    "补充归档数据单元测试，覆盖空数据和加载态。"
+  ]
+}

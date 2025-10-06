@@ -1,0 +1,28 @@
+﻿{
+  "timestamp": "2025-10-06T14:52:10+08:00",
+  "task": "blog-next legacy parity verification",
+  "summary": "评估 React/Vite 新版 blog-next 是否完整覆盖 Webpack 旧版博客系统的全部功能，并在缺失时建立改进记录与实现路径。",
+  "objectives": [
+    "核对新版各业务模块与旧版实现的功能对等情况",
+    "识别差异、缺口及可能的回归风险",
+    "形成可执行的补齐计划并持续追踪"
+  ],
+  "inputs": {
+    "new_version_path": "D:/code/react-blog/blog-next",
+    "legacy_version_path": "D:/code/react-blog"
+  ],
+  "constraints": [
+    "遵循仓库协作与文档规范，输出简体中文记录",
+    "审批策略为 never，禁止请求越权操作",
+    "保留既有实现，避免破坏性删除未审查内容"
+  ],
+  "deliverables": [
+    "功能对照分析总结",
+    "缺失功能 Markdown 清单（含优先级、责任人/模块、处理计划）",
+    "后续实现与验证的阶段性路线"
+  ],
+  "open_questions": [
+    "旧版功能范围的完整定义是否已有文档?",
+    "功能一致性是否需要性能、SEO、无障碍等非功能性指标?"
+  ]
+}

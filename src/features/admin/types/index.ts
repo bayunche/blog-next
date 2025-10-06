@@ -5,7 +5,7 @@
 import { ReactNode } from 'react'
 
 /**
- * 菜单项接口
+ * 菜单项接�?
  */
 export interface MenuItem {
   /** 路径 */
@@ -16,12 +16,12 @@ export interface MenuItem {
   name: string
   /** 是否隐藏 */
   hidden?: boolean
-  /** 子菜单 */
+  /** 子菜�?*/
   children?: MenuItem[]
 }
 
 /**
- * 仪表盘统计数据
+ * 仪表盘统计数�?
  */
 export interface DashboardStats {
   /** 文章总数 */
@@ -35,7 +35,7 @@ export interface DashboardStats {
 }
 
 /**
- * 最新文章
+ * 最新文�?
  */
 export interface RecentArticle {
   id: number
@@ -46,7 +46,7 @@ export interface RecentArticle {
 }
 
 /**
- * 仪表盘数据响应
+ * 仪表盘数据响�?
  */
 export interface DashboardResponse {
   stats: DashboardStats
@@ -56,4 +56,33 @@ export interface DashboardResponse {
     views: number[]
     likes: number[]
   }
+}
+
+/**
+ * ����ͳ�Ƽ�¼
+ */
+export interface ArticleAnalyticsRecord {
+  articleId: number
+  articleLabel: string
+  date: string
+  count: number
+}
+
+/**
+ * ����ͳ�ƻ�����Ϣ
+ */
+export interface ArticleAnalyticsSummary {
+  totalReads: number
+  uniqueArticles: number
+  startDate?: string
+  endDate?: string
+  topArticles: Array<{ articleId: number; articleLabel: string; total: number }>
+}
+
+/**
+ * ����ͳ������
+ */
+export interface ArticleAnalyticsData {
+  records: ArticleAnalyticsRecord[]
+  summary: ArticleAnalyticsSummary
 }

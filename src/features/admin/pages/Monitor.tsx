@@ -1,332 +1,322 @@
-/**
+﻿/**
  * 系统监控页面
+ * 读取性能监控 Store 与 socket.io 实时数据，展示前端与服务端的运行态。
  */
 
-import { Row, Col, Card, Statistic, Table, Progress, Space, Tag } from 'antd'
+import { useMemo } from 'react'
+import { Row, Col, Card, Statistic, Table, Progress, Space, Tag, Empty } from 'antd'
 import {
   DashboardOutlined,
   ClockCircleOutlined,
   ThunderboltOutlined,
-  DatabaseOutlined,
   ApiOutlined,
   CheckCircleOutlined,
   CloseCircleOutlined,
 } from '@ant-design/icons'
+import { Area, Line } from '@ant-design/plots'
+import dayjs from 'dayjs'
+import { useSystemMonitor } from '../hooks/useSystemMonitor'
+import { usePerformanceStore } from '@shared/stores/performanceStore'
 
-/**
- * 系统监控页面组件
- */
-export function Monitor() {
-  // 模拟系统性能数据
-  const performanceData = {
-    cpu: 45,
-    memory: 62,
-    disk: 38,
-    network: 28,
+type MetricRating = 'good' | 'needs-improvement' | 'poor'
+
+const getRatingColor = (rating: MetricRating) => {
+  switch (rating) {
+    case 'good':
+      return 'green'
+    case 'needs-improvement':
+      return 'gold'
+    case 'poor':
+    default:
+      return 'red'
   }
+}
 
-  // 模拟 API 响应时间数据
-  const apiData = [
-    {
-      key: '1',
-      endpoint: 'GET /api/article/list',
-      avgTime: 125,
-      maxTime: 380,
-      minTime: 65,
-      count: 1543,
-      status: 'success',
-    },
-    {
-      key: '2',
-      endpoint: 'GET /api/article/:id',
-      avgTime: 95,
-      maxTime: 245,
-      minTime: 45,
-      count: 892,
-      status: 'success',
-    },
-    {
-      key: '3',
-      endpoint: 'POST /api/discuss',
-      avgTime: 168,
-      maxTime: 512,
-      minTime: 82,
-      count: 634,
-      status: 'success',
-    },
-    {
-      key: '4',
-      endpoint: 'GET /api/tag/list',
-      avgTime: 58,
-      maxTime: 156,
-      minTime: 32,
-      count: 2156,
-      status: 'success',
-    },
-    {
-      key: '5',
-      endpoint: 'GET /api/category/list',
-      avgTime: 62,
-      maxTime: 178,
-      minTime: 28,
-      count: 1876,
-      status: 'success',
-    },
-  ]
+export function Monitor() {
+  const { isConnected } = useSystemMonitor()
 
-  // 模拟访问统计数据
-  const accessData = [
-    {
-      key: '1',
-      path: '/home',
-      pv: 15620,
-      uv: 8453,
-      avgTime: '2m 34s',
-    },
-    {
-      key: '2',
-      path: '/article/:id',
-      pv: 12340,
-      uv: 7821,
-      avgTime: '5m 12s',
-    },
-    {
-      key: '3',
-      path: '/categories',
-      pv: 3456,
-      uv: 2134,
-      avgTime: '1m 45s',
-    },
-    {
-      key: '4',
-      path: '/tags',
-      pv: 2987,
-      uv: 1876,
-      avgTime: '1m 28s',
-    },
-    {
-      key: '5',
-      path: '/archives',
-      pv: 2543,
-      uv: 1654,
-      avgTime: '2m 03s',
-    },
-  ]
+  const systemPerformance = usePerformanceStore((state) => state.systemPerformance)
+  const metrics = usePerformanceStore((state) => state.metrics)
+  const fpsHistory = usePerformanceStore((state) => state.fpsHistory)
+  const memoryStats = usePerformanceStore((state) => state.memoryUsage)
+  const navigationHistory = usePerformanceStore((state) => state.navigationHistory)
 
-  // API 表格列
-  const apiColumns = [
+  const latestSystem = systemPerformance.length > 0 ? systemPerformance.at(-1)! : null
+
+  const cpuPercent = latestSystem
+    ? Math.round(Math.max(0, Math.min(1, latestSystem.cpuUsage)) * 100)
+    : null
+  const memoryPercent = latestSystem
+    ? Math.round(Math.max(0, Math.min(1, latestSystem.memoryUsage)) * 100)
+    : null
+
+  const systemTrend = useMemo(() => {
+    return systemPerformance
+      .map((item) => {
+        const time = dayjs(item.timestamp).format('HH:mm:ss')
+        return [
+          {
+            time,
+            metric: 'CPU',
+            value: Math.round(Math.max(0, Math.min(1, item.cpuUsage)) * 100),
+          },
+          {
+            time,
+            metric: '内存',
+            value: Math.round(Math.max(0, Math.min(1, item.memoryUsage)) * 100),
+          },
+        ]
+      })
+      .flat()
+      .slice(-120)
+  }, [systemPerformance])
+
+  const fpsTrend = useMemo(() => {
+    return fpsHistory.map((record) => ({
+      time: dayjs(record.timestamp).format('HH:mm:ss'),
+      value: record.fps,
+    }))
+  }, [fpsHistory])
+
+  const metricsTable = useMemo(() => {
+    return metrics.slice(0, 10).map((metric) => ({
+      key: metric.timestamp,
+      name: metric.name,
+      value: metric.value.toFixed(2),
+      delta: metric.delta ? metric.delta.toFixed(2) : '-',
+      rating: metric.rating,
+      recordedAt: dayjs(metric.timestamp).format('HH:mm:ss'),
+    }))
+  }, [metrics])
+
+  const navigationTable = useMemo(() => {
+    return navigationHistory.slice(0, 10).map((record, index) => ({
+      key: `${record.path}-${record.timestamp}-${index}`,
+      path: record.path,
+      event: record.event,
+      timestamp: dayjs(record.timestamp).format('HH:mm:ss'),
+      duration: record.duration ? Math.round(record.duration / 1000) : null,
+    }))
+  }, [navigationHistory])
+
+  const metricColumns = [
     {
-      title: '接口',
-      dataIndex: 'endpoint',
-      key: 'endpoint',
-      width: 300,
+      title: '指标',
+      dataIndex: 'name',
+      key: 'name',
+      width: 150,
     },
     {
-      title: '状态',
-      dataIndex: 'status',
-      key: 'status',
-      width: 100,
-      render: (status: string) => (
-        <Tag
-          icon={
-            status === 'success' ? <CheckCircleOutlined /> : <CloseCircleOutlined />
-          }
-          color={status === 'success' ? 'success' : 'error'}
-        >
-          {status === 'success' ? '正常' : '异常'}
+      title: '数值',
+      dataIndex: 'value',
+      key: 'value',
+      width: 120,
+    },
+    {
+      title: '变化量',
+      dataIndex: 'delta',
+      key: 'delta',
+      width: 120,
+    },
+    {
+      title: '评级',
+      dataIndex: 'rating',
+      key: 'rating',
+      width: 160,
+      render: (rating: MetricRating) => (
+        <Tag color={getRatingColor(rating)}>
+          {rating === 'good'
+            ? '优秀'
+            : rating === 'needs-improvement'
+              ? '需优化'
+              : '较差'}
         </Tag>
       ),
     },
     {
-      title: '平均响应时间',
-      dataIndex: 'avgTime',
-      key: 'avgTime',
-      width: 150,
-      render: (time: number) => `${time}ms`,
-      sorter: (a: any, b: any) => a.avgTime - b.avgTime,
-    },
-    {
-      title: '最大响应时间',
-      dataIndex: 'maxTime',
-      key: 'maxTime',
-      width: 150,
-      render: (time: number) => `${time}ms`,
-    },
-    {
-      title: '最小响应时间',
-      dataIndex: 'minTime',
-      key: 'minTime',
-      width: 150,
-      render: (time: number) => `${time}ms`,
-    },
-    {
-      title: '请求次数',
-      dataIndex: 'count',
-      key: 'count',
-      width: 120,
-      sorter: (a: any, b: any) => a.count - b.count,
+      title: '时间',
+      dataIndex: 'recordedAt',
+      key: 'recordedAt',
+      width: 140,
     },
   ]
 
-  // 访问统计表格列
-  const accessColumns = [
+  const navigationColumns = [
     {
       title: '页面路径',
       dataIndex: 'path',
       key: 'path',
-      width: 200,
+      width: 220,
     },
     {
-      title: 'PV（页面浏览量）',
-      dataIndex: 'pv',
-      key: 'pv',
-      width: 150,
-      sorter: (a: any, b: any) => a.pv - b.pv,
+      title: '事件',
+      dataIndex: 'event',
+      key: 'event',
+      width: 120,
+      render: (event: 'enter' | 'leave') => (
+        <Tag color={event === 'enter' ? 'blue' : 'purple'}>
+          {event === 'enter' ? '进入' : '离开'}
+        </Tag>
+      ),
     },
     {
-      title: 'UV（独立访客）',
-      dataIndex: 'uv',
-      key: 'uv',
-      width: 150,
-      sorter: (a: any, b: any) => a.uv - b.uv,
+      title: '时间',
+      dataIndex: 'timestamp',
+      key: 'timestamp',
+      width: 160,
     },
     {
-      title: '平均停留时间',
-      dataIndex: 'avgTime',
-      key: 'avgTime',
-      width: 150,
+      title: '停留时长 (s)',
+      dataIndex: 'duration',
+      key: 'duration',
+      width: 160,
+      render: (value: number | null) => (value ? value : '—'),
     },
   ]
 
   return (
     <div>
-      {/* 系统性能 */}
-      <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
-        <Col xs={24}>
-          <Card
-            title={
-              <Space>
-                <DashboardOutlined />
-                系统性能
-              </Space>
-            }
-          >
-            <Row gutter={[16, 16]}>
-              <Col xs={24} sm={12} lg={6}>
-                <Card>
-                  <Statistic
-                    title="CPU 使用率"
-                    value={performanceData.cpu}
-                    suffix="%"
-                    valueStyle={{
-                      color: performanceData.cpu > 80 ? '#cf1322' : '#3f8600',
-                    }}
-                  />
-                  <Progress
-                    percent={performanceData.cpu}
-                    strokeColor={{
-                      '0%': '#108ee9',
-                      '100%': '#87d068',
-                    }}
-                  />
-                </Card>
-              </Col>
-              <Col xs={24} sm={12} lg={6}>
-                <Card>
-                  <Statistic
-                    title="内存使用率"
-                    value={performanceData.memory}
-                    suffix="%"
-                    valueStyle={{
-                      color: performanceData.memory > 80 ? '#cf1322' : '#3f8600',
-                    }}
-                  />
-                  <Progress
-                    percent={performanceData.memory}
-                    strokeColor={{
-                      '0%': '#108ee9',
-                      '100%': '#87d068',
-                    }}
-                  />
-                </Card>
-              </Col>
-              <Col xs={24} sm={12} lg={6}>
-                <Card>
-                  <Statistic
-                    title="磁盘使用率"
-                    value={performanceData.disk}
-                    suffix="%"
-                    valueStyle={{
-                      color: performanceData.disk > 80 ? '#cf1322' : '#3f8600',
-                    }}
-                  />
-                  <Progress
-                    percent={performanceData.disk}
-                    strokeColor={{
-                      '0%': '#108ee9',
-                      '100%': '#87d068',
-                    }}
-                  />
-                </Card>
-              </Col>
-              <Col xs={24} sm={12} lg={6}>
-                <Card>
-                  <Statistic
-                    title="网络使用率"
-                    value={performanceData.network}
-                    suffix="%"
-                    valueStyle={{
-                      color: performanceData.network > 80 ? '#cf1322' : '#3f8600',
-                    }}
-                  />
-                  <Progress
-                    percent={performanceData.network}
-                    strokeColor={{
-                      '0%': '#108ee9',
-                      '100%': '#87d068',
-                    }}
-                  />
-                </Card>
-              </Col>
-            </Row>
+      <Row gutter={[16, 16]}>
+        <Col span={24}>
+          <Card>
+            <Space align="center" size="middle">
+              <Tag
+                color={isConnected ? 'green' : 'red'}
+                icon={isConnected ? <CheckCircleOutlined /> : <CloseCircleOutlined />}
+              >
+                {isConnected ? 'Socket 已连接' : 'Socket 未连接'}
+              </Tag>
+              <Tag color={metrics.length > 0 ? 'blue' : 'default'}>
+                Web Vitals {metrics.length > 0 ? '采集中' : '等待数据'}
+              </Tag>
+            </Space>
           </Card>
         </Col>
       </Row>
 
-      {/* API 响应时间 */}
-      <Card
-        title={
-          <Space>
-            <ApiOutlined />
-            API 响应时间
-          </Space>
-        }
-        style={{ marginBottom: 24 }}
-      >
-        <Table
-          columns={apiColumns}
-          dataSource={apiData}
-          pagination={false}
-          size="middle"
-        />
-      </Card>
+      <Row gutter={[16, 16]} style={{ marginTop: 16 }}>
+        <Col xs={24} sm={12} lg={6}>
+          <Card>
+            <Statistic
+              title="CPU 使用率"
+              value={cpuPercent ?? 0}
+              suffix="%"
+              prefix={<DashboardOutlined />}
+              valueStyle={{ color: cpuPercent && cpuPercent > 80 ? '#cf1322' : '#3f8600' }}
+            />
+            <Progress
+              percent={cpuPercent ?? 0}
+              status={cpuPercent && cpuPercent > 80 ? 'exception' : 'active'}
+            />
+          </Card>
+        </Col>
+        <Col xs={24} sm={12} lg={6}>
+          <Card>
+            <Statistic
+              title="内存使用率"
+              value={memoryPercent ?? 0}
+              suffix="%"
+              prefix={<DashboardOutlined />}
+              valueStyle={{ color: memoryPercent && memoryPercent > 80 ? '#cf1322' : '#3f8600' }}
+            />
+            <Progress
+              percent={memoryPercent ?? 0}
+              status={memoryPercent && memoryPercent > 80 ? 'exception' : 'active'}
+            />
+          </Card>
+        </Col>
+        <Col xs={24} sm={12} lg={6}>
+          <Card>
+            <Statistic
+              title="当前 FPS"
+              value={fpsHistory.at(-1)?.fps ?? 0}
+              suffix="fps"
+              prefix={<ThunderboltOutlined />}
+              valueStyle={{ color: (fpsHistory.at(-1)?.fps ?? 0) < 30 ? '#cf1322' : '#3f8600' }}
+            />
+            <Progress
+              percent={Math.min(100, Math.round(((fpsHistory.at(-1)?.fps ?? 0) / 60) * 100))}
+              status={(fpsHistory.at(-1)?.fps ?? 0) < 30 ? 'exception' : 'active'}
+            />
+          </Card>
+        </Col>
+        <Col xs={24} sm={12} lg={6}>
+          <Card>
+            <Statistic
+              title="JS 内存使用"
+              value={memoryStats ? memoryStats.used.toFixed(1) : '—'}
+              suffix="MB"
+            />
+            <Statistic
+              title="距离上次变化"
+              value={memoryStats ? `${memoryStats.increase >= 0 ? '+' : ''}${memoryStats.increase.toFixed(1)} MB` : '—'}
+            />
+          </Card>
+        </Col>
+      </Row>
 
-      {/* 访问统计 */}
-      <Card
-        title={
-          <Space>
-            <ClockCircleOutlined />
-            访问统计
-          </Space>
-        }
-      >
-        <Table
-          columns={accessColumns}
-          dataSource={accessData}
-          pagination={false}
-          size="middle"
-        />
-      </Card>
+      <Row gutter={[16, 16]} style={{ marginTop: 16 }}>
+        <Col xs={24} lg={16}>
+          <Card title={<Space><DashboardOutlined />CPU / 内存趋势</Space>}>
+            {systemTrend.length > 0 ? (
+              <Line
+                data={systemTrend}
+                xField="time"
+                yField="value"
+                seriesField="metric"
+                smooth
+                animation={{ appear: { animation: 'path-in', duration: 600 } }}
+                yAxis={{ max: 100, min: 0, title: { text: '百分比 (%)' } }}
+                tooltip={{ showMarkers: true }}
+              />
+            ) : (
+              <Empty description="暂无系统指标" />
+            )}
+          </Card>
+        </Col>
+        <Col xs={24} lg={8}>
+          <Card title={<Space><ThunderboltOutlined />FPS 趋势</Space>}>
+            {fpsTrend.length > 0 ? (
+              <Area
+                data={fpsTrend}
+                xField="time"
+                yField="value"
+                smooth
+                yAxis={{ min: 0, nice: true, title: { text: 'FPS' } }}
+                tooltip={{ showMarkers: true }}
+                animation={{ appear: { animation: 'path-in', duration: 600 } }}
+              />
+            ) : (
+              <Empty description="暂无 FPS 数据" />
+            )}
+          </Card>
+        </Col>
+      </Row>
+
+      <Row gutter={[16, 16]} style={{ marginTop: 16 }}>
+        <Col xs={24} lg={12}>
+          <Card title={<Space><ApiOutlined />Web Vitals 指标</Space>}>
+            <Table
+              columns={metricColumns}
+              dataSource={metricsTable}
+              pagination={false}
+              size="small"
+              locale={{ emptyText: '暂无性能指标' }}
+            />
+          </Card>
+        </Col>
+        <Col xs={24} lg={12}>
+          <Card title={<Space><ClockCircleOutlined />页面导航记录</Space>}>
+            <Table
+              columns={navigationColumns}
+              dataSource={navigationTable}
+              pagination={false}
+              size="small"
+              locale={{ emptyText: '暂无导航数据' }}
+            />
+          </Card>
+        </Col>
+      </Row>
     </div>
   )
 }

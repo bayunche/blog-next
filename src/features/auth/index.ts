@@ -16,3 +16,4 @@ export * from './components'
 
 // 页面
 export { GithubCallbackPage } from './pages/GithubCallbackPage'
+export { GithubLoginingPage } from './pages/GithubLoginingPage'

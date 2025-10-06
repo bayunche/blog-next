@@ -153,14 +153,44 @@ Web (Nginx:80/443)
 
 ## 备份与恢复
 
-### 备份数据库
+### 自动备份系统
+
+项目已配置完整的自动备份系统：
+
+- ✅ **自动定时备份**: 每天凌晨 2:00 自动备份，每周日 3:00 额外备份
+- ✅ **智能数据导入**: 容器启动时自动导入最新备份
+- ✅ **备份保留策略**: 自动清理 30 天前的旧备份
+- ✅ **压缩存储**: 备份文件 gzip 压缩
+
+详细说明请查看：[MySQL 备份系统文档](./docker/mysql/README.md)
+
+### 快速操作
+
+**查看备份文件**：
 ```bash
-docker-compose exec mysql mysqldump -u react_blog -p react_blog > backup_$(date +%Y%m%d).sql
+docker-compose exec mysql ls -lh /backups/
 ```
 
-### 恢复数据库
+**手动执行备份**：
 ```bash
-docker-compose exec -T mysql mysql -u react_blog -p react_blog < backup.sql
+docker-compose exec mysql /scripts/backup.sh
+```
+
+**查看备份日志**：
+```bash
+docker-compose exec mysql tail -f /var/log/mysql-backup.log
+```
+
+**手动恢复备份**：
+```bash
+# 恢复特定备份
+gunzip -c ./docker/backups/backup_20241005_020000.sql.gz | docker-compose exec -T mysql mysql -u react_blog -p react_blog
+```
+
+**测试备份系统**：
+```bash
+# 运行自动化测试脚本
+bash docker/mysql/test-backup.sh
 ```
 
 ## 生产环境建议
@@ -168,9 +198,10 @@ docker-compose exec -T mysql mysql -u react_blog -p react_blog < backup.sql
 1. **修改默认密码**: 务必修改 `.env` 中的所有默认密码
 2. **启用 HTTPS**: 在 `docker/nginx/certs/` 目录放置 SSL 证书
 3. **限制端口暴露**: 生产环境建议不暴露 MySQL 3306 端口
-4. **定期备份**: 设置定时任务备份数据库
-5. **监控日志**: 使用日志聚合工具监控应用运行状态
+4. **自动备份已启用**: 系统已配置每日自动备份，建议额外配置远程备份到 OSS/S3
+5. **监控日志**: 使用日志聚合工具监控应用运行状态，包括备份日志
 6. **资源限制**: 在 docker-compose.yml 中添加 CPU 和内存限制
+7. **备份告警**: 配置备份失败告警通知
 
 ## 更新应用
 
@@ -189,13 +220,21 @@ docker-compose up -d
 blog-next/
 ├── docker/                  # Docker 配置
 │   ├── mysql/
-│   │   └── init/           # 数据库初始化脚本
-│   │       ├── 01-init.sql
-│   │       └── 02-data.sql
+│   │   ├── Dockerfile      # 自定义 MySQL 镜像
+│   │   ├── init/           # 数据库初始化脚本
+│   │   │   ├── 01-init.sql
+│   │   │   ├── 02-data-final.sql
+│   │   │   └── 99-restore-backup.sh
+│   │   ├── scripts/        # 备份脚本
+│   │   │   ├── backup.sh
+│   │   │   ├── crontab
+│   │   │   └── entrypoint-wrapper.sh
+│   │   ├── test-backup.sh  # 备份系统测试脚本
+│   │   └── README.md       # 备份系统文档
 │   ├── nginx/
 │   │   ├── conf.d/         # Nginx 站点配置
 │   │   └── certs/          # SSL 证书（可选）
-│   └── backups/            # 数据库备份目录
+│   └── backups/            # 数据库备份存储目录（自动生成）
 ├── server/                  # 后端源代码
 ├── src/                     # 前端源代码
 ├── docker-compose.yml       # Docker Compose 配置

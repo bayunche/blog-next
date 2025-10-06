@@ -19,7 +19,21 @@
       "Bash(python:*)",
       "Bash(docker cp:*)",
       "Bash(docker logs:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "WebFetch(domain:diygod.cc)",
+      "Bash(chmod:*)",
+      "Bash(find:*)",
+      "Bash(npm install:*)",
+      "Bash(docker exec:*)",
+      "Bash(winpty docker exec -it blog-next-mysql bash /scripts/backup.sh)",
+      "Bash(MSYS_NO_PATHCONV=1 docker exec blog-next-mysql bash /scripts/backup.sh)",
+      "Bash(MSYS_NO_PATHCONV=1 docker exec blog-next-mysql ls -lh /backups/)",
+      "Bash(MSYS_NO_PATHCONV=1 docker exec blog-next-mysql pgrep crond)",
+      "Bash(MSYS_NO_PATHCONV=1 docker exec blog-next-mysql crontab -l)",
+      "Bash(MSYS_NO_PATHCONV=1 docker exec blog-next-mysql ps aux)",
+      "Bash(MSYS_NO_PATHCONV=1 docker exec blog-next-mysql cat /etc/cron.d/mysql-backup)",
+      "Bash(grep:*)",
+      "Bash(npm test:*)"
     ],
     "deny": [],
     "ask": []

@@ -1,0 +1,21 @@
+﻿{
+  "id": "Q1",
+  "focus": "Monitor page data model",
+  "findings": [
+    "`usePerformanceMonitor` runs globally (App.tsx) and continuously pushes metrics (metrics/fps/memory/navigation) into `usePerformanceStore`.",
+    "`useSystemMonitor` socket hook adds `{ cpuUsage, memoryUsage, timestamp }` records into the same store via `addSystemPerformance`.",
+    "`Monitor.tsx` still uses static constants `performanceData`, `apiData`, `accessData`; no store consumption or hook invocation." ],
+  "evidence": [
+    { "file": "src/shared/hooks/usePerformanceMonitor.ts", "detail": "collects web vitals, FPS, memory, navigation" },
+    { "file": "src/features/admin/hooks/useSystemMonitor.ts", "detail": "connects socket.io and populates system metrics" },
+    { "file": "src/features/admin/pages/Monitor.tsx:21", "detail": "hard-coded data objects" }
+  ],
+  "gaps": [
+    "Need selectors (e.g., memoized) to pull data slices from store with useEffect to compute charts.",
+    "UI still expects aggregated arrays (apiData/accessData) not provided by store; must redesign layout around available metrics.",
+    "No connection status or empty state handling." ],
+  "next_steps": [
+    "Define derived datasets (cpuTrend, memoryTrend from systemPerformance).",
+    "Expose last known metrics, fallback to skeleton when store empty.",
+    "Inject `useSystemMonitor` inside Monitor page (or parent) to start socket connection." ]
+}

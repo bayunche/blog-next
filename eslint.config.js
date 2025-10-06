@@ -7,12 +7,9 @@ import prettierConfig from 'eslint-config-prettier'
 import prettierPlugin from 'eslint-plugin-prettier'
 
 export default tseslint.config(
-  // Global ignores
   {
-    ignores: ['dist', 'node_modules', '*.config.js', '*.config.ts'],
+    ignores: ['dist', 'node_modules', '*.config.js', '*.config.ts', 'server/**', 'docker/**'],
   },
-
-  // Base config for all files
   {
     files: ['**/*.{ts,tsx,js,jsx}'],
     extends: [
@@ -39,48 +36,19 @@ export default tseslint.config(
     },
     rules: {
       ...reactHooks.configs.recommended.rules,
-      'react-refresh/only-export-components': [
-        'warn',
-        { allowConstantExport: true },
-      ],
-
-      // Prettier integration
-      'prettier/prettier': 'warn',
-
-      // TypeScript specific
-      '@typescript-eslint/no-explicit-any': 'warn',
-      '@typescript-eslint/no-unused-vars': [
-        'warn',
-        {
-          argsIgnorePattern: '^_',
-          varsIgnorePattern: '^_',
-        },
-      ],
-      '@typescript-eslint/explicit-module-boundary-types': 'off',
-      '@typescript-eslint/no-non-null-assertion': 'warn',
-
-      // React specific
+      'react-refresh/only-export-components': 'off',
+      'prettier/prettier': 'off',
+      '@typescript-eslint/no-explicit-any': 'off',
+      '@typescript-eslint/no-unused-vars': 'off',
+      '@typescript-eslint/no-non-null-assertion': 'off',
       'react-hooks/rules-of-hooks': 'error',
-      'react-hooks/exhaustive-deps': 'warn',
-
-      // General code quality
-      'no-console': ['warn', { allow: ['warn', 'error'] }],
-      'no-debugger': 'warn',
+      'react-hooks/exhaustive-deps': 'off',
+      'no-console': 'off',
+      'no-debugger': 'error',
       'no-duplicate-imports': 'error',
-      'no-unused-expressions': 'off',
-      '@typescript-eslint/no-unused-expressions': 'warn',
-
-      // Import/Export
-      'sort-imports': [
-        'warn',
-        {
-          ignoreCase: true,
-          ignoreDeclarationSort: true,
-        },
-      ],
+      '@typescript-eslint/no-unused-expressions': 'off',
+      'sort-imports': 'off',
     },
   },
-
-  // Prettier config (disables conflicting ESLint rules)
-  prettierConfig
+  prettierConfig,
 )

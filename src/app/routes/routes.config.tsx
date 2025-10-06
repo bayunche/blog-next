@@ -1,108 +1,101 @@
 /**
- * 路由配置
- * 定义应用的所有路由规则
+ * Route configuration for the application.
  */
 
-import { lazy } from 'react'
-import { Navigate, type RouteObject } from 'react-router-dom'
-import { ProtectedRoute } from './ProtectedRoute'
-
-// ==================== 测试页面 ====================
-import { TestPage } from '@shared/pages/TestPage'
-
-// ==================== 认证页面 ====================
-import { GithubCallbackPage } from '@features/auth'
-
-// ==================== 文章页面 ====================
+import { Navigate, type RouteObject } from "react-router-dom"
+import { ProtectedRoute } from "./ProtectedRoute"
+import { GithubCallbackPage, GithubLoginingPage } from "@features/auth"
 import {
-  ArticleListPage,
-  ArticleDetailPage,
-  CategoriesPage,
-  TagsPage,
   ArchivesPage,
-} from '@features/article'
-
-// ==================== 管理后台 ====================
+  ArticleDetailPage,
+  ArticleListPage,
+  CategoriesPage,
+  CategoryDetailPage,
+  ShareArticlePage,
+  TagDetailPage,
+  TagsPage,
+} from "@features/article"
+import { AboutPage } from "@features/about"
+import { FragmentPage } from "@features/fragment"
 import {
   AdminLayout,
-  Dashboard,
-  ArticleManager,
   ArticleEditor,
-  UserManager,
+  ArticleManager,
+  ArticleAnalytics,
+  Dashboard,
+  FragmentAnalytics,
+  FragmentEditor,
+  FragmentManager,
   Monitor,
-} from '@features/admin'
+  UserManager,
+} from "@features/admin"
+import { WelcomePage, NotFoundPage } from "@features/misc"
+import { WebLayout } from "@features/layout"
 
-// ==================== 布局组件 ====================
-import { WebLayout } from '@features/layout'
-
-// ==================== 临时占位组件 ====================
-// 用于开发阶段的临时页面
 const PlaceholderPage = ({ title }: { title: string }) => (
-  <div style={{ padding: '2rem', textAlign: 'center' }}>
+  <div style={{ padding: "2rem", textAlign: "center" }}>
     <h1>{title}</h1>
-    <p>该页面正在开发中...</p>
+    <p>Page under construction...</p>
   </div>
 )
 
-// ==================== 路由配置 ====================
 export const routes: RouteObject[] = [
-  // 根路径重定向到首页
   {
-    path: '/',
+    path: "/",
     element: <Navigate to="/home" replace />,
   },
-
-  // Web 前台路由
   {
-    path: '/',
+    path: "/",
     element: <WebLayout />,
     children: [
       {
-        path: 'home',
+        path: "home",
         element: <ArticleListPage />,
       },
       {
-        path: 'article/:id',
+        path: "article/:id",
         element: <ArticleDetailPage />,
       },
       {
-        path: 'article/share/:uuid',
-        element: <PlaceholderPage title="分享文章" />,
+        path: "article/share/:uuid",
+        element: <ShareArticlePage />,
       },
       {
-        path: 'archives',
+        path: "archives",
         element: <ArchivesPage />,
       },
       {
-        path: 'categories',
+        path: "categories",
         element: <CategoriesPage />,
       },
       {
-        path: 'categories/:name',
-        element: <PlaceholderPage title="分类详情" />,
+        path: "categories/:name",
+        element: <CategoryDetailPage />,
       },
       {
-        path: 'tags',
+        path: "tags",
         element: <TagsPage />,
       },
       {
-        path: 'tags/:name',
-        element: <PlaceholderPage title="标签详情" />,
+        path: "tags/:name",
+        element: <TagDetailPage />,
       },
       {
-        path: 'about',
-        element: <PlaceholderPage title="关于" />,
+        path: "about",
+        element: <AboutPage />,
       },
       {
-        path: 'fragments',
-        element: <PlaceholderPage title="碎片" />,
+        path: "fragment",
+        element: <FragmentPage />,
+      },
+      {
+        path: "fragments",
+        element: <Navigate to="/fragment" replace />,
       },
     ],
   },
-
-  // 管理后台路由（需要管理员权限）
   {
-    path: '/admin',
+    path: "/admin",
     element: <ProtectedRoute requiredRole="admin" />,
     children: [
       {
@@ -113,79 +106,66 @@ export const routes: RouteObject[] = [
             element: <Dashboard />,
           },
           {
-            path: 'article/manager',
+            path: "article/manager",
             element: <ArticleManager />,
           },
           {
-            path: 'article/add',
+            path: "article/add",
             element: <ArticleEditor />,
           },
           {
-            path: 'article/edit/:id',
+            path: "article/edit/:id",
             element: <ArticleEditor />,
           },
           {
-            path: 'article/graph',
-            element: <PlaceholderPage title="文章图表" />,
+            path: "article/graph",
+            element: <ArticleAnalytics />,
           },
           {
-            path: 'fragment/manager',
-            element: <PlaceholderPage title="碎片管理" />,
+            path: "fragment/manager",
+            element: <FragmentManager />,
           },
           {
-            path: 'fragment/add',
-            element: <PlaceholderPage title="添加碎片" />,
+            path: "fragment/add",
+            element: <FragmentEditor />,
           },
           {
-            path: 'user',
+            path: "fragment/edit/:id",
+            element: <FragmentEditor />,
+          },
+          {
+            path: "fragment/graph",
+            element: <FragmentAnalytics />,
+          },
+          {
+            path: "user",
             element: <UserManager />,
           },
           {
-            path: 'monitor',
+            path: "monitor",
             element: <Monitor />,
           },
         ],
       },
     ],
   },
-
-  // 欢迎页面
   {
-    path: '/welcome',
-    element: <PlaceholderPage title="欢迎" />,
+    path: "/welcome",
+    element: <WelcomePage />,
   },
-
-  // GitHub 登录回调
   {
-    path: '/github',
+    path: "/github",
     element: <GithubCallbackPage />,
   },
-
-  // 登录页面
   {
-    path: '/login',
-    element: <PlaceholderPage title="登录" />,
+    path: "/login",
+    element: <GithubLoginingPage />,
   },
-
-  // 404 页面
   {
-    path: '*',
-    element: <PlaceholderPage title="404 - 页面未找到" />,
+    path: "*",
+    element: <NotFoundPage />,
   },
 ]
 
-/**
- * 路由元信息类型定义
- */
-export interface RouteMeta {
-  /** 路由标题 */
-  title?: string
-  /** 是否需要认证 */
-  requiresAuth?: boolean
-  /** 需要的角色 */
-  requiredRole?: 'user' | 'admin'
-  /** 图标 */
-  icon?: string
-  /** 是否在菜单中隐藏 */
-  hideInMenu?: boolean
-}
+
+

@@ -1,0 +1,19 @@
+﻿{
+  "id": "Q3",
+  "focus": "GitHub contribution widget implementation",
+  "findings": [
+    "Legacy `../src/views/web/home/Contribution.jsx` used `react-calendar-heatmap` and `useMediaQuery` to render yearly contributions fetched from `/user/github/contributions`.",
+    "Current codebase has backend route intact (`server/router/user.js#getGithubContributions`) and controller scrapes GitHub, so API output remains compatible.",
+    "Neither `ArticleListPage` nor shared components call this endpoint; package.json no longer lists `react-calendar-heatmap` dependency." ],
+  "evidence": [
+    { "file": "../src/views/web/home/Contribution.jsx", "detail": "original UI and request logic" },
+    { "file": "server/router/user.js", "detail": "GET /user/github/contributions mapped" },
+    { "file": "package.json", "detail": "dependency missing (needs re-add or alternative)" } ],
+  "gaps": [
+    "Need a typed client + TanStack Query hook for contributions data.",
+    "Decide on visualization: reintroduce `react-calendar-heatmap` or use antd plots heatmap." ],
+  "next_steps": [
+    "Add `react-calendar-heatmap` (or alternative) dependency and style integration.",
+    "Create `useGithubContributions` hook using queryKeys.users.contributions().",
+    "Implement responsive component (desktop vs mobile) and embed into `ArticleListPage` or dedicated widget region." ]
+}

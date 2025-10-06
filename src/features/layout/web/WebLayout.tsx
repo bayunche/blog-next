@@ -5,6 +5,7 @@
 
 import { Layout } from 'antd'
 import { Outlet } from 'react-router-dom'
+import { WebHeader } from './components'
 import './WebLayout.less'
 
 const { Header, Content, Footer } = Layout
@@ -17,10 +18,7 @@ export function WebLayout() {
     <Layout className="web-layout">
       {/* 头部导航 */}
       <Header className="web-header">
-        <div className="header-content">
-          <div className="logo">React Blog</div>
-          {/* TODO: 添加导航菜单 */}
-        </div>
+        <WebHeader />
       </Header>
 
       {/* 主内容区 */}

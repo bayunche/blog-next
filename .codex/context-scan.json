@@ -1,0 +1,45 @@
+﻿{
+  "scope": {
+    "monitor_page": "src/features/admin/pages/Monitor.tsx",
+    "performance_hooks": [
+      "src/shared/hooks/usePerformanceMonitor.ts",
+      "src/features/admin/hooks/useSystemMonitor.ts",
+      "src/shared/stores/performanceStore.ts"
+    ],
+    "homepage_contribution": {
+      "legacy_component": "../src/views/web/home/Contribution.jsx",
+      "current_home": "src/features/article/pages/ArticleListPage.tsx"
+    },
+    "backend_endpoints": [
+      "server/router/user.js#get('/github/contributions')",
+      "server/controllers/user.js#getGithubContributions",
+      "server/router/article.js#get('/archives')"
+    ]
+  },
+  "current_state": {
+    "monitor": "Monitor.tsx renders mocked arrays (performanceData/apiData/accessData) with AntD cards/tables; no hook usage.",
+    "performance_store": "Zustand store already tracks metrics, fps, memory, navigation, and systemPerformance; actions exposed for UI consumption.",
+    "socket_hook": "useSystemMonitor.ts connects to socket.io @ VITE_SOCKET_URL, pushes cpu/memory into store via addSystemPerformance.",
+    "home_page": "ArticleListPage renders Sidebar, ArticleCard list, QuickNav; no contribution widget or API call present.",
+    "legacy_contribution": "Contribution.jsx fetched /user/github/contributions, rendered react-calendar-heatmap with responsive behaviour."
+  },
+  "technology": {
+    "frontend": "React 19, TypeScript, Ant Design, TanStack Query available (used widely in repo).",
+    "charts": "@ant-design/plots used in other analytics (e.g., FragmentAnalytics).",
+    "state": "Zustand + React Query; tests via Vitest & testing-library.",
+    "socket": "socket.io-client already installed; hooks configured.",
+    "data_viz": "react-calendar-heatmap not present in current package.json; legacy used it -> evaluate reintroducing or alt chart." 
+  },
+  "testing": {
+    "monitor": "No dedicated tests yet; opportunity to add component/unit tests verifying dynamic rendering (maybe stub store).",
+    "home": "No tests for ArticleListPage; new component should include Vitest + RTL coverage (snapshot or behaviour).",
+    "backend": "Existing contributions endpoint lacks tests; focus on frontend coverage for this task."
+  },
+  "observations": [
+    "Monitor hooks and store exist but unused, implying planned integration left incomplete.",
+    "Home page lacks any call to contributions API; QuickNav replicates part of legacy QuickLink but not contributions.",
+    "Package.json does not include react-calendar-heatmap; need to decide whether to add dependency or implement custom heatmap (maybe @ant-design/plots calendar?).",
+    "Need to ensure API base path is consistent (legacy used axios instance). Check @shared/utils/request for base path to hit /user/github/contributions.",
+    "Socket endpoint default is http://localhost:1234, ensure backend exposes events; may need graceful fallback when socket unavailable." 
+  ]
+}

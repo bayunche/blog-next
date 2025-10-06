@@ -31,6 +31,8 @@ export function useLogin(options?: UseLoginOptions) {
     mutationFn: (data: LoginRequest) => loginAPI(data),
 
     onSuccess: (response) => {
+      console.log('✅ 登录成功，响应数据:', response)
+
       // 保存用户信息和 Token 到 Store
       setAuth(response.user, response.token)
 
@@ -39,9 +41,16 @@ export function useLogin(options?: UseLoginOptions) {
 
       // 执行成功回调
       options?.onSuccess?.()
+
+      // 延迟刷新页面，让用户看到成功提示
+      setTimeout(() => {
+        window.location.reload()
+      }, 500)
     },
 
     onError: (error: Error) => {
+      console.error('❌ 登录失败:', error)
+
       // 显示错误消息
       message.error(error.message || '登录失败，请检查用户名和密码')
 

@@ -12,6 +12,8 @@ import {
   Tag,
   Modal,
   message,
+  Dropdown,
+  type MenuProps,
   type TableProps,
   type TableColumnsType,
 } from 'antd'
@@ -21,7 +23,12 @@ import {
   DeleteOutlined,
   ExclamationCircleOutlined,
   EyeOutlined,
+  EyeInvisibleOutlined,
   CheckCircleOutlined,
+  ExportOutlined,
+  DownOutlined,
+  UpOutlined,
+  MoreOutlined,
 } from '@ant-design/icons'
 import { useNavigate } from 'react-router-dom'
 import dayjs from 'dayjs'
@@ -32,6 +39,9 @@ import {
   usePublishArticle,
   useBatchPublishArticles,
   useUnpublishArticle,
+  useBatchExportArticles,
+  useExportAllArticles,
+  useBatchUpdateArticleStatus,
 } from '../hooks/useArticleManage'
 import { useCategories, useTags } from '@features/article'
 import type { ArticleManageItem } from '../api/article'
@@ -74,6 +84,9 @@ export function ArticleManager() {
   const publishMutation = usePublishArticle()
   const batchPublishMutation = useBatchPublishArticles()
   const unpublishMutation = useUnpublishArticle()
+  const batchExportMutation = useBatchExportArticles()
+  const exportAllMutation = useExportAllArticles()
+  const batchUpdateStatusMutation = useBatchUpdateArticleStatus()
 
   // 表格列定义
   const columns: TableColumnsType<ArticleManageItem> = [
@@ -260,11 +273,149 @@ export function ArticleManager() {
     })
   }
 
+  // 批量导出
+  const handleBatchExport = () => {
+    if (selectedRowKeys.length === 0) {
+      message.warning('请先选择要导出的文章')
+      return
+    }
+
+    batchExportMutation.mutate(selectedRowKeys as number[])
+  }
+
+  // 导出全部
+  const handleExportAll = () => {
+    Modal.confirm({
+      title: '确认导出',
+      icon: <ExclamationCircleOutlined />,
+      content: '确定要导出所有文章吗？',
+      okText: '确定',
+      cancelText: '取消',
+      onOk: () => exportAllMutation.mutate(),
+    })
+  }
+
+  // 批量设为公开
+  const handleBatchSetPublic = () => {
+    if (selectedRowKeys.length === 0) {
+      message.warning('请先选择要设为公开的文章')
+      return
+    }
+
+    batchUpdateStatusMutation.mutate(
+      {
+        ids: selectedRowKeys as number[],
+        type: true,
+      },
+      {
+        onSuccess: () => setSelectedRowKeys([]),
+      }
+    )
+  }
+
+  // 批量设为私密
+  const handleBatchSetPrivate = () => {
+    if (selectedRowKeys.length === 0) {
+      message.warning('请先选择要设为私密的文章')
+      return
+    }
+
+    batchUpdateStatusMutation.mutate(
+      {
+        ids: selectedRowKeys as number[],
+        type: false,
+      },
+      {
+        onSuccess: () => setSelectedRowKeys([]),
+      }
+    )
+  }
+
+  // 批量置顶
+  const handleBatchSetTop = () => {
+    if (selectedRowKeys.length === 0) {
+      message.warning('请先选择要置顶的文章')
+      return
+    }
+
+    batchUpdateStatusMutation.mutate(
+      {
+        ids: selectedRowKeys as number[],
+        top: true,
+      },
+      {
+        onSuccess: () => setSelectedRowKeys([]),
+      }
+    )
+  }
+
+  // 批量取消置顶
+  const handleBatchUnsetTop = () => {
+    if (selectedRowKeys.length === 0) {
+      message.warning('请先选择要取消置顶的文章')
+      return
+    }
+
+    batchUpdateStatusMutation.mutate(
+      {
+        ids: selectedRowKeys as number[],
+        top: false,
+      },
+      {
+        onSuccess: () => setSelectedRowKeys([]),
+      }
+    )
+  }
+
   // 行选择配置
   const rowSelection: TableProps<ArticleManageItem>['rowSelection'] = {
     selectedRowKeys,
     onChange: (keys) => setSelectedRowKeys(keys),
   }
+
+  // 更多操作菜单
+  const moreActionsMenu: MenuProps['items'] = [
+    {
+      key: 'export-all',
+      label: '导出全部文章',
+      icon: <ExportOutlined />,
+      onClick: handleExportAll,
+    },
+    {
+      type: 'divider',
+    },
+    {
+      key: 'set-public',
+      label: '设为公开',
+      icon: <EyeOutlined />,
+      onClick: handleBatchSetPublic,
+      disabled: selectedRowKeys.length === 0,
+    },
+    {
+      key: 'set-private',
+      label: '设为私密',
+      icon: <EyeInvisibleOutlined />,
+      onClick: handleBatchSetPrivate,
+      disabled: selectedRowKeys.length === 0,
+    },
+    {
+      type: 'divider',
+    },
+    {
+      key: 'set-top',
+      label: '设为置顶',
+      icon: <UpOutlined />,
+      onClick: handleBatchSetTop,
+      disabled: selectedRowKeys.length === 0,
+    },
+    {
+      key: 'unset-top',
+      label: '取消置顶',
+      icon: <DownOutlined />,
+      onClick: handleBatchUnsetTop,
+      disabled: selectedRowKeys.length === 0,
+    },
+  ]
 
   return (
     <div>
@@ -321,7 +472,7 @@ export function ArticleManager() {
       </Space>
 
       {/* 操作按钮 */}
-      <Space style={{ marginBottom: 16 }}>
+      <Space style={{ marginBottom: 16 }} wrap>
         <Button
           type="primary"
           icon={<PlusOutlined />}
@@ -337,6 +488,13 @@ export function ArticleManager() {
           批量发布
         </Button>
         <Button
+          icon={<ExportOutlined />}
+          onClick={handleBatchExport}
+          disabled={selectedRowKeys.length === 0}
+        >
+          批量导出
+        </Button>
+        <Button
           danger
           icon={<DeleteOutlined />}
           onClick={handleBatchDelete}
@@ -344,6 +502,11 @@ export function ArticleManager() {
         >
           批量删除
         </Button>
+        <Dropdown menu={{ items: moreActionsMenu }} trigger={['click']}>
+          <Button icon={<MoreOutlined />}>
+            更多操作 <DownOutlined />
+          </Button>
+        </Dropdown>
       </Space>
 
       {/* 文章列表 */}

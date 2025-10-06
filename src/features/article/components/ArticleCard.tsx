@@ -67,7 +67,7 @@ export function ArticleCard({ article, showCover = true }: ArticleCardProps) {
           )
         }
         className={styles.articleCard}
-        bodyStyle={{ padding: 'var(--spacing-md)' }}
+        styles={{ body: { padding: 'var(--spacing-md)' } }}
       >
         {/* 标题 */}
         <Title level={3} className={styles.title}>

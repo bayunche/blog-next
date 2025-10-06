@@ -195,7 +195,7 @@ export const getPasswordStrength = (password: string): 'weak' | 'medium' | 'stro
 export const generateSignature = (data: Record<string, any>, signKey?: string): string => {
   const SIGN_KEY = signKey || import.meta.env.VITE_SIGN_KEY || 'ADfj3kcadc2349akvm1CPFFCD84f'
 
-  let strs: string[] = []
+  const strs: string[] = []
   for (const key in data) {
     strs.push(`${key}=${data[key]}`)
   }

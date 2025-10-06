@@ -1,0 +1,23 @@
+{
+  "question_id": "Q5",
+  "focus": "GithubLogining 组件在新架构中的职责",
+  "findings": [
+    "旧版 GithubLogining (..\\src\\components\\GithubLogining\\index.jsx) 在收到 code 后直接调用 loginAsync 并路由返回。",
+    "新版已提供 GithubCallbackPage 负责读取 code 并调用 useGithubAuth.handleGithubCallback，成功后跳转首页。",
+    "useGithubAuth 钩子依赖 TanStack Query mutation 并期望在开始授权前保存 state。",
+    "当前 /login 路由仍挂载 PlaceholderPage，需要一个页面承担 GitHub OAuth 发起/Loading 展示以替换旧行为。"
+  ],
+  "evidence": [
+    {"file": "..\\src\\components\\GithubLogining\\index.jsx", "description": "旧版登录 loading 页面逻辑"},
+    {"file": "src\\features\\auth\\pages\\GithubCallbackPage.tsx", "description": "新版处理 code 的页面"},
+    {"file": "src\\features\\auth\\hooks\\useGithubAuth.ts", "description": "授权流程钩子"},
+    {"file": "src\\app\\routes\\routes.config.tsx", "description": "/login 当前仍为占位"}
+  ],
+  "gaps": [
+    "需确定 /login 是否仅用于 GitHub loading 还是也要支持表单登录，避免与 GithubCallbackPage 重复。"
+  ],
+  "next_actions": [
+    "在 features/auth/pages 下实现 GithubLoginingPage，调用 useGithubAuth.startGithubAuth 并展示加载动画。",
+    "将 routes.config.tsx 的 /login 指向新组件，并补充路由/授权流程测试。"
+  ]
+}

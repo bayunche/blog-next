@@ -1,0 +1,6 @@
+# MySQL 定时备份任务
+# 每天凌晨 2 点执行备份
+0 2 * * * root /scripts/backup.sh >> /var/log/mysql-backup.log 2>&1
+
+# 每周日凌晨 3 点额外备份一次（周备份）
+0 3 * * 0 root /scripts/backup.sh >> /var/log/mysql-backup.log 2>&1

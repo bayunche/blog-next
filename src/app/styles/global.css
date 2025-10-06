@@ -1,35 +1,35 @@
 /**
  * 全局样式
- * 基于萌系设计系统
+ * 基于 diygod.cc 的暖橙色设计系统
  */
 
 /* CSS 变量定义 - 亮色主题 */
 :root {
-  /* 萌系主色调 - 粉色系 */
-  --primary-color: #ff69b4;
-  --primary-light: #ffb3d9;
-  --primary-dark: #cc4a8c;
+  /* 暖橙色主色调 - diygod.cc 风格 */
+  --primary-color: #d67f47;
+  --primary-light: #e8a378;
+  --primary-dark: #c46d3a;
 
   /* 辅助色 */
   --secondary-color: #87ceeb;
-  --accent-color: #ffd700;
-  --success-color: #98fb98;
-  --warning-color: #ffa500;
-  --error-color: #ff6b6b;
-  --info-color: #3182ce;
+  --accent-color: #f97316;
+  --success-color: #22c55e;
+  --warning-color: #f97316;
+  --error-color: #ef4444;
+  --info-color: #3b82f6;
 
-  /* 中性色 */
-  --bg-primary: #ffffff;
-  --bg-secondary: #f8f9fa;
-  --bg-tertiary: #e9ecef;
-  --text-primary: #2d3748;
-  --text-secondary: #718096;
-  --text-muted: #a0aec0;
+  /* 中性色（米白/米黄系统） */
+  --bg-primary: #faf8f5;
+  --bg-secondary: #ffffff;
+  --bg-tertiary: #f5f3f0;
+  --text-primary: #2c3e50;
+  --text-secondary: #7f8c8d;
+  --text-muted: #95a5a6;
   --text-disabled: #cbd5e0;
 
   /* 边框颜色 */
-  --border-color: #e2e8f0;
-  --border-hover: #cbd5e0;
+  --border-color: #e8e8e8;
+  --border-hover: #d6cbc5;
   --border-focus: var(--primary-color);
 
   /* 毛玻璃效果 */
@@ -37,11 +37,11 @@
   --glass-border: rgba(255, 255, 255, 0.18);
   --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
 
-  /* 萌系渐变 */
+  /* 暖色系渐变 */
   --gradient-primary: linear-gradient(135deg, var(--primary-color), var(--primary-light));
-  --gradient-secondary: linear-gradient(135deg, var(--secondary-color), var(--accent-color));
-  --gradient-rainbow: linear-gradient(135deg, #ff69b4, #87ceeb, #ffd700, #98fb98);
-  --gradient-sunset: linear-gradient(135deg, #ff6b6b 0%, #ffa500 50%, #ff69b4 100%);
+  --gradient-secondary: linear-gradient(135deg, var(--secondary-color), #b3ebff);
+  --gradient-warm: linear-gradient(135deg, #d67f47, #f97316, #ea580c);
+  --gradient-sunset: linear-gradient(135deg, #ef4444 0%, #f97316 50%, #d67f47 100%);
 
   /* 动画缓动 */
   --ease-out-cubic: cubic-bezier(0.4, 0, 0.2, 1);
@@ -57,13 +57,13 @@
   --radius-2xl: 24px;
   --radius-full: 9999px;
 
-  /* 阴影系统 */
-  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.05);
-  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.1);
-  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.1);
-  --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.12);
-  --shadow-xl: 0 20px 40px rgba(0, 0, 0, 0.15);
-  --shadow-glow: 0 0 20px rgba(255, 105, 180, 0.5);
+  /* 阴影系统（柔和） */
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-sm: 0 2px 6px rgba(0, 0, 0, 0.06);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.1);
+  --shadow-xl: 0 16px 40px rgba(0, 0, 0, 0.12);
+  --shadow-glow: 0 0 20px rgba(214, 127, 71, 0.5);
 
   /* 间距系统 */
   --spacing-xs: 0.25rem;
@@ -72,14 +72,6 @@
   --spacing-lg: 1.5rem;
   --spacing-xl: 2rem;
   --spacing-2xl: 3rem;
-
-  /* 响应式断点 */
-  --breakpoint-xs: 320px;
-  --breakpoint-sm: 640px;
-  --breakpoint-md: 768px;
-  --breakpoint-lg: 1024px;
-  --breakpoint-xl: 1280px;
-  --breakpoint-2xl: 1536px;
 
   /* Z-index 层级 */
   --z-dropdown: 1000;
@@ -91,28 +83,28 @@
   --z-tooltip: 1070;
 }
 
-/* 暗色主题 */
+/* 暗色主题（diygod.cc 深色模式） */
 [data-theme='dark'] {
-  --bg-primary: #1a202c;
-  --bg-secondary: #2d3748;
-  --bg-tertiary: #4a5568;
-  --text-primary: #f7fafc;
-  --text-secondary: #cbd5e0;
-  --text-muted: #a0aec0;
-  --text-disabled: #718096;
+  --bg-primary: #161413;
+  --bg-secondary: #1f1d1c;
+  --bg-tertiary: #2a2624;
+  --text-primary: #e8e8e8;
+  --text-secondary: #a8a8a8;
+  --text-muted: #888888;
+  --text-disabled: #6f6560;
 
-  --border-color: #4a5568;
-  --border-hover: #718096;
+  --border-color: #3a3a3a;
+  --border-hover: #505050;
 
-  --glass-bg: rgba(26, 32, 44, 0.8);
+  --glass-bg: rgba(22, 20, 19, 0.8);
   --glass-border: rgba(255, 255, 255, 0.12);
   --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
 
   --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.25);
-  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.25);
-  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.3);
-  --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.35);
-  --shadow-xl: 0 20px 40px rgba(0, 0, 0, 0.4);
+  --shadow-sm: 0 2px 6px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.35);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.4);
+  --shadow-xl: 0 16px 40px rgba(0, 0, 0, 0.45);
 }
 
 /* 全局重置 */
@@ -134,8 +126,7 @@ html {
 
 body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB',
-    'Microsoft YaHei', 'Helvetica Neue', Helvetica, Arial, sans-serif, 'Apple Color Emoji',
-    'Segoe UI Emoji', 'Segoe UI Symbol';
+    'Microsoft YaHei', 'Helvetica Neue', Helvetica, Arial, sans-serif;
   background: var(--bg-primary);
   color: var(--text-primary);
   line-height: 1.6;
@@ -175,12 +166,12 @@ body {
 /* 选中文本样式 */
 ::selection {
   background: var(--primary-light);
-  color: var(--text-primary);
+  color: white;
 }
 
 ::-moz-selection {
   background: var(--primary-light);
-  color: var(--text-primary);
+  color: white;
 }
 
 /* 链接样式 */
@@ -218,14 +209,6 @@ button {
 button:disabled {
   cursor: not-allowed;
   opacity: 0.6;
-}
-
-/* 输入框重置 */
-input,
-textarea,
-select {
-  font-family: inherit;
-  font-size: inherit;
 }
 
 /* 标题样式 */
@@ -276,78 +259,6 @@ p {
   line-height: 1.6;
 }
 
-/* 列表 */
-ul,
-ol {
-  margin-bottom: 1rem;
-  padding-left: 2rem;
-}
-
-li {
-  margin-bottom: 0.5rem;
-}
-
-/* 代码 */
-code {
-  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, Courier, monospace;
-  font-size: 0.875em;
-  background: var(--bg-tertiary);
-  padding: 0.2em 0.4em;
-  border-radius: var(--radius-xs);
-}
-
-pre {
-  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, Courier, monospace;
-  background: var(--bg-tertiary);
-  padding: 1rem;
-  border-radius: var(--radius-md);
-  overflow-x: auto;
-  margin-bottom: 1rem;
-}
-
-pre code {
-  background: none;
-  padding: 0;
-}
-
-/* 引用 */
-blockquote {
-  border-left: 4px solid var(--primary-color);
-  padding-left: 1rem;
-  margin-left: 0;
-  margin-bottom: 1rem;
-  font-style: italic;
-  color: var(--text-secondary);
-}
-
-/* 分隔线 */
-hr {
-  border: none;
-  border-top: 1px solid var(--border-color);
-  margin: 2rem 0;
-}
-
-/* 表格 */
-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-bottom: 1rem;
-}
-
-th,
-td {
-  padding: 0.75rem;
-  text-align: left;
-  border-bottom: 1px solid var(--border-color);
-}
-
-th {
-  font-weight: 600;
-  background: var(--bg-secondary);
-}
-
-/* 工具类 */
-
 /* 毛玻璃卡片 */
 .glass-card {
   background: var(--glass-bg);
@@ -378,129 +289,23 @@ th {
   overflow: hidden;
 }
 
-.text-ellipsis-3 {
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-/* 响应式隐藏/显示 */
-@media (max-width: 640px) {
-  .hide-sm {
-    display: none !important;
-  }
-}
-
+/* 响应式隐藏 */
 @media (max-width: 768px) {
   .hide-md {
     display: none !important;
   }
 }
 
-@media (max-width: 1024px) {
-  .hide-lg {
-    display: none !important;
-  }
+/* ==================== 自定义鼠标指针 ==================== */
+* {
+  cursor: url(https://cdn.jsdelivr.net/gh/bayunche/react-blog@release-v0.0.2/Resources/default.cur), auto !important;
 }
 
-/* 动画 */
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
-@keyframes slideInUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes slideInDown {
-  from {
-    opacity: 0;
-    transform: translateY(-20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes scaleIn {
-  from {
-    opacity: 0;
-    transform: scale(0.9);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
-.animate-fadeIn {
-  animation: fadeIn 0.3s var(--ease-out-cubic);
-}
-
-.animate-slideInUp {
-  animation: slideInUp 0.4s var(--ease-out-cubic);
-}
-
-.animate-slideInDown {
-  animation: slideInDown 0.4s var(--ease-out-cubic);
-}
-
-.animate-scaleIn {
-  animation: scaleIn 0.3s var(--ease-bounce);
-}
-
-/* Loading 动画 */
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-.animate-spin {
-  animation: spin 1s linear infinite;
-}
-
-/* 打印样式 */
-@media print {
-  * {
-    background: white !important;
-    color: black !important;
-    box-shadow: none !important;
-  }
-
-  a {
-    text-decoration: underline;
-  }
-
-  h1,
-  h2,
-  h3,
-  h4,
-  h5,
-  h6 {
-    page-break-after: avoid;
-  }
-
-  pre,
-  blockquote {
-    page-break-inside: avoid;
-  }
-
-  img {
-    page-break-inside: avoid;
-  }
+a,
+button,
+input[type='submit'],
+input[type='button'],
+[role='button'],
+.clickable {
+  cursor: url(https://cdn.jsdelivr.net/gh/bayunche/react-blog@release-v0.0.2/Resources/pointer.cur), pointer !important;
 }

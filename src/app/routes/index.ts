@@ -1,5 +1,5 @@
 /**
- * 路由模块统一导出
+ * Route module exports
  */
 
 export { routes, type RouteMeta } from './routes.config'

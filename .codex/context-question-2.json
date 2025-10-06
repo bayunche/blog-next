@@ -1,0 +1,25 @@
+﻿{
+  "question_id": "Q2",
+  "focus": "后台文章统计/管理等功能对比",
+  "findings": [
+    "旧版文章管理模块包含复杂的批量操作（导出、分享链接、设为公开/私密、置顶等）和表格 footer 交互 (..\\src\\views\\admin\\article\\manager\\index.jsx)，新版 ArticleManager (src\\features\\admin\\pages\\ArticleManager.tsx) 仅提供批量发布/删除，缺少导出、分享、置顶等功能。",
+    "旧版 article/graph 页面 (..\\src\\views\\admin\\article\\graph\\index.jsx) 基于 @ant-design/charts 展示文章阅读/发布趋势，新版路由仍为 Placeholder，尚未重写。",
+    "旧版监控页 monitor (..\\src\\views\\admin\\monitor) 依赖 socket.io 实时日志，需确认新版 Monitor.tsx 是否复现。",
+    "旧版 fragment 模块具有 manager/edit/graph，FragmentGraph 已在新版重写为 FragmentAnalytics，但 manager/edit 等功能差异仍需对照。"
+  ],
+  "evidence": [
+    {"file": "..\\src\\views\\admin\\article\\manager\\index.jsx", "description": "导出/分享等批量处理逻辑"},
+    {"file": "src\\features\\admin\\pages\\ArticleManager.tsx", "description": "仅保留增删改查+发布功能"},
+    {"file": "src\\app\\routes\\routes.config.tsx", "description": "admin/article/graph 仍未实现"}
+  ],
+  "gaps": [
+    "需要逐一罗列旧版后台各页面功能点（文章、碎片、用户、监控）并与新版核对",
+    "监控页实时功能需要检查新版是否仍依赖 socket.io 客户端和 server 端事件",
+    "文章统计视图缺失导致旧版 KPI 功能不可用"
+  ],
+  "next_actions": [
+    "阅读旧版 admin 目录下的 manager/hooks/components，整理功能矩阵",
+    "检查新版 hooks/useArticleManage.ts 等实现，看是否覆盖导出/分享等 API",
+    "确认 server 端相关路由是否仍提供导出、分享等接口"
+  ]
+}

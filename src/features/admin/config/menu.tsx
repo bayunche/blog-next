@@ -1,4 +1,4 @@
-/**
+﻿/**
  * 管理后台菜单配置
  */
 
@@ -11,6 +11,7 @@ import {
   FolderOpenOutlined,
   UserOutlined,
   MonitorOutlined,
+  DotChartOutlined,
 } from '@ant-design/icons'
 import type { MenuItem } from '../types'
 
@@ -60,6 +61,11 @@ export const adminMenuItems: MenuItem[] = [
         icon: <EditOutlined />,
         name: '新增',
       },
+      {
+        path: '/admin/fragment/graph',
+        icon: <DotChartOutlined />,
+        name: '图表',
+      },
     ],
   },
   {
@@ -75,7 +81,7 @@ export const adminMenuItems: MenuItem[] = [
 ]
 
 /**
- * 获取菜单展开的 key
+ * 获取菜单展开的key
  * 用于根据当前路径自动展开对应的子菜单
  */
 export function getMenuOpenKeys(menu: MenuItem[]): Array<{ pathname: string; openKey: string }> {

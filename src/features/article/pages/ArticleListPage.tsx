@@ -1,4 +1,4 @@
-/**
+﻿/**
  * 文章列表页面
  * 展示所有文章，支持分页和筛选
  */
@@ -6,7 +6,7 @@
 import { useState } from 'react'
 import { Row, Col, Pagination, Spin, Empty, Alert } from 'antd'
 import { useArticleList } from '../hooks'
-import { ArticleCard } from '../components/ArticleCard'
+import { ArticleCard, GithubContribution } from '../components'
 import { Sidebar, QuickNav } from '@shared/components'
 
 /**
@@ -113,8 +113,11 @@ export function ArticleListPage() {
         </Col>
       </Row>
 
-      {/* 快速导航 */}
+      {/* 快速导览 */}
       <QuickNav articles={data.list} />
+
+      {/* GitHub 贡献图 */}
+      <GithubContribution />
     </div>
   )
 }

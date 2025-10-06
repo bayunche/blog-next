@@ -1,0 +1,214 @@
+// 背景动画组件样式
+.background-animation {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+  overflow: hidden;
+  pointer-events: none;
+
+  // 背景图片容器
+  .background-images {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+  }
+
+  // 单张背景图片
+  .background-image {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    opacity: 0;
+    transition: opacity 2s ease-in-out;
+    filter: brightness(0.7) contrast(1.1);
+
+    &.active {
+      opacity: 1;
+    }
+  }
+
+  // 遮罩层 - 增强对比度和可读性
+  .background-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+      135deg,
+      rgba(0, 0, 0, 0.3) 0%,
+      rgba(0, 0, 0, 0.1) 50%,
+      rgba(0, 0, 0, 0.3) 100%
+    );
+    z-index: 1;
+  }
+
+  // 粒子画布
+  .particles-canvas {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 2;
+  }
+
+  // 萌系控制按钮
+  .bg-controls {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    z-index: 1000;
+    pointer-events: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+
+    .bg-control-btn {
+      width: 50px;
+      height: 50px;
+      border-radius: var(--radius-full);
+      border: 1px solid var(--glass-border);
+      background: var(--glass-bg);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      color: var(--primary-color);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s var(--ease-out-cubic);
+      box-shadow: var(--shadow-glow);
+      position: relative;
+      overflow: hidden;
+
+      &:before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 105, 180, 0.2), transparent);
+        transition: left 0.5s;
+      }
+
+      &:hover {
+        background: var(--gradient-primary);
+        color: white;
+        transform: translateY(-4px) scale(1.05);
+        box-shadow: 0 8px 30px rgba(255, 105, 180, 0.4);
+        animation: pulse-glow 2s infinite;
+        
+        &:before {
+          left: 100%;
+        }
+      }
+
+      &:active {
+        transform: translateY(-2px) scale(1.02);
+      }
+
+      &.paused {
+        background: var(--glass-bg);
+        color: var(--warning-color);
+        box-shadow: 0 0 20px rgba(255, 165, 0, 0.3);
+        
+        &:hover {
+          background: linear-gradient(135deg, var(--warning-color), #ffb347);
+          color: white;
+          box-shadow: 0 8px 30px rgba(255, 165, 0, 0.4);
+        }
+      }
+
+      svg {
+        transition: all 0.3s var(--ease-bounce);
+        filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+      }
+
+      &:first-child:hover svg {
+        transform: rotate(360deg);
+        animation: float 2s ease-in-out infinite;
+      }
+
+      &:last-child:hover svg {
+        transform: scale(1.2);
+        animation: float 2s ease-in-out infinite;
+      }
+    }
+  }
+}
+
+// 响应式设计
+@media (max-width: 768px) {
+  .background-animation {
+    .background-image {
+      background-attachment: scroll; // 移动端性能优化
+    }
+
+    .bg-controls {
+      bottom: 20px;
+      right: 20px;
+
+      .bg-control-btn {
+        width: 45px;
+        height: 45px;
+      }
+    }
+  }
+}
+
+// 减少动画效果（针对低性能设备）
+@media (prefers-reduced-motion: reduce) {
+  .background-animation {
+    .background-image {
+      transition: opacity 0.5s ease;
+    }
+
+    .bg-control-btn {
+      transition: none;
+
+      &:hover svg {
+        transform: none;
+      }
+    }
+  }
+}
+
+// 深色模式适配
+@media (prefers-color-scheme: dark) {
+  .background-animation {
+    .background-overlay {
+      background: linear-gradient(
+        135deg,
+        rgba(0, 0, 0, 0.5) 0%,
+        rgba(0, 0, 0, 0.2) 50%,
+        rgba(0, 0, 0, 0.5) 100%
+      );
+    }
+  }
+}
+
+// 高对比度模式
+@media (prefers-contrast: high) {
+  .background-animation {
+    .background-image {
+      filter: brightness(0.5) contrast(1.3);
+    }
+
+    .background-overlay {
+      background: rgba(0, 0, 0, 0.6);
+    }
+  }
+}

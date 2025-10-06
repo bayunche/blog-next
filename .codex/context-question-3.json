@@ -1,0 +1,24 @@
+﻿{
+  "question_id": "Q4",
+  "focus": "后端接口差异 (文章归档等)",
+  "findings": [
+    "旧版 Koa 路由 article.js 暴露 getArchives (..\\server\\router\\article.js) 并由控制器实现年度/月度归档统计 (..\\server\\controllers\\article.js#L578)，新版 article 路由缺少该接口，控制器文件也未定义 getArchives。",
+    "新版前端仍调用 GET /article/archives (src\\features\\article\\api\\index.ts)，导致归档页实际请求会 404。",
+    "新旧 server/router 结构看似一致，但需要逐个 diff 以确认其他缺失接口（如点赞、统计）。"
+  ],
+  "evidence": [
+    {"file": "server\\router\\article.js", "description": "新版未注册 /article/archives"},
+    {"file": "..\\server\\router\\article.js", "description": "旧版包含 /article/archives"},
+    {"file": "..\\server\\controllers\\article.js", "description": "旧版 getArchives 实现"},
+    {"file": "src\\features\\article\\api\\index.ts", "description": "新版前端仍调用该接口"}
+  ],
+  "gaps": [
+    "需要全面对比 controllers 目录，识别所有缺失/新增接口",
+    "确认数据库模型是否同步更新以支撑新前端需求"
+  ],
+  "next_actions": [
+    "对 server/router 与 controllers 进行逐文件 diff，列出缺失接口列表",
+    "补齐 /article/archives 等关键接口或调整前端调用"
+  ],
+  "cost_notice": "深挖第3次，已花费较多时间，请评估是否继续深入其它接口以避免过度收集"
+}

@@ -57,7 +57,10 @@ services:
       - blog-network
 
   mysql:
-    image: mysql:8.0
+    build:
+      context: ./docker/mysql
+      dockerfile: Dockerfile
+    image: blog-next-mysql
     container_name: blog-next-mysql
     environment:
       MYSQL_ROOT_PASSWORD: "${MYSQL_ROOT_PASSWORD:-root_password}"
@@ -70,6 +73,8 @@ services:
     volumes:
       - mysql_data:/var/lib/mysql
       - ./docker/mysql/init:/docker-entrypoint-initdb.d
+      - ./docker/backups:/backups
+      - ./docker/mysql/scripts:/scripts
     command: --default-authentication-plugin=mysql_native_password --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD:-root_password}"]

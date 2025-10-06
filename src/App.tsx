@@ -9,7 +9,7 @@ import { Spin } from 'antd'
 import { ThemeProvider, QueryProvider } from '@app/providers'
 import { ErrorBoundary, routes } from '@app/routes'
 import { initializeStores } from '@shared/stores'
-import { usePerformance, type PerformanceMetrics } from '@shared/hooks'
+import { usePerformanceMonitor } from '@shared/hooks/usePerformanceMonitor'
 
 /**
  * 路由容器组件
@@ -49,27 +49,8 @@ function App() {
     initializeStores()
   }, [])
 
-  // 性能监控（仅在生产环境启用）
-  usePerformance(
-    (metrics: PerformanceMetrics) => {
-      if (import.meta.env.MODE === 'production') {
-        // 生产环境：可以发送到监控服务
-        console.log('Performance Metrics:', metrics)
-        // TODO: 发送到监控服务（如 Sentry、DataDog 等）
-        // sendToMonitoring(metrics)
-      } else {
-        // 开发环境：仅在控制台输出
-        console.log('🚀 Performance Metrics:', {
-          FCP: metrics.FCP ? `${metrics.FCP.toFixed(2)}ms` : 'N/A',
-          LCP: metrics.LCP ? `${metrics.LCP.toFixed(2)}ms` : 'N/A',
-          FID: metrics.FID ? `${metrics.FID.toFixed(2)}ms` : 'N/A',
-          CLS: metrics.CLS ? metrics.CLS.toFixed(4) : 'N/A',
-          TTFB: metrics.TTFB ? `${metrics.TTFB.toFixed(2)}ms` : 'N/A',
-        })
-      }
-    },
-    true // 启用性能监控
-  )
+  // 前端性能监控（Web Vitals + FPS + 内存 + 导航）
+  usePerformanceMonitor()
 
   return (
     <ErrorBoundary>

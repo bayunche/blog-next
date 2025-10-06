@@ -13,6 +13,43 @@ const func = require('joi/lib/types/func')
 const DomParser = require('dom-parser')
 
 /**
+ * 解码客户端传来的密码，兼容单/双重加密
+ * @param {string} rawPassword
+ * @returns {string}
+ */
+function decodeIncomingPassword(rawPassword) {
+  if (!rawPassword) {
+    return ''
+  }
+
+  let decrypted = ''
+  try {
+    decrypted = PSW.default.decrypt(rawPassword)
+  } catch (error) {
+    console.warn('[auth] password decrypt failed, fallback to raw value:', error.message)
+    return rawPassword
+  }
+
+  if (!decrypted) {
+    return rawPassword
+  }
+
+  const looksLikeCipher = /^[0-9a-fA-F]+$/.test(decrypted) && decrypted.length % 32 === 0
+
+  if (looksLikeCipher) {
+    try {
+      const secondPass = PSW.default.decrypt(decrypted)
+      if (secondPass) {
+        return secondPass
+      }
+    } catch (error) {
+      console.warn('[auth] secondary password decrypt failed:', error.message)
+    }
+  }
+
+  return decrypted
+}
+/**
  * 读取 github 用户信息
  * @param {String} username - github 登录名
  */
@@ -125,6 +162,10 @@ class UserController {
     })
     if (validator) {
       const { account, password } = ctx.request.body
+      const decodedPassword = decodeIncomingPassword(password)
+      if (!decodedPassword) {
+        ctx.throw(403, '密码不正确')
+      }
 
       const user = await UserModel.findOne({
         where: {
@@ -137,7 +178,7 @@ class UserController {
         // ctx.client(403, '用户不存在')
         ctx.throw(403, '用户不存在')
       } else {
-        const isMatch = await comparePassword(PSW.default.decrypt(password), user.password)
+        const isMatch = await comparePassword(decodedPassword, user.password)
         if (!isMatch) {
           // ctx.client(403, '密码不正确')
           ctx.throw(403, '密码不正确')
@@ -224,8 +265,11 @@ class UserController {
         if (user && !user.github) {
           ctx.throw(403, '用户名已被占用')
         } else {
-          const decryptPassword = PSW.default.decrypt(password)
-          const saltPassword = await encrypt(decryptPassword)
+          const decodedPassword = decodeIncomingPassword(password)
+          if (!decodedPassword) {
+            ctx.throw(400, '密码格式不正确')
+          }
+          const saltPassword = await encrypt(decodedPassword)
           await UserModel.create({ username, password: saltPassword, email })
           // ctx.client(200, '注册成功')
           ctx.status = 204
