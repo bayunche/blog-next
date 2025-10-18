@@ -1,4 +1,4 @@
-import { defineConfig, loadEnv } from 'vite'
+﻿import { defineConfig, loadEnv } from 'vite'
 import react from '@vitejs/plugin-react-swc'
 import path from 'path'
 import type { PluginOption } from 'vite'
@@ -8,21 +8,22 @@ import { visualizer } from 'rollup-plugin-visualizer'
 // https://vite.dev/config/
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '')
+  const apiTarget = env.VITE_API_BASE_URL || 'http://localhost:6060'
+  const proxyTarget = apiTarget.replace(/\/api\/?$/, '')
 
   return {
     plugins: [
       react() as PluginOption,
 
-      // Gzip 压缩（生产环境）
+      // Gzip 鍘嬬缉锛堢敓浜х幆澧冿級
       mode === 'production' && viteCompression({
         verbose: true,
         disable: false,
-        threshold: 10240, // 10KB 以上才压缩
-        algorithm: 'gzip',
+        threshold: 10240, // 10KB 浠ヤ笂鎵嶅帇缂?        algorithm: 'gzip',
         ext: '.gz',
       }) as PluginOption,
 
-      // Bundle 分析（可选，构建时启用）
+      // Bundle 鍒嗘瀽锛堝彲閫夛紝鏋勫缓鏃跺惎鐢級
       process.env.ANALYZE === 'true' && visualizer({
         open: true,
         filename: 'dist/stats.html',
@@ -31,7 +32,7 @@ export default defineConfig(({ mode }) => {
       }) as PluginOption,
     ].filter(Boolean),
 
-    // 路径别名配置
+    // 璺緞鍒悕閰嶇疆
     resolve: {
       alias: {
         '@': path.resolve(__dirname, './src'),
@@ -51,7 +52,7 @@ export default defineConfig(({ mode }) => {
       },
     },
 
-    // 开发服务器配置
+    // 寮€鍙戞湇鍔″櫒閰嶇疆
     server: {
       port: 3000,
       host: true,
@@ -61,12 +62,13 @@ export default defineConfig(({ mode }) => {
         '/api': {
           target: env.VITE_API_BASE_URL || 'http://localhost:6060',
           changeOrigin: true,
-          rewrite: (path) => path,
+          // 开发环境移除 /api 前缀，保持与后端路由一致
+          rewrite: (path) => path.replace(/^\/api/, ''),
         },
       },
     },
 
-    // CSS 预处理器配置
+    // CSS 棰勫鐞嗗櫒閰嶇疆
     css: {
       preprocessorOptions: {
         less: {
@@ -84,20 +86,20 @@ export default defineConfig(({ mode }) => {
       },
     },
 
-    // 构建配置
+    // 鏋勫缓閰嶇疆
     build: {
       target: 'es2020',
       outDir: 'dist',
       assetsDir: 'assets',
       sourcemap: mode === 'development',
       minify: 'esbuild',
-      // 提高性能
+      // 鎻愰珮鎬ц兘
       cssCodeSplit: true,
       cssMinify: true,
-      reportCompressedSize: false, // 关闭压缩大小报告，提升构建速度
+      reportCompressedSize: false, // 鍏抽棴鍘嬬缉澶у皬鎶ュ憡锛屾彁鍗囨瀯寤洪€熷害
       rollupOptions: {
         output: {
-          // 移除手动分割，让Vite自动处理避免循环依赖
+          // 绉婚櫎鎵嬪姩鍒嗗壊锛岃Vite鑷姩澶勭悊閬垮厤寰幆渚濊禆
           chunkFileNames: 'js/[name]-[hash].js',
           entryFileNames: 'js/[name]-[hash].js',
           assetFileNames: '[ext]/[name]-[hash].[ext]',
@@ -106,7 +108,7 @@ export default defineConfig(({ mode }) => {
       chunkSizeWarningLimit: 1000,
     },
 
-    // 优化配置
+    // 浼樺寲閰嶇疆
     optimizeDeps: {
       include: [
         'react',
@@ -122,3 +124,13 @@ export default defineConfig(({ mode }) => {
     },
   }
 })
+
+
+
+
+
+
+
+
+
+

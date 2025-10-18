@@ -7,3 +7,4 @@ export type { PerformanceMetrics } from './usePerformance'
 
 export { useDebounce, useDebouncedCallback } from './useDebounce'
 export { useThrottle, useThrottledCallback } from './useThrottle'
+export { useLanguage } from './useLanguage'

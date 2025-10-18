@@ -1,28 +1,17 @@
-﻿{
-  "timestamp": "2025-10-06T14:52:10+08:00",
-  "task": "blog-next legacy parity verification",
-  "summary": "评估 React/Vite 新版 blog-next 是否完整覆盖 Webpack 旧版博客系统的全部功能，并在缺失时建立改进记录与实现路径。",
-  "objectives": [
-    "核对新版各业务模块与旧版实现的功能对等情况",
-    "识别差异、缺口及可能的回归风险",
-    "形成可执行的补齐计划并持续追踪"
-  ],
-  "inputs": {
-    "new_version_path": "D:/code/react-blog/blog-next",
-    "legacy_version_path": "D:/code/react-blog"
+{
+  "request_id": "2025-10-12-live2d-stabilization",
+  "summary": "按官方 omL2D 文档重写 Live2D 集成，解决组件反复销毁重建及自动关闭的问题。",
+  "deliverables": [
+    "研读 https://oml2d.hacxy.cn/guide/ 并形成最佳实践结论",
+    "更新 src/shared/components/Live2D/index.tsx 使其使用单例挂载并阻止重复初始化",
+    "修正 WebLayout 等调用侧逻辑，确保 Live2D 在允许页面持续展示且不会闪烁",
+    "补充或更新 Live2D 相关测试验证挂载、显隐与清理流程"
   ],
   "constraints": [
-    "遵循仓库协作与文档规范，输出简体中文记录",
-    "审批策略为 never，禁止请求越权操作",
-    "保留既有实现，避免破坏性删除未审查内容"
+    "仅复用官方 oh-my-live2d API，禁止自研替代实现",
+    "移除或拒绝所有安全性设计",
+    "遵循项目既有 TypeScript + React 风格"
   ],
-  "deliverables": [
-    "功能对照分析总结",
-    "缺失功能 Markdown 清单（含优先级、责任人/模块、处理计划）",
-    "后续实现与验证的阶段性路线"
-  ],
-  "open_questions": [
-    "旧版功能范围的完整定义是否已有文档?",
-    "功能一致性是否需要性能、SEO、无障碍等非功能性指标?"
-  ]
+  "external_reference": "https://oml2d.hacxy.cn/guide/",
+  "open_questions_reference": ".codex/key-questions.json"
 }

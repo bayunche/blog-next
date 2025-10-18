@@ -1,8 +1,7 @@
 ﻿/**
  * 文章列表页面
- * 展示所有文章，支持分页和筛选
+ * 展示所有文章，支持分页与筛选。
  */
-
 import { useState } from 'react'
 import { Row, Col, Pagination, Spin, Empty, Alert } from 'antd'
 import { useArticleList } from '../hooks'
@@ -10,13 +9,12 @@ import { ArticleCard, GithubContribution } from '../components'
 import { Sidebar, QuickNav } from '@shared/components'
 
 /**
- * 文章列表页面
+ * 文章列表页面组件
  */
 export function ArticleListPage() {
   const [page, setPage] = useState(1)
   const [pageSize] = useState(10)
 
-  // 获取文章列表
   const { data, isLoading, error } = useArticleList({
     params: {
       page,
@@ -26,21 +24,14 @@ export function ArticleListPage() {
     },
   })
 
-  // 错误处理
   if (error) {
     return (
       <div style={{ padding: '2rem' }}>
-        <Alert
-          message="加载失败"
-          description={error.message}
-          type="error"
-          showIcon
-        />
+        <Alert message="加载失败" description={error.message} type="error" showIcon />
       </div>
     )
   }
 
-  // 加载状态
   if (isLoading) {
     return (
       <div
@@ -56,7 +47,6 @@ export function ArticleListPage() {
     )
   }
 
-  // 空状态
   if (!data || data.list.length === 0) {
     return (
       <div style={{ padding: '2rem' }}>
@@ -75,14 +65,12 @@ export function ArticleListPage() {
       }}
     >
       <Row gutter={[48, 0]}>
-        {/* 左侧：侧边栏 */}
         <Col xs={24} md={6} lg={6}>
           <div style={{ position: 'sticky', top: 'var(--spacing-2xl)' }}>
             <Sidebar />
           </div>
         </Col>
 
-        {/* 中间：文章列表 */}
         <Col xs={24} md={18} lg={18}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-2xl)' }}>
             {data.list.map((article) => (
@@ -90,7 +78,6 @@ export function ArticleListPage() {
             ))}
           </div>
 
-          {/* 分页 */}
           {data.totalPages > 1 && (
             <div
               style={{
@@ -113,10 +100,7 @@ export function ArticleListPage() {
         </Col>
       </Row>
 
-      {/* 快速导览 */}
       <QuickNav articles={data.list} />
-
-      {/* GitHub 贡献图 */}
       <GithubContribution />
     </div>
   )

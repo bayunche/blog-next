@@ -4,72 +4,26 @@
 
 import { useQuery, type UseQueryOptions } from '@tanstack/react-query'
 import dayjs from 'dayjs'
-import { getArticleRecordsAPI, type RawArticleRecord } from '../api/record'
-import type { ArticleAnalyticsData, ArticleAnalyticsRecord } from '../types'
+import { getArticleTrendAPI, type ArticleTrendRecord } from '../api/dashboard'
+import type { ArticleAnalyticsData } from '../types'
 
 const analyticsQueryKey = ['admin', 'article-analytics'] as const
 
-function normalizeRecord(raw: RawArticleRecord): ArticleAnalyticsRecord | null {
-  const articleIdNumber = Number(raw.articleId)
-  if (Number.isNaN(articleIdNumber)) {
-    return null
-  }
+function buildAnalyticsData(records: ArticleTrendRecord[]): ArticleAnalyticsData {
+  const sortedRecords = [...records].sort((a, b) => dayjs(a.date).valueOf() - dayjs(b.date).valueOf())
 
-  const parsedDate = dayjs(raw.time)
-  if (!parsedDate.isValid()) {
-    return null
-  }
+  const totalReads = sortedRecords.reduce((sum, record) => sum + record.count, 0)
 
-  const countNumber = Number(raw.cnt)
+  // Since the new API doesn't provide per-article data, we leave topArticles empty.
+  const topArticles: ArticleAnalyticsData['summary']['topArticles'] = []
 
   return {
-    articleId: articleIdNumber,
-    articleLabel: `文章 #${articleIdNumber}`,
-    date: parsedDate.format('YYYY-MM-DD'),
-    count: Number.isFinite(countNumber) ? countNumber : 0,
-  }
-}
-
-function buildAnalyticsData(rawRecords: RawArticleRecord[]): ArticleAnalyticsData {
-  const records: ArticleAnalyticsRecord[] = []
-
-  rawRecords.forEach((item) => {
-    const record = normalizeRecord(item)
-    if (record) {
-      records.push(record)
-    }
-  })
-
-  records.sort((a, b) => dayjs(a.date).valueOf() - dayjs(b.date).valueOf())
-
-  const totalsByArticle = new Map<number, { articleLabel: string; total: number }>()
-  let totalReads = 0
-
-  records.forEach((record) => {
-    totalReads += record.count
-    const existing = totalsByArticle.get(record.articleId)
-    if (existing) {
-      existing.total += record.count
-    } else {
-      totalsByArticle.set(record.articleId, {
-        articleLabel: record.articleLabel,
-        total: record.count,
-      })
-    }
-  })
-
-  const topArticles = Array.from(totalsByArticle.entries())
-    .map(([articleId, value]) => ({ articleId, articleLabel: value.articleLabel, total: value.total }))
-    .sort((a, b) => b.total - a.total)
-    .slice(0, 5)
-
-  return {
-    records,
+    records: sortedRecords.map((r) => ({ ...r, articleLabel: '所有文章' })),
     summary: {
       totalReads,
-      uniqueArticles: totalsByArticle.size,
-      startDate: records[0]?.date,
-      endDate: records[records.length - 1]?.date,
+      uniqueArticles: 0, // This info is not available in the new API
+      startDate: sortedRecords[0]?.date,
+      endDate: sortedRecords[sortedRecords.length - 1]?.date,
       topArticles,
     },
   }
@@ -81,7 +35,7 @@ export const useArticleAnalytics = (
   return useQuery<ArticleAnalyticsData, Error>({
     queryKey: analyticsQueryKey,
     queryFn: async () => {
-      const raw = await getArticleRecordsAPI()
+      const raw = await getArticleTrendAPI()
       return buildAnalyticsData(raw)
     },
     staleTime: 1000 * 60 * 5,

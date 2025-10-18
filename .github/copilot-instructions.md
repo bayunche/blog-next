@@ -9,6 +9,8 @@ This document provides essential guidance for AI coding agents working on the **
 - **Backend**: Koa 2, MySQL 8, Sequelize ORM
 - **Architecture**: Feature-based modular architecture with clear separation of concerns
 
+**Important Note**: This is the new version implementation located in the `blog-next/` directory. The parent directory contains an older version based on Webpack. This project has fully reimplemented all core features of the legacy version and enhanced them with modern technologies.
+
 ## Architecture
 
 ### Frontend Structure

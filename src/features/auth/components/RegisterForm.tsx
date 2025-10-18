@@ -11,6 +11,7 @@ import {
 } from '@ant-design/icons'
 import { useRegister } from '../hooks'
 import type { RegisterRequest } from '../types'
+import { useTranslation } from 'react-i18next'
 
 /**
  * 注册表单属性
@@ -27,6 +28,7 @@ interface RegisterFormProps {
  */
 export function RegisterForm({ onSuccess, onSwitchToLogin }: RegisterFormProps) {
   const [form] = Form.useForm<RegisterRequest>()
+  const { t } = useTranslation('auth')
 
   // 使用注册 Hook
   const registerMutation = useRegister({
@@ -48,10 +50,10 @@ export function RegisterForm({ onSuccess, onSwitchToLogin }: RegisterFormProps) 
       {/* 表单标题 */}
       <div className="form-header" style={{ marginBottom: '1.5rem' }}>
         <h3 style={{ fontSize: '1.5rem', fontWeight: 600, margin: 0 }}>
-          用户注册
+          {t('form.registerTitle')}
         </h3>
         <p style={{ color: 'var(--text-secondary)', margin: '0.5rem 0 0' }}>
-          创建您的新账号
+          {t('form.registerSubtitle')}
         </p>
       </div>
 
@@ -64,22 +66,22 @@ export function RegisterForm({ onSuccess, onSwitchToLogin }: RegisterFormProps) 
       >
         {/* 用户名 */}
         <Form.Item
-          label="用户名"
+          label={t('form.account')}
           name="username"
           rules={[
-            { required: true, message: '请输入用户名' },
-            { min: 2, message: '用户名至少2个字符' },
-            { max: 20, message: '用户名最多20个字符' },
+            { required: true, message: t('form.accountRequired') },
+            { min: 2, message: t('form.accountMin') },
+            { max: 20, message: t('form.accountMax') },
             {
               pattern: /^[a-zA-Z0-9_]+$/,
-              message: '用户名只能包含字母、数字和下划线',
+              message: t('form.accountPattern'),
             },
           ]}
           hasFeedback
         >
           <Input
             prefix={<UserOutlined />}
-            placeholder="请输入用户名（2-20个字符）"
+            placeholder={t('form.accountPlaceholderDetailed')}
             size="large"
             autoComplete="username"
           />
@@ -87,17 +89,17 @@ export function RegisterForm({ onSuccess, onSwitchToLogin }: RegisterFormProps) 
 
         {/* 邮箱 */}
         <Form.Item
-          label="邮箱"
+          label={t('form.email')}
           name="email"
           rules={[
-            { required: true, message: '请输入邮箱' },
-            { type: 'email', message: '请输入有效的邮箱地址' },
+            { required: true, message: t('form.emailRequired') },
+            { type: 'email', message: t('form.emailInvalid') },
           ]}
           hasFeedback
         >
           <Input
             prefix={<MailOutlined />}
-            placeholder="请输入邮箱地址"
+            placeholder={t('form.emailPlaceholder')}
             size="large"
             autoComplete="email"
           />
@@ -105,21 +107,21 @@ export function RegisterForm({ onSuccess, onSwitchToLogin }: RegisterFormProps) 
 
         {/* 密码 */}
         <Form.Item
-          label="密码"
+          label={t('form.password')}
           name="password"
           rules={[
-            { required: true, message: '请输入密码' },
-            { min: 8, message: '密码至少8个字符' },
+            { required: true, message: t('form.passwordRequired') },
+            { min: 8, message: t('form.passwordMin') },
             {
               pattern: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/,
-              message: '密码必须包含大小写字母和数字',
+              message: t('form.passwordStrongRule'),
             },
           ]}
           hasFeedback
         >
           <Input.Password
             prefix={<LockOutlined />}
-            placeholder="请输入密码（至少8位，包含大小写字母和数字）"
+            placeholder={t('form.passwordStrongPlaceholder')}
             size="large"
             autoComplete="new-password"
           />
@@ -127,17 +129,17 @@ export function RegisterForm({ onSuccess, onSwitchToLogin }: RegisterFormProps) 
 
         {/* 确认密码 */}
         <Form.Item
-          label="确认密码"
+          label={t('form.confirmPassword')}
           name="confirm"
           dependencies={['password']}
           rules={[
-            { required: true, message: '请确认密码' },
+            { required: true, message: t('form.confirmPasswordRequired') },
             ({ getFieldValue }) => ({
               validator(_, value) {
                 if (!value || getFieldValue('password') === value) {
                   return Promise.resolve()
                 }
-                return Promise.reject(new Error('两次输入的密码不一致'))
+                return Promise.reject(new Error(t('form.confirmPasswordMismatch')))
               },
             }),
           ]}
@@ -145,7 +147,7 @@ export function RegisterForm({ onSuccess, onSwitchToLogin }: RegisterFormProps) 
         >
           <Input.Password
             prefix={<SafetyOutlined />}
-            placeholder="请再次输入密码"
+            placeholder={t('form.confirmPasswordPlaceholder')}
             size="large"
             autoComplete="new-password"
           />
@@ -161,7 +163,7 @@ export function RegisterForm({ onSuccess, onSwitchToLogin }: RegisterFormProps) 
             block
             style={{ marginTop: '0.5rem' }}
           >
-            {registerMutation.isPending ? '注册中...' : '注册'}
+            {registerMutation.isPending ? t('form.registerSubmitting') : t('form.register')}
           </Button>
         </Form.Item>
       </Form>
@@ -178,13 +180,13 @@ export function RegisterForm({ onSuccess, onSwitchToLogin }: RegisterFormProps) 
         }}
       >
         <h4 style={{ margin: '0 0 0.5rem', fontSize: '0.875rem', fontWeight: 600 }}>
-          密码要求：
+          {t('form.passwordTipsTitle')}
         </h4>
         <ul style={{ margin: 0, paddingLeft: '1.5rem', color: 'var(--text-secondary)' }}>
-          <li>至少8个字符</li>
-          <li>包含大小写字母</li>
-          <li>包含数字</li>
-          <li>可包含特殊字符</li>
+          <li>{t('form.passwordTips.length')}</li>
+          <li>{t('form.passwordTips.case')}</li>
+          <li>{t('form.passwordTips.number')}</li>
+          <li>{t('form.passwordTips.special')}</li>
         </ul>
       </div>
 
@@ -197,14 +199,14 @@ export function RegisterForm({ onSuccess, onSwitchToLogin }: RegisterFormProps) 
           color: 'var(--text-secondary)',
         }}
       >
-        <span>已有账号？</span>
+        <span>{t('form.alreadyAccount')}</span>
         <Button
           type="link"
           size="small"
           onClick={onSwitchToLogin}
           style={{ padding: '0 0.5rem' }}
         >
-          立即登录
+          {t('form.switchToLoginLink')}
         </Button>
       </div>
     </div>

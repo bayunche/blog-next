@@ -1,15 +1,15 @@
 /**
- * Admin fragment editor page
+ * “闲言”编辑器页面
  */
 
 import { useEffect } from 'react'
 import { Button, Card, Form, Input, message, Space } from 'antd'
 import { useNavigate, useParams } from 'react-router-dom'
 import {
-  useCreateFragmentMutation,
-  useFragmentDetailQuery,
-  useUpdateFragmentMutation,
-} from '../../hooks/useFragmentManage'
+  useCreateFragment,
+  useFragmentDetail,
+  useUpdateFragment,
+} from '@features/fragment'
 
 const { TextArea } = Input
 
@@ -21,25 +21,25 @@ export function FragmentEditor() {
   const navigate = useNavigate()
   const [form] = Form.useForm<{ author?: string; content: string }>()
 
-  const detailQuery = useFragmentDetailQuery(fragmentId, { enabled: isEdit })
+  const detailQuery = useFragmentDetail(fragmentId, { enabled: isEdit })
 
-  const createMutation = useCreateFragmentMutation({
+  const createMutation = useCreateFragment({
     onSuccess: () => {
-      message.success('\u5df2\u521b\u5efa\u788e\u7247')
+      message.success('已创建碎片')
       navigate('/admin/fragment/manager')
     },
     onError: err => {
-      message.error(err.message ?? '\u64cd\u4f5c\u5931\u8d25')
+      message.error(err.message ?? '操作失败')
     },
   })
 
-  const updateMutation = useUpdateFragmentMutation(fragmentId, {
+  const updateMutation = useUpdateFragment(fragmentId, {
     onSuccess: () => {
-      message.success('\u5df2\u66f4\u65b0\u788e\u7247')
+      message.success('已更新碎片')
       navigate('/admin/fragment/manager')
     },
     onError: err => {
-      message.error(err.message ?? '\u64cd\u4f5c\u5931\u8d25')
+      message.error(err.message ?? '操作失败')
     },
   })
 
@@ -64,32 +64,32 @@ export function FragmentEditor() {
 
   return (
     <div style={{ padding: '1.5rem', maxWidth: 700 }}>
-      <Card title={isEdit ? '\u7f16\u8f91\u788e\u7247' : '\u65b0\u5efa\u788e\u7247'}>
+      <Card title={isEdit ? '编辑碎片' : '新建碎片'}>
         <Form
           layout="vertical"
           form={form}
           initialValues={{ author: '', content: '' }}
           onFinish={handleSubmit}
         >
-          <Form.Item label="\u4f5c\u8005" name="author">
-            <Input placeholder="\u53ef\u9009" allowClear />
+          <Form.Item label="作者" name="author">
+            <Input placeholder="可选" allowClear />
           </Form.Item>
 
           <Form.Item
-            label="\u5185\u5bb9"
+            label="内容"
             name="content"
             rules={[
-              { required: true, message: '\u8bf7\u8f93\u5165\u788e\u7247\u5185\u5bb9' },
-              { min: 3, message: '\u5185\u5bb9\u81f3\u5c11 3 \u4e2a\u5b57\u7b26' },
+              { required: true, message: '请输入碎片内容' },
+              { min: 3, message: '内容至少 3 个字符' },
             ]}
           >
-            <TextArea rows={10} placeholder="\u8bb0\u5f55\u4f60\u7684\u7075\u611f..." />
+            <TextArea rows={10} placeholder="记录你的灵感..." />
           </Form.Item>
 
           <Space>
-            <Button onClick={() => navigate(-1)}>\u53d6\u6d88</Button>
+            <Button onClick={() => navigate(-1)}>取消</Button>
             <Button type="primary" htmlType="submit" loading={submitting}>
-              {isEdit ? '\u4fdd\u5b58' : '\u521b\u5efa'}
+              {isEdit ? '保存' : '创建'}
             </Button>
           </Space>
         </Form>

@@ -1,5 +1,5 @@
 const Router = require('koa-router')
-const router = new Router({prefix: '/fragment'})
+const router = new Router({prefix: '/api/fragment'})
 const {fetchFragmentList, create, findFragmentById, deleteFragment, updateFragment} = require('../controllers/fragment')
 
 router

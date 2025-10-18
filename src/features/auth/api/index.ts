@@ -70,10 +70,26 @@ export const getUserInfoAPI = (): Promise<LoginResponse> => {
 /**
  * GitHub OAuth 登录回调
  */
-export const githubAuthCallbackAPI = (
+export const githubAuthCallbackAPI = async (
   params: GithubCallbackParams
 ): Promise<GithubAuthResponse> => {
-  return request.post('/oauth/github/callback', params)
+  const response: any = await request.post('/oauth/github/callback', params)
+
+  if (response?.user && response?.token) {
+    return response as GithubAuthResponse
+  }
+
+  return {
+    user: {
+      id: response.userId ?? response.id,
+      username: response.username,
+      email: response.email,
+      role: response.role,
+      avatar: response.github?.avatar_url ?? response.avatar,
+      github: response.github?.login ?? response.github,
+    },
+    token: response.token,
+  }
 }
 
 /**

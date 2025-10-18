@@ -1,5 +1,7 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
+import '@fontsource/inter/latin.css'
+import '@fontsource/inter/latin-italic.css'
 import './app/styles/global.css'
 import './app/styles/theme.less'
 import App from './App.tsx'

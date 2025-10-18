@@ -1,31 +1,33 @@
-﻿import { render, screen } from "@testing-library/react"
-import { beforeAll, afterAll, beforeEach, describe, expect, it, vi } from "vitest"
-import Monitor from "./Monitor"
-import { usePerformanceStore } from "@shared/stores/performanceStore"
+﻿/**
+ * Monitor 页面单元测试
+ */
+import { act, render, screen } from '@testing-library/react'
+import { beforeAll, beforeEach, afterAll, describe, expect, it, vi } from 'vitest'
+import Monitor from './Monitor'
+import { usePerformanceStore } from '@shared/stores/performanceStore'
 
-defineVitestMocks()
+vi.mock('@ant-design/plots', () => ({
+  Line: () => <div data-testid="monitor-line" />,
+  Area: () => <div data-testid="monitor-area" />,
+}))
 
-// 模拟 socket Hook，避免测试期间建立真实连接
-vi.mock("../hooks/useSystemMonitor", () => ({
+vi.mock('../hooks/useSystemMonitor', () => ({
   useSystemMonitor: () => ({ isConnected: true }),
 }))
 
-function defineVitestMocks() {
-  if (!global.fetch) {
-    // @ts-ignore
-    global.fetch = vi.fn()
-  }
-}
-
-describe("Monitor", () => {
-  const originalFetch = global.fetch
+describe('Monitor', () => {
+  const originalFetch = globalThis.fetch
 
   beforeAll(() => {
-    global.fetch = vi.fn(() => Promise.resolve({ ok: true })) as any
+    vi.stubGlobal('fetch', vi.fn(() => Promise.resolve(new Response())) as typeof fetch)
   })
 
   afterAll(() => {
-    global.fetch = originalFetch
+    if (originalFetch) {
+      vi.stubGlobal('fetch', originalFetch)
+    } else {
+      vi.unstubAllGlobals()
+    }
   })
 
   beforeEach(() => {
@@ -33,7 +35,7 @@ describe("Monitor", () => {
     clearMetrics()
   })
 
-  it("renders empty states when no performance data", () => {
+  it('renders empty states when no metrics collected', () => {
     render(<Monitor />)
 
     expect(screen.getByText(/Socket 已连接/)).toBeInTheDocument()
@@ -41,43 +43,42 @@ describe("Monitor", () => {
     expect(screen.getByText(/暂无性能指标/)).toBeInTheDocument()
   })
 
-  it("renders latest cpu and memory utilisation when data available", () => {
+  it('renders live metrics when store contains data', async () => {
     const now = Date.now()
 
-    usePerformanceStore.setState((state) => ({
-      systemPerformance: [
-        ...state.systemPerformance,
-        { cpuUsage: 0.52, memoryUsage: 0.33, timestamp: now },
-      ],
-      metrics: [
-        {
-          name: "CLS",
-          value: 0.11,
-          delta: 0,
-          rating: "good",
-          timestamp: now,
+    await act(async () => {
+      usePerformanceStore.setState((state) => ({
+        systemPerformance: [
+          ...state.systemPerformance,
+          { cpuUsage: 0.52, memoryUsage: 0.33, timestamp: now },
+        ],
+        metrics: [
+          {
+            name: 'CLS',
+            value: 0.11,
+            delta: 0,
+            rating: 'good',
+            timestamp: now,
+          },
+        ],
+        fpsHistory: [
+          { fps: 58, timestamp: now },
+        ],
+        memoryUsage: {
+          used: 512,
+          total: 1024,
+          limit: 2048,
+          increase: 12,
         },
-      ],
-      fpsHistory: [
-        {
-          fps: 58,
-          timestamp: now,
-        },
-      ],
-      memoryUsage: {
-        used: 512,
-        total: 1024,
-        limit: 2048,
-        increase: 12,
-      },
-      navigationHistory: [
-        {
-          path: "/home",
-          event: "enter",
-          timestamp: now,
-        },
-      ],
-    }))
+        navigationHistory: [
+          {
+            path: '/home',
+            event: 'enter',
+            timestamp: now,
+          },
+        ],
+      }))
+    })
 
     render(<Monitor />)
 

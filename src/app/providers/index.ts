@@ -5,3 +5,4 @@
 
 export { ThemeProvider, useTheme, type ThemeMode } from './ThemeProvider'
 export { QueryProvider, queryClient } from './QueryProvider'
+export { I18nProvider } from './I18nProvider'

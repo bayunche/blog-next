@@ -193,7 +193,7 @@ class UserController {
   }
 
   // github 登录
-  static async githubLogin(ctx, code) {
+  static async githubLogin(ctx, code, responseFormat = 'legacy') {
     const result = await axios.post(GITHUB.access_token_url, {
       client_id: GITHUB.client_id,
       client_secret: GITHUB.client_secret,
@@ -231,16 +231,46 @@ class UserController {
       }
       // username: user.username, role, userId: id, token
       const token = createToken({ userId: githubInfo.id, role: target.role }) // 生成 token
-
-      ctx.body = {
-        github: githubInfo,
+      const userPayload = {
+        id: target.id,
         username: target.username,
-        userId: target.id,
+        email: target.email,
         role: target.role,
-        token,
+        avatar: githubInfo.avatar_url,
+        github: githubInfo.login,
+        notice: target.notice,
+        disabledDiscuss: target.disabledDiscuss,
+      }
+
+      if (responseFormat === 'modern') {
+        ctx.body = {
+          user: userPayload,
+          token,
+        }
+      } else {
+        ctx.body = {
+          github: githubInfo,
+          username: target.username,
+          userId: target.id,
+          role: target.role,
+          token,
+          email: target.email,
+        }
       }
     } else {
       ctx.throw(403, 'github 授权码已失效！')
+    }
+  }
+
+  static async githubCallback(ctx) {
+    const validator = ctx.validate(ctx.request.body, {
+      code: Joi.string().required(),
+      state: Joi.string().allow('', null),
+    })
+
+    if (validator) {
+      const { code } = ctx.request.body
+      await UserController.githubLogin(ctx, code, 'modern')
     }
   }
 

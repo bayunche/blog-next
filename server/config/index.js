@@ -25,7 +25,7 @@ const config = {
   GITHUB: {
     client_id: process.env.GITHUB_CLIENT_ID || 'your_github_client_id',
     client_secret: process.env.GITHUB_CLIENT_SECRET || 'your_github_client_secret',
-    access_token_url: process.env.GITHUB_ACCESS_TOKEN_URL || 'https://github.com/login/oauth/authorize',
+    access_token_url: process.env.GITHUB_ACCESS_TOKEN_URL || 'https://github.com/login/oauth/access_token',
     fetch_user_url: process.env.GITHUB_FETCH_USER_URL || 'https://api.github.com/user',
     fetch_user: process.env.GITHUB_FETCH_USER_URL || 'https://api.github.com/user'
   },

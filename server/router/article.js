@@ -1,5 +1,5 @@
 const Router = require('koa-router')
-const router = new Router({ prefix: '/article' })
+const router = new Router({ prefix: '/api/article' })
 
 const {
   create,
@@ -17,6 +17,8 @@ const {
   outputList,
   delList,
   batchUpdateStatus,
+  like,
+  unlike,
 } = require('../controllers/article')
 
 router
@@ -36,5 +38,7 @@ router
   .put('/batch/status', batchUpdateStatus) // 批量更新文章状态
   .delete('/list/:list', delList) // 删除指定文章列表
   .delete('/:id', del) // 删除指定文章
+  .post('/:id/like', like) // 文章点赞
+  .delete('/:id/like', unlike) // 取消点赞
 
 module.exports = router

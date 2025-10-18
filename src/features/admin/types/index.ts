@@ -1,11 +1,11 @@
-/**
+﻿/**
  * 管理后台类型定义
  */
 
 import { ReactNode } from 'react'
 
 /**
- * 菜单项接�?
+ * 菜单项接�?
  */
 export interface MenuItem {
   /** 路径 */
@@ -16,12 +16,12 @@ export interface MenuItem {
   name: string
   /** 是否隐藏 */
   hidden?: boolean
-  /** 子菜�?*/
+  /** 子菜�?*/
   children?: MenuItem[]
 }
 
 /**
- * 仪表盘统计数�?
+ * 仪表盘统计数�?
  */
 export interface DashboardStats {
   /** 文章总数 */
@@ -35,7 +35,7 @@ export interface DashboardStats {
 }
 
 /**
- * 最新文�?
+ * 最新文�?
  */
 export interface RecentArticle {
   id: number
@@ -43,10 +43,11 @@ export interface RecentArticle {
   createdAt: string
   viewCount: number
   likeCount: number
+  status: 'draft' | 'published'
 }
 
 /**
- * 仪表盘数据响�?
+ * 仪表盘数据响�?
  */
 export interface DashboardResponse {
   stats: DashboardStats
@@ -59,7 +60,7 @@ export interface DashboardResponse {
 }
 
 /**
- * ����ͳ�Ƽ�¼
+ * ����ͳ�Ƽ�¼
  */
 export interface ArticleAnalyticsRecord {
   articleId: number
@@ -69,7 +70,7 @@ export interface ArticleAnalyticsRecord {
 }
 
 /**
- * ����ͳ�ƻ�����Ϣ
+ * ����ͳ�ƻ�����Ϣ
  */
 export interface ArticleAnalyticsSummary {
   totalReads: number
@@ -80,7 +81,7 @@ export interface ArticleAnalyticsSummary {
 }
 
 /**
- * ����ͳ������
+ * ����ͳ������
  */
 export interface ArticleAnalyticsData {
   records: ArticleAnalyticsRecord[]

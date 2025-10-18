@@ -36,7 +36,7 @@ export function useComments(options: UseCommentsOptions) {
     queryKey: ['comments', params.articleId, params.page, params.pageSize],
     queryFn: () => getCommentsAPI(params),
     staleTime: 1000 * 60 * 2, // 2 分钟内数据保持新鲜
-    enabled: !!params.articleId, // 只有当 articleId 存在时才执行查询
+    enabled: params.articleId !== undefined && params.articleId !== null,
     ...queryOptions,
   })
 }

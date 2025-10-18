@@ -3,7 +3,7 @@
  * 用于触发浏览器文件下载
  */
 
-import request from './request'
+import request from '@shared/api/axios'
 
 /**
  * 下载文件

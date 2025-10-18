@@ -5,12 +5,8 @@ const { checkToken } = require('../utils/token')
  * @required 'all': get post put delete 均需要权限。
  */
 const verifyList1 = [
-  { regexp: /\/article\/output/, required: 'get', verifyTokenBy: 'url' }, // 导出文章 verifyTokenBy 从哪里验证 token
-  { regexp: /\/article/, required: 'post, put, delete' }, // 普通用户 禁止修改或者删除、添加文章
-  { regexp: /\/fragment/, required: 'post, put, delete' }, // 普通用户 禁止修改或者删除、添加文章
-  { regexp: /\/discuss/, required: 'delete, post' }, // 普通用户 禁止删除评论
-  { regexp: /\/user/, required: 'put, delete' }, // 普通用户 禁止获取用户、修改用户、以及删除用户
-  { regexp: /\/monitor/, required: 'get' } // 普通用户 禁止获取用户、修改用户、以及删除用户
+  // 管理员权限
+  { regexp: /\/api\/admin/, required: 'all' } // admin 路由均需要权限
 ]
 
 // role === 2 需要权限的路由

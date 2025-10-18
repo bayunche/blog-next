@@ -1,25 +1,24 @@
-/**
- * 前端性能监控 Hook
- * 集成 Web Vitals API 和自定义性能监控
+﻿/**
+ * 鍓嶇鎬ц兘鐩戞帶 Hook
+ * 闆嗘垚 Web Vitals API 鍜岃嚜瀹氫箟鎬ц兘鐩戞帶
  */
 
 import { useEffect, useRef } from 'react'
 import { useLocation } from 'react-router-dom'
-import { onCLS, onFCP, onFID, onLCP, onTTFB, type Metric } from 'web-vitals'
-import { usePerformanceStore } from '@shared/stores/performanceStore'
-import type { PerformanceMetric } from '@shared/stores/performanceStore'
+import { onCLS, onFCP, onINP, onLCP, onTTFB, type Metric } from 'web-vitals'
+import { usePerformanceStore, type PerformanceMetric } from '@shared/stores/performanceStore'
 
 /**
- * 性能指标评分阈值
- * 基于 Google 推荐的 Core Web Vitals 标准
+ * 鎬ц兘鎸囨爣璇勫垎闃堝€?
+ * 鍩轰簬 Google 鎺ㄨ崘鐨?Core Web Vitals 鏍囧噯
  */
 const THRESHOLDS = {
   // Cumulative Layout Shift (CLS)
   CLS: { good: 0.1, poor: 0.25 },
   // First Contentful Paint (FCP) - ms
   FCP: { good: 1800, poor: 3000 },
-  // First Input Delay (FID) - ms
-  FID: { good: 100, poor: 300 },
+  // Interaction to Next Paint (INP) - ms (替代 FID)
+  INP: { good: 200, poor: 500 },
   // Largest Contentful Paint (LCP) - ms
   LCP: { good: 2500, poor: 4000 },
   // Time to First Byte (TTFB) - ms
@@ -27,7 +26,7 @@ const THRESHOLDS = {
 }
 
 /**
- * 获取性能指标评分
+ * 鑾峰彇鎬ц兘鎸囨爣璇勫垎
  */
 function getRating(name: string, value: number): 'good' | 'needs-improvement' | 'poor' {
   const threshold = THRESHOLDS[name as keyof typeof THRESHOLDS]
@@ -39,7 +38,7 @@ function getRating(name: string, value: number): 'good' | 'needs-improvement' | 
 }
 
 /**
- * 将 Web Vitals Metric 转换为 PerformanceMetric
+ * 灏?Web Vitals Metric 杞崲涓?PerformanceMetric
  */
 function convertMetric(metric: Metric): PerformanceMetric {
   return {
@@ -52,8 +51,8 @@ function convertMetric(metric: Metric): PerformanceMetric {
 }
 
 /**
- * 前端性能监控 Hook
- * 自动收集 Web Vitals 指标、FPS、内存使用和导航数据
+ * 鍓嶇鎬ц兘鐩戞帶 Hook
+ * 鑷姩鏀堕泦 Web Vitals 鎸囨爣銆丗PS銆佸唴瀛樹娇鐢ㄥ拰瀵艰埅鏁版嵁
  */
 export function usePerformanceMonitor() {
   const addMetric = usePerformanceStore((state) => state.addMetric)
@@ -63,27 +62,27 @@ export function usePerformanceMonitor() {
 
   const location = useLocation()
   const enterTimeRef = useRef<number>(Date.now())
-  const fpsIntervalRef = useRef<number>()
-  const memoryIntervalRef = useRef<number>()
+  const fpsIntervalRef = useRef<number | undefined>(undefined)
+  const memoryIntervalRef = useRef<number | undefined>(undefined)
 
   /**
-   * 收集 Web Vitals 指标
+   * 鏀堕泦 Web Vitals 鎸囨爣
    */
   useEffect(() => {
     const handleMetric = (metric: Metric) => {
       addMetric(convertMetric(metric))
     }
 
-    // 监听 Core Web Vitals
+    // 鐩戝惉 Core Web Vitals
     onCLS(handleMetric)
     onFCP(handleMetric)
-    onFID(handleMetric)
+    onINP(handleMetric)
     onLCP(handleMetric)
     onTTFB(handleMetric)
   }, [addMetric])
 
   /**
-   * 监控 FPS（帧率）
+   * 鐩戞帶 FPS锛堝抚鐜囷級
    */
   useEffect(() => {
     let lastTime = performance.now()
@@ -94,7 +93,7 @@ export function usePerformanceMonitor() {
       const currentTime = performance.now()
       const elapsed = currentTime - lastTime
 
-      // 每秒计算一次 FPS
+      // 姣忕璁＄畻涓€娆?FPS
       if (elapsed >= 1000) {
         const fps = Math.round((frames * 1000) / elapsed)
         addFPS(fps)
@@ -114,19 +113,19 @@ export function usePerformanceMonitor() {
   }, [addFPS])
 
   /**
-   * 监控内存使用（如果浏览器支持）
+   * 鐩戞帶鍐呭瓨浣跨敤锛堝鏋滄祻瑙堝櫒鏀寔锛?
    */
   useEffect(() => {
-    // @ts-ignore - performance.memory 是非标准 API
+    // @ts-expect-error - performance.memory 鏄潪鏍囧噯 API
     if (!performance.memory) return
 
     let lastUsed = 0
 
     const measureMemory = () => {
-      // @ts-ignore
+      // @ts-expect-error - Node 环境缺少 performance.memory 类型
       const { usedJSHeapSize, totalJSHeapSize, jsHeapSizeLimit } = performance.memory
 
-      const used = usedJSHeapSize / (1024 * 1024) // 转换为 MB
+      const used = usedJSHeapSize / (1024 * 1024) // 杞崲涓?MB
       const total = totalJSHeapSize / (1024 * 1024)
       const limit = jsHeapSizeLimit / (1024 * 1024)
       const increase = used - lastUsed
@@ -135,11 +134,11 @@ export function usePerformanceMonitor() {
       lastUsed = used
     }
 
-    // 每 2 秒更新一次
+    // 姣?2 绉掓洿鏂颁竴娆?
     const intervalId = window.setInterval(measureMemory, 2000)
     memoryIntervalRef.current = intervalId
 
-    // 立即执行一次
+    // 绔嬪嵆鎵ц涓€娆?
     measureMemory()
 
     return () => {
@@ -148,21 +147,21 @@ export function usePerformanceMonitor() {
   }, [updateMemory])
 
   /**
-   * 监控路由导航
+   * 鐩戞帶璺敱瀵艰埅
    */
   useEffect(() => {
     const currentPath = location.pathname
     const enterTime = Date.now()
     enterTimeRef.current = enterTime
 
-    // 记录进入事件
+    // 璁板綍杩涘叆浜嬩欢
     addNavigation({
       path: currentPath,
       event: 'enter',
       timestamp: enterTime,
     })
 
-    // 返回清理函数，记录离开事件
+    // 杩斿洖娓呯悊鍑芥暟锛岃褰曠寮€浜嬩欢
     return () => {
       const leaveTime = Date.now()
       const duration = leaveTime - enterTimeRef.current
@@ -176,11 +175,11 @@ export function usePerformanceMonitor() {
     }
   }, [location.pathname, addNavigation])
 
-  // 返回一些有用的信息（可选）
+  // 杩斿洖涓€浜涙湁鐢ㄧ殑淇℃伅锛堝彲閫夛級
   return {
     isSupported: {
       webVitals: true,
-      // @ts-ignore
+      // @ts-expect-error - Node 环境下缺少 memory 字段
       memory: !!performance.memory,
       navigation: true,
     },

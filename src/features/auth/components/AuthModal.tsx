@@ -10,6 +10,7 @@ import { LoginForm } from './LoginForm'
 import { RegisterForm } from './RegisterForm'
 import { useGithubAuth } from '../hooks'
 import type { AuthModalType } from '../types'
+import { useTranslation } from 'react-i18next'
 
 /**
  * 认证模态框属性
@@ -32,6 +33,7 @@ export function AuthModal({
   defaultTab = 'login',
 }: AuthModalProps) {
   const [activeTab, setActiveTab] = useState<AuthModalType>(defaultTab)
+  const { t } = useTranslation('auth')
 
   // GitHub OAuth Hook
   const { isGithubAuthAvailable, startGithubAuth, isProcessing } = useGithubAuth({
@@ -112,7 +114,7 @@ export function AuthModal({
         items={[
           {
             key: 'login',
-            label: '登录',
+            label: t('modal.loginTab'),
             children: (
               <LoginForm
                 onSuccess={handleLoginSuccess}
@@ -122,7 +124,7 @@ export function AuthModal({
           },
           {
             key: 'register',
-            label: '注册',
+            label: t('modal.registerTab'),
             children: (
               <RegisterForm
                 onSuccess={handleRegisterSuccess}
@@ -138,7 +140,7 @@ export function AuthModal({
         <>
           <Divider plain style={{ margin: '1.5rem 0' }}>
             <span style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
-              或
+              {t('modal.or')}
             </span>
           </Divider>
 
@@ -155,7 +157,7 @@ export function AuthModal({
                 borderColor: '#24292e',
               }}
             >
-              使用 GitHub 登录
+              {t('modal.githubLogin')}
             </Button>
           </Space>
         </>

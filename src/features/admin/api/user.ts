@@ -2,7 +2,7 @@
  * 用户管理 API
  */
 
-import request from '@shared/utils/request'
+import request from '@shared/api/axios'
 
 /**
  * 用户列表参数

@@ -1,5 +1,5 @@
 const Router = require('koa-router')
-const router = new Router({ prefix: '/discuss' })
+const router = new Router({ prefix: '/api/discuss' })
 const { create, getList, deleteComment, deleteReply } = require('../controllers/discuss')
 
 router

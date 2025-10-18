@@ -2,7 +2,7 @@
  * 文章管理 API
  */
 
-import request from '@shared/utils/request'
+import request from '@shared/api/axios'
 
 /**
  * 文章管理列表参数
@@ -147,7 +147,7 @@ export interface BatchUpdateStatusParams {
 }
 
 export const batchUpdateArticleStatusAPI = (params: BatchUpdateStatusParams): Promise<void> => {
-  return request.put('/article/batch/status', params)
+  return request.put('/admin/article/batch-status', params)
 }
 
 /**

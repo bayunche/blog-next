@@ -5,12 +5,14 @@
 import { useEffect, useRef } from "react"
 import { Spin, Result, Alert, Typography } from "antd"
 import { useGithubAuth } from "../hooks"
+import { useTranslation } from "react-i18next"
 
 const { Paragraph, Text } = Typography
 
 export function GithubLoginingPage() {
   const hasStartedRef = useRef(false)
   const { isGithubAuthAvailable, startGithubAuth, isProcessing, error } = useGithubAuth()
+  const { t } = useTranslation('auth')
 
   useEffect(() => {
     if (isGithubAuthAvailable && !hasStartedRef.current) {
@@ -24,11 +26,11 @@ export function GithubLoginingPage() {
       <div style={{ padding: "2rem" }}>
         <Result
           status="warning"
-          title="GitHub OAuth 未配置"
-          subTitle="请联系管理员配置 VITE_GITHUB_CLIENT_ID 环境变量后再试"
+          title={t('github.unavailableTitle')}
+          subTitle={t('github.unavailableSubtitle')}
           extra={
             <a href="/" style={{ color: "var(--primary-color)" }}>
-              返回首页
+              {t('github.backHome')}
             </a>
           }
         />
@@ -47,19 +49,19 @@ export function GithubLoginingPage() {
         gap: "1.5rem",
       }}
     >
-      <Spin size="large" spinning={isProcessing ?? true} tip="正在跳转 GitHub，请稍候..." />
+      <Spin size="large" spinning={isProcessing ?? true} tip={t('github.redirecting')} />
       <div style={{ maxWidth: "420px", textAlign: "center" }}>
         <Paragraph>
-          <Text>即将跳转至 GitHub 完成授权，授权成功后会自动返回博客。</Text>
+          <Text>{t('github.redirectingDesc')}</Text>
         </Paragraph>
         <Paragraph type="secondary">
-          如果长时间没有跳转，请手动刷新页面或检查浏览器是否拦截弹出窗口。
+          {t('github.redirectingHint')}
         </Paragraph>
       </div>
       {error && (
         <Alert
-          message="登录失败"
-          description={error.message || "GitHub 登录失败，请稍后重试"}
+          message={t('github.errorTitle')}
+          description={error.message || t('github.errorDefault')}
           type="error"
           showIcon
         />

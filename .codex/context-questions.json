@@ -1,32 +1,32 @@
-﻿{
-  "questions": [
-    {
-      "id": "Q1",
-      "topic": "Admin monitor integration",
-      "known": "Socket hook pushes cpuUsage/memoryUsage (0-1) into performanceStore.systemPerformance; usePerformanceMonitor tracks metrics/fps/navigation/memory.",
-      "unknown": "What UI layout do we want for dynamic data (charts? tables?) and which metrics from store should feed each AntD card? Need to decide mapping and smoothing, plus offline fallback.",
-      "priority": "high"
-    },
-    {
-      "id": "Q2",
-      "topic": "Socket availability",
-      "known": "useSystemMonitor fetches /api/monitor/start and listens to 'systemUpdate'; no error handling on Monitor page.",
-      "unknown": "How to display connection status / empty states when socket offline? Should we keep last known metrics or show skeleton?",
-      "priority": "medium"
-    },
-    {
-      "id": "Q3",
-      "topic": "GitHub contributions widget",
-      "known": "Backend endpoint GET /user/github/contributions returns array of {date,count}; legacy used react-calendar-heatmap.",
-      "unknown": "What visual library to use now? Should we reintroduce react-calendar-heatmap or use Ant Design/plots? Need to confirm dependency policy & theming integration.",
-      "priority": "high"
-    },
-    {
-      "id": "Q4",
-      "topic": "Data fetching strategy",
-      "known": "Project relies on TanStack Query; need new hook for contributions and query key defined in @shared/api/queryKeys.ts.",
-      "unknown": "Existing query key definition? Should we extend queryKeys.user.contributions? ensure caching & error states.",
-      "priority": "medium"
-    }
-  ]
-}
+[
+  {
+    "priority": "high",
+    "question": "Live2D 看板娘为何会在加载后持续执行 stageSlideOut 与 stageSlideIn？",
+    "known": "组件在初始化时调用 stageSlideIn，并在 shouldShow 为 false 时调用 stageSlideOut。",
+    "unknown": "是否存在外部状态变化（媒体查询、localStorage 状态或库内部休眠策略）触发 stageSlideOut。"
+  },
+  {
+    "priority": "high",
+    "question": "oh-my-live2d 是否需要保留 OML2D_STATUS 才能维持激活状态？",
+    "known": "当前实现每次挂载都会移除 localStorage 中的 OML2D_STATUS。",
+    "unknown": "官方文档是否建议保留该状态以避免重复销毁或强制休眠。"
+  },
+  {
+    "priority": "medium",
+    "question": "媒体查询监听是否导致 shouldShow 短暂变 false？",
+    "known": "组件在 useEffect 中调用 matchMedia 并同步 setIsMobile。",
+    "unknown": "在 React 严格模式下是否会出现重复订阅或初始化顺序导致 flicker。"
+  },
+  {
+    "priority": "medium",
+    "question": "WebLayout 或父级组件是否在路由切换时卸载 Live2D 容器？",
+    "known": "Live2D 包裹在 WebLayout 内并在所有前台路由渲染。",
+    "unknown": "页面切换时的过渡动画是否会暂时卸载容器导致实例重建。"
+  },
+  {
+    "priority": "low",
+    "question": "现有单元测试是否覆盖 rest/activate 状态切换？",
+    "known": "index.test.tsx 仅验证初始挂载与基础显隐逻辑。",
+    "unknown": "是否需要补充测试模拟 localStorage 状态与媒体查询变化。"
+  }
+]

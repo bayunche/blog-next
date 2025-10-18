@@ -9,7 +9,8 @@ import axios, {
   type InternalAxiosRequestConfig,
 } from 'axios'
 import { message } from 'antd'
-import { encryptPassword, getToken, removeToken } from '@shared/utils'
+import { encryptPassword, getToken } from '@shared/utils'
+import { useAuthStore } from '@shared/stores/authStore'
 
 const pendingRequests = new Map<string, AbortController>()
 
@@ -75,14 +76,61 @@ const createAxiosInstance = (): AxiosInstance => {
     (response: AxiosResponse) => {
       removePendingRequest(response.config as InternalAxiosRequestConfig)
 
-      const { code, data, message: msg } = response.data || {}
+      const responseData = response.data || {}
+      
+      console.log('[DEBUG] Axios interceptor - raw response:', {
+        url: response.config.url,
+        status: response.status,
+        dataType: typeof responseData,
+        dataKeys: Object.keys(responseData),
+        hasCode: 'code' in responseData,
+        hasData: 'data' in responseData,
+        rawData: JSON.stringify(responseData).slice(0, 300)
+      })
+      
+      // 兼容三种响应格式:
+      // 1. 标准包装格式: { code: 200, data: {...}, message: "..." }
+      // 2. 仅 data 包装格式: { data: [...] } (自动提取)
+      // 3. 直接格式: { username: "...", role: 1, ... }
+      const { code, data, message: msg } = responseData
 
-      if (code === 200 || code === 0) {
+      // 如果有 code 字段,使用标准包装格式判断
+      if (typeof code !== 'undefined') {
+        console.log('[DEBUG] Axios interceptor - wrapped format detected:', {
+          code,
+          hasData: !!data,
+          dataType: typeof data,
+          dataKeys: data ? Object.keys(data) : [],
+          returnValue: JSON.stringify(data).slice(0, 200)
+        })
+        
+        if (code === 200 || code === 0) {
+          return data
+        }
+        message.warning(msg || 'Request failed')
+        return Promise.reject(new Error(msg || 'Request failed'))
+      }
+
+      // 新增: 如果响应只包含 data 字段且是对象,自动提取 data 内容
+      // 这解决了后端返回 { data: [...] } 格式但未使用标准包装的情况
+      if (
+        responseData &&
+        typeof responseData === 'object' &&
+        'data' in responseData &&
+        Object.keys(responseData).length === 1
+      ) {
+        console.log('[DEBUG] Axios interceptor - data-only format detected, extracting data field:', {
+          dataType: typeof data,
+          dataIsArray: Array.isArray(data),
+          dataLength: Array.isArray(data) ? data.length : 'N/A',
+          returnValue: JSON.stringify(data).slice(0, 200)
+        })
         return data
       }
 
-      message.warning(msg || 'Request failed')
-      return Promise.reject(new Error(msg || 'Request failed'))
+      // 如果没有 code 字段且不是仅 data 格式,认为是直接格式,直接返回响应数据
+      console.log('[DEBUG] Axios interceptor - direct format, returning responseData as-is')
+      return responseData
     },
     (error: AxiosError) => {
       if (error.config) {
@@ -105,7 +153,7 @@ const createAxiosInstance = (): AxiosInstance => {
       switch (status) {
         case 401:
           message.error('Login expired, please sign in again')
-          removeToken()
+          useAuthStore.getState().logout()
           setTimeout(() => {
             window.location.href = '/login'
           }, 1000)

@@ -65,7 +65,7 @@ export function WelcomePage({ typingInterval = 90, revealDelay = 480 }: WelcomeP
 
       <div className={styles.hero}>
         <Title level={1} className={styles.title}>
-          React Blog
+          八云澈的小站
         </Title>
         <Paragraph className={styles.typing}>{typedText}</Paragraph>
 

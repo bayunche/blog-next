@@ -11,6 +11,12 @@ lerna-debug.log*
 node_modules
 server/node_modules
 
+# Local project directories
+.codex/
+.github/
+.claude/
+.vscode/
+
 # Build output
 dist
 dist-ssr
@@ -53,3 +59,7 @@ Thumbs.db
 *.swp
 *.swo
 *~
+
+.claude/
+.github/
+.codex/

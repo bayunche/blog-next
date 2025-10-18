@@ -1,7 +1,6 @@
 ﻿/**
  * 用户相关 API
  */
-
 import request from '@shared/api/axios'
 
 export interface GithubContributionRecord {
@@ -10,7 +9,7 @@ export interface GithubContributionRecord {
 }
 
 /**
- * 获取 GitHub 贡献数据
+ * 获取 GitHub 贡献记录
  */
 export const getGithubContributionsAPI = (): Promise<GithubContributionRecord[]> => {
   return request.get('/user/github/contributions')

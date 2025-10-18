@@ -6,6 +6,7 @@
 export { BackgroundAnimation } from './BackgroundAnimation'
 export { Live2D } from './Live2D'
 export { MusicPlayer } from './MusicPlayer'
+export { RopeToTop } from './RopeToTop'
 
 // UI 组件
 export { Sidebar } from './Sidebar'

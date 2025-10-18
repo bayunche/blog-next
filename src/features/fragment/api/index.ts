@@ -2,7 +2,7 @@
  * Fragment API helpers
  */
 
-import request from '@shared/utils/request'
+import request from '@shared/api/axios'
 import type { Fragment, FragmentListResponse, FragmentPayload } from '../types'
 
 type FragmentRecord = Record<string, unknown>

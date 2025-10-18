@@ -2,7 +2,7 @@
  * Admin article analytics API
  */
 
-import request from '@shared/utils/request'
+import request from '@shared/api/axios'
 
 export interface RawArticleRecord {
   articleId: number | string

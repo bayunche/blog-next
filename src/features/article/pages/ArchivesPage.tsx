@@ -1,6 +1,6 @@
 /**
- * �鵵ҳ��
- * ��ʱ����չʾ��������
+ * 归档页面
+ * 按时间线展示所有文章
  */
 
 import { Timeline, Spin, Alert, Typography, Space, Tag } from 'antd'
@@ -12,7 +12,7 @@ import { useArchives } from '../hooks'
 const { Title, Text } = Typography
 
 /**
- * �鵵ҳ�����
+ * 归档页面组件
  */
 export function ArchivesPage() {
   const { data, isLoading, error } = useArchives()
@@ -20,7 +20,7 @@ export function ArchivesPage() {
   if (error) {
     return (
       <div style={{ padding: '2rem' }}>
-        <Alert message="����ʧ��" description={error.message} type="error" showIcon />
+        <Alert message="加载失败" description={error.message} type="error" showIcon />
       </div>
     )
   }
@@ -36,7 +36,7 @@ export function ArchivesPage() {
           minHeight: '60vh',
         }}
       >
-        <Spin size="large" tip="������..." />
+        <Spin size="large" tip="加载中..." />
       </div>
     )
   }
@@ -48,7 +48,7 @@ export function ArchivesPage() {
     return (
       <div data-testid="archives-empty" style={{ padding: '2rem', maxWidth: '1200px', margin: '0 auto' }}>
         <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-secondary)' }}>
-          ���޹鵵����
+          暂无归档数据
         </div>
       </div>
     )
@@ -56,12 +56,12 @@ export function ArchivesPage() {
 
   return (
     <div data-testid="archives-content" style={{ padding: '2rem', maxWidth: '1000px', margin: '0 auto' }}>
-      {/* ҳ����� */}
+      {/* 页面标题 */}
       <div style={{ marginBottom: '2rem', textAlign: 'center' }}>
         <Title level={1}>
-          <ClockCircleOutlined /> ���¹鵵
+          <ClockCircleOutlined /> 文章归档
         </Title>
-        <p style={{ color: 'var(--text-secondary)', fontSize: '1rem' }}>�� {totalArticles} ƪ����</p>
+        <p style={{ color: 'var(--text-secondary)', fontSize: '1rem' }}>共 {totalArticles} 篇文章</p>
       </div>
 
       {years.map((yearData) => (
@@ -76,7 +76,7 @@ export function ArchivesPage() {
             <Title level={2} style={{ marginBottom: '0.25rem' }}>
               <CalendarOutlined /> {yearData.year}
             </Title>
-            <Text type="secondary">�� {yearData.count} ƪ����</Text>
+            <Text type="secondary">共 {yearData.count} 篇文章</Text>
           </div>
 
           <Timeline
@@ -85,9 +85,9 @@ export function ArchivesPage() {
               children: (
                 <div key={`${yearData.year}-${monthData.month}`}>
                   <Title level={4} style={{ marginTop: 0, marginBottom: '1rem' }}>
-                    {String(monthData.month).padStart(2, '0')} ��
+                    {String(monthData.month).padStart(2, '0')} 月
                     <Tag color="blue" style={{ marginLeft: '0.5rem' }}>
-                      {monthData.count} ƪ
+                      {monthData.count} 篇
                     </Tag>
                   </Title>
 
@@ -153,13 +153,13 @@ export function ArchivesPage() {
 
                           {typeof article.viewCount === 'number' && (
                             <Text type="secondary" style={{ fontSize: '0.875rem' }}>
-                              ??? {article.viewCount}
+                              阅读 {article.viewCount}
                             </Text>
                           )}
 
                           {typeof article.likeCount === 'number' && (
                             <Text type="secondary" style={{ fontSize: '0.875rem' }}>
-                              ?? {article.likeCount}
+                              点赞 {article.likeCount}
                             </Text>
                           )}
                         </div>

@@ -6,6 +6,7 @@ import { Form, Input, Button } from 'antd'
 import { UserOutlined, LockOutlined } from '@ant-design/icons'
 import { useLogin } from '../hooks'
 import type { LoginRequest } from '../types'
+import { useTranslation } from 'react-i18next'
 
 /**
  * 登录表单属性
@@ -22,6 +23,7 @@ interface LoginFormProps {
  */
 export function LoginForm({ onSuccess, onSwitchToRegister }: LoginFormProps) {
   const [form] = Form.useForm<LoginRequest>()
+  const { t } = useTranslation('auth')
 
   // 使用登录 Hook
   const loginMutation = useLogin({
@@ -43,10 +45,10 @@ export function LoginForm({ onSuccess, onSwitchToRegister }: LoginFormProps) {
       {/* 表单标题 */}
       <div className="form-header" style={{ marginBottom: '1.5rem' }}>
         <h3 style={{ fontSize: '1.5rem', fontWeight: 600, margin: 0 }}>
-          用户登录
+          {t('form.loginTitle')}
         </h3>
         <p style={{ color: 'var(--text-secondary)', margin: '0.5rem 0 0' }}>
-          请输入您的登录凭据
+          {t('form.loginSubtitle')}
         </p>
       </div>
 
@@ -59,17 +61,17 @@ export function LoginForm({ onSuccess, onSwitchToRegister }: LoginFormProps) {
       >
         {/* 用户名 */}
         <Form.Item
-          label="用户名"
+          label={t('form.account')}
           name="account"
           rules={[
-            { required: true, message: '请输入用户名' },
-            { min: 2, message: '用户名至少2个字符' },
-            { max: 20, message: '用户名最多20个字符' },
+            { required: true, message: t('form.accountRequired') },
+            { min: 2, message: t('form.accountMin') },
+            { max: 20, message: t('form.accountMax') },
           ]}
         >
           <Input
             prefix={<UserOutlined />}
-            placeholder="请输入用户名"
+            placeholder={t('form.accountPlaceholder')}
             size="large"
             autoComplete="username"
           />
@@ -77,16 +79,16 @@ export function LoginForm({ onSuccess, onSwitchToRegister }: LoginFormProps) {
 
         {/* 密码 */}
         <Form.Item
-          label="密码"
+          label={t('form.password')}
           name="password"
           rules={[
-            { required: true, message: '请输入密码' },
-            { min: 6, message: '密码至少6个字符' },
+            { required: true, message: t('form.passwordRequired') },
+            { min: 6, message: t('form.passwordMin') },
           ]}
         >
           <Input.Password
             prefix={<LockOutlined />}
-            placeholder="请输入密码"
+            placeholder={t('form.passwordPlaceholder')}
             size="large"
             autoComplete="current-password"
           />
@@ -102,7 +104,7 @@ export function LoginForm({ onSuccess, onSwitchToRegister }: LoginFormProps) {
             block
             style={{ marginTop: '0.5rem' }}
           >
-            {loginMutation.isPending ? '登录中...' : '登录'}
+            {loginMutation.isPending ? t('form.loginSubmitting') : t('form.login')}
           </Button>
         </Form.Item>
       </Form>
@@ -116,14 +118,14 @@ export function LoginForm({ onSuccess, onSwitchToRegister }: LoginFormProps) {
           color: 'var(--text-secondary)',
         }}
       >
-        <span>还没有账号？</span>
+        <span>{t('form.noAccountShort')}</span>
         <Button
           type="link"
           size="small"
           onClick={onSwitchToRegister}
           style={{ padding: '0 0.5rem' }}
         >
-          立即注册
+          {t('form.switchToRegister')}
         </Button>
       </div>
     </div>

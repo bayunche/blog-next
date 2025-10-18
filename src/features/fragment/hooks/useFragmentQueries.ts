@@ -30,7 +30,7 @@ export const useFragmentList = (
 
 export const useFragmentDetail = (
   id: number,
-  options?: UseQueryOptions<Fragment, Error, Fragment>,
+  options?: Omit<UseQueryOptions<Fragment, Error, Fragment>, 'queryKey' | 'queryFn'>,
 ) => {
   return useQuery<Fragment, Error>({
     queryKey: fragmentQueryKeys.detail(id),

@@ -8,6 +8,7 @@ import { message } from 'antd'
 import { useNavigate } from 'react-router-dom'
 import { useAuthStore } from '@shared/stores'
 import { logoutAPI } from '../api'
+import { useTranslation } from 'react-i18next'
 
 /**
  * 认证 Hook
@@ -16,6 +17,7 @@ import { logoutAPI } from '../api'
 export function useAuth() {
   const navigate = useNavigate()
   const authStore = useAuthStore()
+  const { t } = useTranslation('auth')
 
   // 登出 Mutation
   const logoutMutation = useMutation({
@@ -26,7 +28,7 @@ export function useAuth() {
       authStore.logout()
 
       // 显示成功消息
-      message.success('已退出登录')
+      message.success(t('message.logoutSuccess'))
 
       // 跳转到首页
       navigate('/', { replace: true })
@@ -37,7 +39,7 @@ export function useAuth() {
       authStore.logout()
 
       // 显示错误消息
-      message.error(error.message || '退出登录失败')
+      message.error(error.message || t('message.logoutFailed'))
 
       // 跳转到首页
       navigate('/', { replace: true })

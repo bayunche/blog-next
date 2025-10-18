@@ -56,8 +56,10 @@ export function ArticleEditor() {
       form.setFieldsValue({
         title: article.title,
         summary: article.summary,
-        categoryId: article.category?.id,
-        tagIds: article.tags?.map((t) => t.id),
+        categoryId: article.category
+          ? { value: article.category.id, label: article.category.name }
+          : undefined,
+        tagIds: article.tags?.map((t) => ({ value: t.id, label: t.name })),
       })
       setContent(article.content || '')
       setCoverImageUrl(article.coverImage || '')
@@ -91,43 +93,16 @@ export function ArticleEditor() {
     showUploadList: false,
   }
 
-  // 保存草稿
-  const handleSaveDraft = async () => {
+  const handleFinish = async (status: 'draft' | 'published') => {
     try {
       const values = await form.validateFields()
       const data: ArticleFormData = {
         ...values,
+        categoryId: values.categoryId?.value,
+        tagIds: values.tagIds?.map((t: { value: number }) => t.value),
         content,
         coverImage: coverImageUrl,
-        status: 'draft',
-      }
-
-      if (isEdit) {
-        updateMutation.mutate(
-          { id: Number(id), data },
-          {
-            onSuccess: () => navigate('/admin/article/manager'),
-          }
-        )
-      } else {
-        createMutation.mutate(data, {
-          onSuccess: () => navigate('/admin/article/manager'),
-        })
-      }
-    } catch (error) {
-      console.error('表单验证失败:', error)
-    }
-  }
-
-  // 发布文章
-  const handlePublish = async () => {
-    try {
-      const values = await form.validateFields()
-      const data: ArticleFormData = {
-        ...values,
-        content,
-        coverImage: coverImageUrl,
-        status: 'published',
+        status,
       }
 
       if (isEdit) {
@@ -160,7 +135,7 @@ export function ArticleEditor() {
             <Button onClick={() => navigate('/admin/article/manager')}>取消</Button>
             <Button
               icon={<SaveOutlined />}
-              onClick={handleSaveDraft}
+              onClick={() => handleFinish('draft')}
               loading={createMutation.isPending || updateMutation.isPending}
             >
               保存草稿
@@ -168,7 +143,7 @@ export function ArticleEditor() {
             <Button
               type="primary"
               icon={<SendOutlined />}
-              onClick={handlePublish}
+              onClick={() => handleFinish('published')}
               loading={createMutation.isPending || updateMutation.isPending}
             >
               发布文章
@@ -196,6 +171,7 @@ export function ArticleEditor() {
               <Select
                 placeholder="选择分类"
                 allowClear
+                labelInValue
                 options={categories?.map((cat) => ({
                   label: cat.name,
                   value: cat.id,
@@ -212,6 +188,7 @@ export function ArticleEditor() {
                 mode="multiple"
                 placeholder="选择标签"
                 allowClear
+                labelInValue
                 options={tags?.map((tag) => ({
                   label: tag.name,
                   value: tag.id,

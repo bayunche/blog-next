@@ -2,7 +2,7 @@
  * 评论模块 API
  */
 
-import request from '@shared/utils/request'
+import request from '@shared/api/axios'
 import type {
   GetCommentsParams,
   CommentListResponse,

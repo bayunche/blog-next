@@ -8,6 +8,7 @@ import { message } from 'antd'
 import { useAuthStore } from '@shared/stores'
 import { loginAPI } from '../api'
 import type { LoginRequest } from '../types'
+import { useTranslation } from 'react-i18next'
 
 /**
  * 登录 Hook 配置
@@ -26,6 +27,7 @@ interface UseLoginOptions {
  */
 export function useLogin(options?: UseLoginOptions) {
   const { setAuth } = useAuthStore()
+  const { t } = useTranslation('auth')
 
   return useMutation({
     mutationFn: (data: LoginRequest) => loginAPI(data),
@@ -37,7 +39,7 @@ export function useLogin(options?: UseLoginOptions) {
       setAuth(response.user, response.token)
 
       // 显示成功消息
-      message.success('登录成功！')
+      message.success(t('message.loginSuccess'))
 
       // 执行成功回调
       options?.onSuccess?.()
@@ -52,7 +54,7 @@ export function useLogin(options?: UseLoginOptions) {
       console.error('❌ 登录失败:', error)
 
       // 显示错误消息
-      message.error(error.message || '登录失败，请检查用户名和密码')
+      message.error(error.message || t('message.loginFailed'))
 
       // 执行失败回调
       options?.onError?.(error)

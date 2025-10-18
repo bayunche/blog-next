@@ -3,14 +3,13 @@
  */
 
 // ==================== 导入初始化函数 ====================
-import { initializeAuth } from './authStore'
 import { initializeTheme } from './themeStore'
 
 // ==================== 类型定义 ====================
 export type { StoreState, StoreActions, User } from './types'
 
 // ==================== Auth Store ====================
-export { useAuthStore, initializeAuth } from './authStore'
+export { useAuthStore } from './authStore'
 export type { default as AuthStore } from './authStore'
 
 // ==================== Theme Store ====================
@@ -27,6 +26,5 @@ export type { default as AppStore } from './appStore'
  */
 export const initializeStores = () => {
   // 直接调用初始化函数
-  initializeAuth()
   initializeTheme()
 }

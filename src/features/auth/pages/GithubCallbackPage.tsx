@@ -7,6 +7,7 @@ import { useEffect } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { Spin, Result } from 'antd'
 import { useGithubAuth } from '../hooks'
+import { useTranslation } from 'react-i18next'
 
 /**
  * GitHub 回调页面组件
@@ -14,6 +15,7 @@ import { useGithubAuth } from '../hooks'
 export function GithubCallbackPage() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
+  const { t } = useTranslation('auth')
 
   // GitHub OAuth Hook
   const { handleGithubCallback, isProcessing, error } = useGithubAuth({
@@ -49,7 +51,7 @@ export function GithubCallbackPage() {
           height: '100vh',
         }}
       >
-        <Spin size="large" tip="正在使用 GitHub 登录..." />
+        <Spin size="large" tip={t('github.callbackLoading')} />
       </div>
     )
   }
@@ -68,11 +70,11 @@ export function GithubCallbackPage() {
       >
         <Result
           status="error"
-          title="GitHub 登录失败"
-          subTitle={error.message || '请稍后重试'}
+          title={t('github.errorTitle')}
+          subTitle={error.message || t('github.errorDefault')}
           extra={
             <a href="/" style={{ color: 'var(--primary-color)' }}>
-              返回首页
+              {t('github.backHome')}
             </a>
           }
         />

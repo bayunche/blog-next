@@ -1,136 +1,108 @@
-/**
+﻿/**
  * 管理后台仪表盘页面
  */
-
-import { Row, Col, Card, Statistic, Table, Typography, Space, Tag } from 'antd'
+import { useMemo } from 'react'
+import { Row, Col, Card, Statistic, Table, Typography, Space, Tag, Button, Result, Spin } from 'antd'
 import {
   FileTextOutlined,
   UserOutlined,
   CommentOutlined,
   EyeOutlined,
-  ArrowUpOutlined,
 } from '@ant-design/icons'
 import { Link } from 'react-router-dom'
 import dayjs from 'dayjs'
+import { useDashboardOverview } from '../hooks'
+import type { RecentArticle } from '../types'
 
 const { Title } = Typography
 
-/**
- * 仪表盘页面组件
- */
+const STATUS_COLOR: Record<RecentArticle['status'], string> = {
+  published: 'green',
+  draft: 'orange',
+}
+
 export function Dashboard() {
-  // 模拟统计数据（实际应该从 API 获取）
-  const stats = {
-    articleCount: 42,
-    userCount: 128,
-    commentCount: 356,
-    viewCount: 15620,
+  const { data, isLoading, isError, refetch, isFetching } = useDashboardOverview()
+
+  const stats = data?.stats ?? { articleCount: 0, userCount: 0, commentCount: 0, viewCount: 0 }
+  const recentArticles = data?.recentArticles ?? []
+
+  const columns = useMemo(
+    () => [
+      {
+        title: '标题',
+        dataIndex: 'title',
+        key: 'title',
+        render: (text: string, record: RecentArticle) => (
+          <Link to={`/article/${record.id}`} target="_blank" rel="noopener noreferrer">
+            {text}
+          </Link>
+        ),
+      },
+      {
+        title: '状态',
+        dataIndex: 'status',
+        key: 'status',
+        width: 120,
+        render: (status: RecentArticle['status']) => (
+          <Tag color={STATUS_COLOR[status]}>{status === 'published' ? '已发布' : '草稿'}</Tag>
+        ),
+      },
+      {
+        title: '浏览',
+        dataIndex: 'viewCount',
+        key: 'viewCount',
+        width: 120,
+        sorter: (a: RecentArticle, b: RecentArticle) => a.viewCount - b.viewCount,
+      },
+      {
+        title: '点赞',
+        dataIndex: 'likeCount',
+        key: 'likeCount',
+        width: 120,
+        sorter: (a: RecentArticle, b: RecentArticle) => a.likeCount - b.likeCount,
+      },
+      {
+        title: '创建时间',
+        dataIndex: 'createdAt',
+        key: 'createdAt',
+        width: 200,
+        render: (text: string) => dayjs(text).format('YYYY-MM-DD HH:mm'),
+      },
+    ],
+    [],
+  )
+
+  if (isLoading) {
+    return (
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}>
+        <Spin size="large" tip="仪表盘数据加载中..." />
+      </div>
+    )
   }
 
-  // 模拟最新文章数据
-  const recentArticles = [
-    {
-      key: '1',
-      id: 1,
-      title: 'React 19 新特性详解',
-      createdAt: '2025-10-01 10:30:00',
-      viewCount: 520,
-      likeCount: 48,
-      status: 'published',
-    },
-    {
-      key: '2',
-      id: 2,
-      title: 'TypeScript 高级类型实战',
-      createdAt: '2025-09-30 15:20:00',
-      viewCount: 380,
-      likeCount: 35,
-      status: 'published',
-    },
-    {
-      key: '3',
-      id: 3,
-      title: 'Vite 构建优化技巧',
-      createdAt: '2025-09-29 09:15:00',
-      viewCount: 290,
-      likeCount: 28,
-      status: 'published',
-    },
-    {
-      key: '4',
-      id: 4,
-      title: 'TanStack Query 实战指南',
-      createdAt: '2025-09-28 14:45:00',
-      viewCount: 412,
-      likeCount: 41,
-      status: 'draft',
-    },
-    {
-      key: '5',
-      id: 5,
-      title: 'Zustand 状态管理最佳实践',
-      createdAt: '2025-09-27 11:30:00',
-      viewCount: 356,
-      likeCount: 32,
-      status: 'published',
-    },
-  ]
-
-  // 表格列定义
-  const columns = [
-    {
-      title: '标题',
-      dataIndex: 'title',
-      key: 'title',
-      render: (text: string, record: any) => (
-        <Link to={`/article/${record.id}`} target="_blank">
-          {text}
-        </Link>
-      ),
-    },
-    {
-      title: '状态',
-      dataIndex: 'status',
-      key: 'status',
-      width: 100,
-      render: (status: string) => (
-        <Tag color={status === 'published' ? 'green' : 'orange'}>
-          {status === 'published' ? '已发布' : '草稿'}
-        </Tag>
-      ),
-    },
-    {
-      title: '浏览',
-      dataIndex: 'viewCount',
-      key: 'viewCount',
-      width: 100,
-      sorter: (a: any, b: any) => a.viewCount - b.viewCount,
-    },
-    {
-      title: '点赞',
-      dataIndex: 'likeCount',
-      key: 'likeCount',
-      width: 100,
-      sorter: (a: any, b: any) => a.likeCount - b.likeCount,
-    },
-    {
-      title: '创建时间',
-      dataIndex: 'createdAt',
-      key: 'createdAt',
-      width: 180,
-      render: (text: string) => dayjs(text).format('YYYY-MM-DD HH:mm'),
-    },
-  ]
+  if (isError || !data) {
+    return (
+      <Result
+        status="error"
+        title="仪表盘数据加载失败"
+        subTitle="请检查网络或后端服务后再试。"
+        extra={
+          <Button type="primary" onClick={() => refetch()}>
+            重试
+          </Button>
+        }
+      />
+    )
+  }
 
   return (
     <div>
-      {/* 欢迎标题 */}
-      <Title level={2} style={{ marginBottom: '24px' }}>
+      <Title level={2} style={{ marginBottom: 24 }}>
         欢迎回来，管理员！
       </Title>
 
-      {/* 统计卡片 */}
-      <Row gutter={[16, 16]} style={{ marginBottom: '24px' }}>
+      <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
         <Col xs={24} sm={12} lg={6}>
           <Card>
             <Statistic
@@ -148,11 +120,6 @@ export function Dashboard() {
               value={stats.userCount}
               prefix={<UserOutlined />}
               valueStyle={{ color: '#1677ff' }}
-              suffix={
-                <span style={{ fontSize: '14px', color: '#52c41a' }}>
-                  <ArrowUpOutlined /> 12%
-                </span>
-              }
             />
           </Card>
         </Col>
@@ -178,7 +145,6 @@ export function Dashboard() {
         </Col>
       </Row>
 
-      {/* 最新文章列表 */}
       <Card
         title={
           <Space>
@@ -191,16 +157,15 @@ export function Dashboard() {
         <Table
           columns={columns}
           dataSource={recentArticles}
+          rowKey={(record) => record.id}
           pagination={false}
           size="middle"
+          loading={isFetching && !isLoading}
+          locale={{ emptyText: '暂无文章' }}
         />
       </Card>
 
-      {/* 快捷操作提示 */}
-      <Card
-        title="快捷操作"
-        style={{ marginTop: '24px' }}
-      >
+      <Card title="快捷操作" style={{ marginTop: 24 }}>
         <Space size="large">
           <Link to="/admin/article/add">
             <FileTextOutlined /> 新建文章

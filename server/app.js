@@ -3,6 +3,7 @@ const koaBody = require('koa-body')
 const cors = require('koa2-cors')
 const error = require('koa-json-error')
 const logger = require('koa-logger')
+const serve = require('koa-static')
 
 //  config
 const config = require('./config')
@@ -24,6 +25,7 @@ const path = require('path')
 
 app
   .use(cors())
+  .use(serve(path.join(__dirname, '../public')))
   .use(
     koaBody({
       multipart: true,

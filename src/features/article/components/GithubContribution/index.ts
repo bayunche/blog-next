@@ -1,1 +1,1 @@
-﻿export * from "./GithubContribution"
+﻿export * from './GithubContribution'

@@ -1,25 +1,25 @@
-﻿import { useMemo } from "react"
-import { Card, Spin, Alert, Empty, Typography } from "antd"
-import ReactCalendarHeatmap from "react-calendar-heatmap"
-import dayjs from "dayjs"
-import { useGithubContributions } from "@features/article/hooks"
-import styles from "./GithubContribution.module.less"
-import "react-calendar-heatmap/dist/styles.css"
+﻿/**
+ * GitHub 贡献热力图组件
+ */
+import { useMemo } from 'react'
+import { Card, Spin, Alert, Empty, Typography } from 'antd'
+import ReactCalendarHeatmap from 'react-calendar-heatmap'
+import dayjs from 'dayjs'
+import { useGithubContributions } from '@features/article/hooks'
+import styles from './GithubContribution.module.less'
+import 'react-calendar-heatmap/dist/styles.css'
 
 const { Paragraph, Text } = Typography
 
 const COLOR_LEVELS = 4
 
-/**
- * GitHub contributions heatmap widget
- */
 export function GithubContribution() {
   const { data, isLoading, isError, error } = useGithubContributions()
 
   const { startDate, endDate, values, maxCount } = useMemo(() => {
     if (!data || data.length === 0) {
       return {
-        startDate: dayjs().subtract(1, "year").toDate(),
+        startDate: dayjs().subtract(1, 'year').toDate(),
         endDate: new Date(),
         values: [],
         maxCount: 0,
@@ -41,7 +41,7 @@ export function GithubContribution() {
 
   const getLevelClass = (count?: number) => {
     if (!count || maxCount === 0) {
-      return "color-empty"
+      return 'color-empty'
     }
 
     const ratio = count / maxCount
@@ -50,21 +50,21 @@ export function GithubContribution() {
   }
 
   const tooltipAttrs = (value: { date?: string; count?: number }) => {
-    if (!value || !value.date) {
+    if (!value?.date) {
       return {}
     }
 
-    const formattedDate = dayjs(value.date).format("YYYY-MM-DD")
+    const formattedDate = dayjs(value.date).format('YYYY-MM-DD')
     const count = value.count ?? 0
     return {
-      "data-tip": `${formattedDate}: ${count} contributions`,
+      'data-tip': `${formattedDate}: ${count} contributions`,
     }
   }
 
   return (
     <Card title="GitHub Contributions" className={styles.container} bordered>
       {isLoading ? (
-        <div className={styles.state}>
+        <div className={styles.state} data-testid="github-contribution-loading">
           <Spin tip="Fetching GitHub contributions..." />
         </div>
       ) : isError ? (
@@ -72,7 +72,7 @@ export function GithubContribution() {
           type="error"
           showIcon
           message="Failed to load GitHub contributions"
-          description={error instanceof Error ? error.message : "Please try again later"}
+          description={error instanceof Error ? error.message : 'Please try again later'}
         />
       ) : values.length === 0 ? (
         <Empty description="No contributions recorded" />

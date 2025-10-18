@@ -6,6 +6,8 @@
 import { useEffect, useState } from 'react'
 import { Anchor } from 'antd'
 import type { TocItem } from '../types'
+import { useTranslation } from 'react-i18next'
+import { createSlugger } from '../utils/slugger'
 
 /**
  * 目录组件 Props
@@ -28,15 +30,13 @@ function extractToc(content: string): TocItem[] {
 
   const headingRegex = /^(#{1,6})\s+(.+)$/gm
   const toc: TocItem[] = []
+  const slugger = createSlugger()
   let match
 
   while ((match = headingRegex.exec(content)) !== null) {
     const level = match[1].length
     const text = match[2].trim()
-    const anchor = text
-      .toLowerCase()
-      .replace(/[^\w\u4e00-\u9fa5]+/g, '-')
-      .replace(/^-|-$/g, '')
+    const anchor = slugger(text)
 
     toc.push({
       level,
@@ -91,31 +91,63 @@ export function TableOfContents({
 }: TableOfContentsProps) {
   const [toc, setToc] = useState<TocItem[]>([])
   const [activeAnchor, setActiveAnchor] = useState<string>('')
+  const { t } = useTranslation('article')
 
   useEffect(() => {
     const items = extractToc(content)
     const tree = buildTocTree(items)
     setToc(tree)
 
-    // 监听滚动，高亮当前标题
-    const handleScroll = () => {
-      const headings = document.querySelectorAll(
+    const headingElements = Array.from(
+      document.querySelectorAll<HTMLElement>(
         '.markdown-renderer h1, .markdown-renderer h2, .markdown-renderer h3'
       )
+    )
 
-      let current = ''
-      headings.forEach((heading) => {
-        const rect = heading.getBoundingClientRect()
-        if (rect.top <= 100) {
-          current = heading.id
-        }
-      })
-
-      setActiveAnchor(current)
+    if (headingElements.length === 0) {
+      setActiveAnchor('')
+      return undefined
     }
 
-    window.addEventListener('scroll', handleScroll)
-    return () => window.removeEventListener('scroll', handleScroll)
+    setActiveAnchor(headingElements[0]?.id ?? '')
+
+    const entryMap = new Map<string, IntersectionObserverEntry>()
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          const id = entry.target.id
+          if (id) {
+            entryMap.set(id, entry)
+          }
+        })
+
+        let nextActive = headingElements[0]?.id ?? ''
+
+        for (const heading of headingElements) {
+          const entry = entryMap.get(heading.id)
+          if (!entry) {
+            continue
+          }
+
+          if (entry.isIntersecting || entry.boundingClientRect.top <= 0) {
+            nextActive = heading.id
+          } else if (entry.boundingClientRect.top > 0 && !entry.isIntersecting) {
+            break
+          }
+        }
+
+        setActiveAnchor((prev) => (prev === nextActive ? prev : nextActive))
+      },
+      {
+        rootMargin: '-40% 0px -50% 0px',
+        threshold: [0, 0.15, 0.4],
+      }
+    )
+
+    headingElements.forEach((heading) => observer.observe(heading))
+
+    return () => observer.disconnect()
   }, [content])
 
   // 将目录转换为 Ant Design Anchor 的格式
@@ -135,12 +167,12 @@ export function TableOfContents({
   return (
     <div className={`table-of-contents ${className}`}>
       <div style={{ marginBottom: '1rem', fontWeight: 600, fontSize: '1rem' }}>
-        目录
+        {t('toc.title')}
       </div>
       <Anchor
         affix={false}
         items={convertToAnchorItems(toc)}
-        getCurrentAnchor={() => activeAnchor}
+        getCurrentAnchor={() => (activeAnchor ? `#${activeAnchor}` : '')}
       />
 
       <style>{`

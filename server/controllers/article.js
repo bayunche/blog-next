@@ -66,6 +66,14 @@ class ArticleController {
 
   // 获取文章详情
   static async findById(ctx) {
+    // 添加诊断日志
+    console.log('[DEBUG] findById called with:', {
+      id: ctx.params.id,
+      type: ctx.query.type,
+      url: ctx.url,
+      method: ctx.method
+    })
+
     const validator = ctx.validate(
       { ...ctx.params, ...ctx.query },
       {
@@ -74,8 +82,11 @@ class ArticleController {
       }
     )
     if (validator) {
+      const articleId = parseInt(ctx.params.id, 10)
+      console.log('[DEBUG] Parsed article ID:', articleId)
+
       const data = await ArticleModel.findOne({
-        where: { id: ctx.params.id },
+        where: { id: articleId },
         include: [
           // 查找 分类 标签 评论 回复...
           { model: TagModel, attributes: ['id', 'name'] },
@@ -98,11 +109,23 @@ class ArticleController {
         row: true,
       })
 
+      console.log('[DEBUG] Article found:', data ? {
+        id: data.id,
+        title: data.title,
+        type: data.type,
+        exists: true
+      } : 'null')
+
+      if (!data) {
+        console.log('[ERROR] Article not found in database, id:', articleId)
+        ctx.throw(404, '文章不存在')
+      }
+
       const { type = 1 } = ctx.query
       // viewer count ++
-      type === 1 && ArticleModel.update({ viewCount: ++data.viewCount }, { where: { id: ctx.params.id } })
+      type === 1 && ArticleModel.update({ viewCount: ++data.viewCount }, { where: { id: articleId } })
       // 每个浏览记录都存一个stamp，这样后续能够看出文章的阅读趋势方便推荐
-      type === 1 && RecordModel.create({ articleId: ctx.params.id })
+      type === 1 && RecordModel.create({ articleId: articleId })
       // JSON.parse(github)
       data.comments.forEach(comment => {
         comment.user.github = JSON.parse(comment.user.github)
@@ -110,12 +133,10 @@ class ArticleController {
           reply.user.github = JSON.parse(reply.user.github)
         })
       })
-      console.log(data.uuid)
-      if (data.type) {
-        ctx.body = data
-      } else {
-        ctx.body = null
-      }
+
+      // 移除 type 检查 - 归档页面应该显示所有文章，包括草稿
+      console.log('[DEBUG] Returning article data, type:', data.type)
+      ctx.body = data
     }
   }
 
@@ -167,6 +188,13 @@ class ArticleController {
   }
   // 获取文章列表
   static async getList(ctx) {
+    // 添加诊断日志
+    console.log('[DEBUG] getList called with:', {
+      query: ctx.query,
+      url: ctx.url,
+      method: ctx.method
+    })
+
     const validator = ctx.validate(ctx.query, {
       page: Joi.string(),
       pageSize: Joi.number(),
@@ -239,6 +267,20 @@ class ArticleController {
           })
         }
         data.rows = data.rows.sort((a, b) => b.top - a.top)
+        
+        console.log('[DEBUG] getList result (type != null):', {
+          rowCount: data.rows.length,
+          totalCount: data.count,
+          page,
+          pageSize,
+          responseFormat: '{ list, total, page, pageSize }',
+          firstArticle: data.rows[0] ? {
+            id: data.rows[0].id,
+            title: data.rows[0].title,
+            type: data.rows[0].type
+          } : null
+        })
+        
         ctx.body = { list: data.rows, total: data.count, page: parseInt(page), pageSize: parseInt(pageSize) }
       } else {
         const data = await ArticleModel.findAndCountAll({
@@ -287,6 +329,20 @@ class ArticleController {
           })
         }
         data.rows = data.rows.sort((a, b) => b.top - a.top)
+        
+        console.log('[DEBUG] getList result (type == null):', {
+          rowCount: data.rows.length,
+          totalCount: data.count,
+          page,
+          pageSize,
+          responseFormat: '{ list, total, page, pageSize }',
+          firstArticle: data.rows[0] ? {
+            id: data.rows[0].id,
+            title: data.rows[0].title,
+            type: data.rows[0].type
+          } : null
+        })
+        
         ctx.body = { list: data.rows, total: data.count, page: parseInt(page), pageSize: parseInt(pageSize) }
       }
     }
@@ -657,6 +713,57 @@ class ArticleController {
       } catch (error) {
         console.error('批量更新文章状态失败', error)
         ctx.throw(500, '批量更新失败')
+      }
+    }
+  }
+
+  // 文章点赞
+  static async like(ctx) {
+    const validator = ctx.validate(ctx.params, {
+      id: Joi.number().required(),
+    })
+
+    if (validator) {
+      const articleId = parseInt(ctx.params.id, 10)
+      const article = await ArticleModel.findOne({ where: { id: articleId } })
+
+      if (!article) {
+        ctx.throw(404, '文章不存在')
+      }
+
+      await article.increment('likeCount', { by: 1 })
+      await article.reload()
+
+      ctx.body = {
+        success: true,
+        likeCount: Number(article.likeCount) || 0,
+        isLiked: true,
+      }
+    }
+  }
+
+  static async unlike(ctx) {
+    const validator = ctx.validate(ctx.params, {
+      id: Joi.number().required(),
+    })
+
+    if (validator) {
+      const articleId = parseInt(ctx.params.id, 10)
+      const article = await ArticleModel.findOne({ where: { id: articleId } })
+
+      if (!article) {
+        ctx.throw(404, '文章不存在')
+      }
+
+      if ((Number(article.likeCount) || 0) > 0) {
+        await article.decrement('likeCount', { by: 1 })
+        await article.reload()
+      }
+
+      ctx.body = {
+        success: true,
+        likeCount: Math.max(Number(article.likeCount) || 0, 0),
+        isLiked: false,
       }
     }
   }

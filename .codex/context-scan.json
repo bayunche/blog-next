@@ -1,45 +1,90 @@
-﻿{
-  "scope": {
-    "monitor_page": "src/features/admin/pages/Monitor.tsx",
-    "performance_hooks": [
-      "src/shared/hooks/usePerformanceMonitor.ts",
-      "src/features/admin/hooks/useSystemMonitor.ts",
-      "src/shared/stores/performanceStore.ts"
-    ],
-    "homepage_contribution": {
-      "legacy_component": "../src/views/web/home/Contribution.jsx",
-      "current_home": "src/features/article/pages/ArticleListPage.tsx"
+{
+  "timestamp": "2025-10-12T07:08:30Z",
+  "new_project": {
+    "base_path": "blog-next/",
+    "frontend_routes": "src/app/routes/routes.config.tsx",
+    "modules": {
+      "web": "src/features/article/pages, src/features/misc/pages, src/features/about/pages/AboutPage.tsx",
+      "auth": "src/features/auth/pages, hooks, components",
+      "layout": "src/features/layout/web/WebLayout.tsx",
+      "shared_components": "src/shared/components (Live2D, MusicPlayer, RopeToTop, GithubContribution)",
+      "state": "src/shared/stores",
+      "i18n": "src/shared/i18n",
+      "tests": "Vitest suites under src/features/**/test.tsx"
     },
-    "backend_endpoints": [
-      "server/router/user.js#get('/github/contributions')",
-      "server/controllers/user.js#getGithubContributions",
-      "server/router/article.js#get('/archives')"
+    "backend": {
+      "router": "server/router",
+      "controllers": "server/controllers",
+      "models": "server/models"
+    }
+  },
+  "legacy_project": {
+    "base_path": "../",
+    "frontend_routes": "src/router/index.jsx",
+    "modules": {
+      "web_views": "src/views/web (home, article, archives, categories, about, fragments, tag)",
+      "admin_views": "src/views/admin (article, fragment, monitor, home, user)",
+      "shared_components": "src/components (Discuss, GithubLogining, Live2d, MusicPlayer)",
+      "stores": "src/stores",
+      "styles": "src/assets/less",
+      "comment_system": "src/components/Discuss" 
+    },
+    "backend": {
+      "router": "server/router/index.js",
+      "controllers": "server/controllers",
+      "models": "server/models"
+    }
+  },
+  "tests": {
+    "new_project": "Vitest configured in vitest.config.ts (React Testing Library)",
+    "legacy_project": "Jest/Vitest style tests limited (see vitest.setup.js at root)"
+  },
+  "observations": {
+    "known_parity_docs": ["REIMPLEMENTATION_STATUS.md", "docs/legacy-parity-report.md"],
+    "potential_gaps": [
+      "Legacy about page integrates Discuss comment widget (../src/views/web/about/index.jsx) while new AboutPage currently omits comments.",
+      "Need to validate legacy GitHub login routing (/github) vs new routing (/login for loading screen, /github for callback).",
+      "Legacy project exposes word-split service & additional scripts (../word-split-service) that may not be ported."
     ]
   },
-  "current_state": {
-    "monitor": "Monitor.tsx renders mocked arrays (performanceData/apiData/accessData) with AntD cards/tables; no hook usage.",
-    "performance_store": "Zustand store already tracks metrics, fps, memory, navigation, and systemPerformance; actions exposed for UI consumption.",
-    "socket_hook": "useSystemMonitor.ts connects to socket.io @ VITE_SOCKET_URL, pushes cpu/memory into store via addSystemPerformance.",
-    "home_page": "ArticleListPage renders Sidebar, ArticleCard list, QuickNav; no contribution widget or API call present.",
-    "legacy_contribution": "Contribution.jsx fetched /user/github/contributions, rendered react-calendar-heatmap with responsive behaviour."
+  "live2d_investigation": {
+    "timestamp": "2025-10-12T09:24:00Z",
+    "feature_scope": "Web 前台布局中的 Live2D 看板娘展示",
+    "locations": {
+      "component": "src/shared/components/Live2D/index.tsx",
+      "styles": "src/shared/components/Live2D/styles.less",
+      "mount_point": "src/features/layout/web/WebLayout.tsx"
+    },
+    "current_behavior": {
+      "mounting_logic": "组件在 useEffect 中根据路由与移动端断点计算 allowDisplay，调用 loadOml2d 将舞台挂载至 containerRef 指向的 div。",
+      "visibility_state": "通过本地 state 控制是否渲染包裹容器，初始渲染依赖 allowDisplay 判定。",
+      "asset_sources": "模型资源存放在 public/live2d 下，通过绝对路径 /live2d/* 加载。"
+    },
+    "related_examples": [
+      "旧版项目的 Live2d 组件位于 ../src/components/Live2d/index.js，直接将 oh-my-live2d 舞台挂载到 document.body。",
+      "当前布局中其他全局挂件（RopeToTop、MusicPlayer）同样在 WebLayout.tsx 中挂载，可作为布局集成对照。"
+    ],
+    "testing_notes": "暂无针对 Live2D 的单元测试；现有 routes.config.test.tsx 对 oh-my-live2d 做了 vi.mock，用于路由配置测试。",
+    "initial_observations": [
+      "allowDisplay 逻辑限制了 '/' 或 '/home'、'/about'、文章详情等路径，需确认实际路径是否匹配。",
+      "实例销毁时仅清空 containerRef.innerHTML，未调用实例自带的 unMount/clear 方法，可能残留全局样式或缓存。",
+      "加载模型依赖 window、localStorage，若在 SSR 或严格 CSP 环境下可能报错，需要监控运行日志。",
+      "当前实现传入 statusBar 配置仅保留 enable 与 style，覆盖 oh-my-live2d 默认消息，导致状态栏文案出现 undefined 循环提示；父目录组件保留默认消息并通过实例方法自定义提示。"
+    ]
   },
-  "technology": {
-    "frontend": "React 19, TypeScript, Ant Design, TanStack Query available (used widely in repo).",
-    "charts": "@ant-design/plots used in other analytics (e.g., FragmentAnalytics).",
-    "state": "Zustand + React Query; tests via Vitest & testing-library.",
-    "socket": "socket.io-client already installed; hooks configured.",
-    "data_viz": "react-calendar-heatmap not present in current package.json; legacy used it -> evaluate reintroducing or alt chart." 
-  },
-  "testing": {
-    "monitor": "No dedicated tests yet; opportunity to add component/unit tests verifying dynamic rendering (maybe stub store).",
-    "home": "No tests for ArticleListPage; new component should include Vitest + RTL coverage (snapshot or behaviour).",
-    "backend": "Existing contributions endpoint lacks tests; focus on frontend coverage for this task."
-  },
-  "observations": [
-    "Monitor hooks and store exist but unused, implying planned integration left incomplete.",
-    "Home page lacks any call to contributions API; QuickNav replicates part of legacy QuickLink but not contributions.",
-    "Package.json does not include react-calendar-heatmap; need to decide whether to add dependency or implement custom heatmap (maybe @ant-design/plots calendar?).",
-    "Need to ensure API base path is consistent (legacy used axios instance). Check @shared/utils/request for base path to hit /user/github/contributions.",
-    "Socket endpoint default is http://localhost:1234, ensure backend exposes events; may need graceful fallback when socket unavailable." 
-  ]
+  "live2d_auto_toggle_issue": {
+    "timestamp": "2025-10-12T15:17:00Z",
+    "symptoms": "Live2D 舞台在加载后会自行收起又重新弹出，形成循环闪烁效果。",
+    "suspected_causes": [
+      "当前实现每次渲染都会移除 localStorage 中的 OML2D_STATUS，导致插件重复进入激活流程。",
+      "媒体查询监听在布局初始化时触发 change 事件，可能临时将 shouldShow 设为 false 并调用 stageSlideOut。",
+      "visibility 状态依赖 onStageSlideIn 回调，若实例 stageSlideIn Promise 未 resolve，会导致状态与真实展示不一致。"
+    ],
+    "files_of_interest": [
+      "src/shared/components/Live2D/index.tsx",
+      "src/features/layout/web/WebLayout.tsx",
+      "src/shared/components/Live2D/index.test.tsx"
+    ],
+    "existing_tests": "Vitest 针对 Live2D 的测试仅覆盖首次挂载与显隐切换，尚未验证 rest/active 状态同步问题。"
+  }
 }

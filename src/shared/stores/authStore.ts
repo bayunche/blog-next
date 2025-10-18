@@ -7,7 +7,6 @@ import { create } from 'zustand'
 import { persist, createJSONStorage, devtools, subscribeWithSelector } from 'zustand/middleware'
 import { immer } from 'zustand/middleware/immer'
 import type { User } from './types'
-import { saveUserInfo, removeToken, getUserInfo } from '@shared/utils'
 
 /**
  * 认证状态接口
@@ -46,9 +45,6 @@ interface AuthActions {
   // ==================== 异步操作 ====================
   /** 登出 */
   logout: () => void
-
-  /** 初始化认证状态（从 localStorage 加载） */
-  initialize: () => void
 
   /** 重置状态 */
   reset: () => void
@@ -113,46 +109,15 @@ export const useAuthStore = create<AuthState & AuthActions>()(
               state.user = user
               state.token = token
               state.error = null
-
-              // 同步到 localStorage（使用工具函数）
-              saveUserInfo({ ...user, token })
             }),
 
           // ==================== 异步操作 ====================
           logout: () => {
-            // 清除状态
-            set((state) => {
-              state.user = null
-              state.token = null
-              state.error = null
-            })
-
-            // 清除 localStorage
-            removeToken()
-
-            // TODO: 调用登出 API
-            // 清理其他 Store（可选）
+            // 清除状态，persist middleware 会自动同步到 localStorage
+            set(initialState)
           },
 
-          initialize: () => {
-            // 从 localStorage 加载用户信息
-            const userInfo = getUserInfo()
-
-            if (userInfo && userInfo.token) {
-              set((state) => {
-                state.user = userInfo as User
-                state.token = userInfo.token
-              })
-            }
-          },
-
-          reset: () =>
-            set((state) => {
-              state.user = null
-              state.token = null
-              state.loading = false
-              state.error = null
-            }),
+          reset: () => set(initialState),
 
           // ==================== 计算属性 ====================
           isAuthenticated: () => {
@@ -181,14 +146,6 @@ export const useAuthStore = create<AuthState & AuthActions>()(
     }
   )
 )
-
-/**
- * 初始化 AuthStore
- * 在应用启动时调用，从 localStorage 加载认证状态
- */
-export const initializeAuth = () => {
-  useAuthStore.getState().initialize()
-}
 
 /**
  * 导出默认实例

@@ -29,6 +29,7 @@ import { useArticleDetail, useLikeArticle } from '../hooks'
 import { MarkdownRenderer } from '../components/MarkdownRenderer'
 import { TableOfContents } from '../components/TableOfContents'
 import { CommentList } from '@features/comment'
+import { useTranslation } from 'react-i18next'
 
 const { Title, Text } = Typography
 
@@ -38,6 +39,7 @@ const { Title, Text } = Typography
 export function ArticleDetailPage() {
   const { id } = useParams<{ id: string }>()
   const articleId = parseInt(id || '0', 10)
+  const { t } = useTranslation('article')
 
   // 获取文章详情
   const { data: article, isLoading, error } = useArticleDetail({ id: articleId })
@@ -60,7 +62,7 @@ export function ArticleDetailPage() {
     return (
       <div style={{ padding: '2rem' }}>
         <Alert
-          message="加载失败"
+          message={t('error.title')}
           description={error.message}
           type="error"
           showIcon
@@ -80,7 +82,7 @@ export function ArticleDetailPage() {
           minHeight: '60vh',
         }}
       >
-        <Spin size="large" tip="加载中..." />
+        <Spin size="large" tip={t('loading')} />
       </div>
     )
   }
@@ -89,7 +91,7 @@ export function ArticleDetailPage() {
   if (!article) {
     return (
       <div style={{ padding: '2rem' }}>
-        <Alert message="文章不存在" type="warning" showIcon />
+        <Alert message={t('notFound')} type="warning" showIcon />
       </div>
     )
   }
@@ -113,17 +115,17 @@ export function ArticleDetailPage() {
               style={{ marginBottom: '1rem' }}
             >
               <Text type="secondary">
-                <CalendarOutlined />{' '}
+                <CalendarOutlined /> {t('meta.publishedAt')}{' '}
                 {dayjs(article.createdAt).format('YYYY-MM-DD HH:mm')}
               </Text>
               <Text type="secondary">
-                <EyeOutlined /> {article.viewCount} 次阅读
+                <EyeOutlined /> {t('meta.views', { count: article.viewCount })}
               </Text>
               <Text type="secondary">
-                <LikeOutlined /> {article.likeCount} 点赞
+                <LikeOutlined /> {t('meta.likes', { count: article.likeCount })}
               </Text>
               <Text type="secondary">
-                <CommentOutlined /> {article.commentCount} 评论
+                <CommentOutlined /> {t('meta.comments', { count: article.commentCount })}
               </Text>
             </Space>
 
@@ -162,7 +164,10 @@ export function ArticleDetailPage() {
               loading={isLiking}
               onClick={handleLike}
             >
-              {article.isLiked ? '已点赞' : '点赞'} ({article.likeCount})
+              {t('likeButton', {
+                status: article.isLiked ? t('actions.liked') : t('actions.like'),
+                count: article.likeCount,
+              })}
             </Button>
           </div>
 
@@ -190,7 +195,7 @@ export function ArticleDetailPage() {
                       }}
                     >
                       <Text type="secondary">
-                        <LeftOutlined /> 上一篇
+                        <LeftOutlined /> {t('prevArticle')}
                       </Text>
                       <div style={{ marginTop: '0.5rem' }}>
                         {article.prev.title}
@@ -215,7 +220,7 @@ export function ArticleDetailPage() {
                       }}
                     >
                       <Text type="secondary">
-                        下一篇 <RightOutlined />
+                        {t('nextArticle')} <RightOutlined />
                       </Text>
                       <div style={{ marginTop: '0.5rem' }}>
                         {article.next.title}

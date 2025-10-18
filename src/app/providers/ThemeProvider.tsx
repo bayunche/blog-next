@@ -5,7 +5,9 @@
 
 import { ConfigProvider, App as AntApp, theme } from 'antd'
 import zhCN from 'antd/locale/zh_CN'
-import { useEffect, useState, type ReactNode } from 'react'
+import enUS from 'antd/locale/en_US'
+import { useEffect, useMemo, useState, type ReactNode } from 'react'
+import { useTranslation } from 'react-i18next'
 import { getThemeConfig } from '@design-system/themes/antd-theme'
 
 // 主题类型
@@ -33,11 +35,24 @@ const getSystemTheme = (): 'light' | 'dark' => {
 }
 
 export function ThemeProvider({ children }: ThemeProviderProps) {
+  const { i18n } = useTranslation()
   const [themeMode, setThemeMode] = useState<ThemeMode>(getInitialTheme)
   const [actualTheme, setActualTheme] = useState<'light' | 'dark'>(() => {
     const initial = getInitialTheme()
     return initial === 'auto' ? getSystemTheme() : initial
   })
+  const [currentLocale, setCurrentLocale] = useState(() => i18n.language)
+
+  useEffect(() => {
+    const handleLanguageChange = (lng: string) => {
+      setCurrentLocale(lng)
+    }
+
+    i18n.on('languageChanged', handleLanguageChange)
+    return () => {
+      i18n.off('languageChanged', handleLanguageChange)
+    }
+  }, [i18n])
 
   // 监听系统主题变化
   useEffect(() => {
@@ -70,6 +85,12 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
 
   // 获取 Ant Design 主题配置
   const antdTheme = getThemeConfig(actualTheme === 'dark')
+  const antdLocale = useMemo(() => {
+    if (currentLocale?.startsWith('en')) {
+      return enUS
+    }
+    return zhCN
+  }, [currentLocale])
 
   // 提供主题切换方法（通过 Context API 或全局状态管理）
   useEffect(() => {
@@ -85,7 +106,7 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
         ...antdTheme,
         algorithm: actualTheme === 'dark' ? theme.darkAlgorithm : theme.defaultAlgorithm,
       }}
-      locale={zhCN}
+      locale={antdLocale}
     >
       <AntApp>{children}</AntApp>
     </ConfigProvider>

@@ -7,6 +7,7 @@ import { useMutation } from '@tanstack/react-query'
 import { message } from 'antd'
 import { registerAPI } from '../api'
 import type { RegisterRequest } from '../types'
+import { useTranslation } from 'react-i18next'
 
 /**
  * 注册 Hook 配置
@@ -24,12 +25,14 @@ interface UseRegisterOptions {
  * @returns Mutation 对象
  */
 export function useRegister(options?: UseRegisterOptions) {
+  const { t } = useTranslation('auth')
+
   return useMutation({
     mutationFn: (data: RegisterRequest) => registerAPI(data),
 
     onSuccess: (response) => {
       // 显示成功消息
-      message.success(response.message || '注册成功！请登录')
+      message.success(response.message || t('message.registerSuccess'))
 
       // 执行成功回调
       options?.onSuccess?.()
@@ -37,7 +40,7 @@ export function useRegister(options?: UseRegisterOptions) {
 
     onError: (error: Error) => {
       // 显示错误消息
-      message.error(error.message || '注册失败，请检查输入信息')
+      message.error(error.message || t('message.registerFailed'))
 
       // 执行失败回调
       options?.onError?.(error)

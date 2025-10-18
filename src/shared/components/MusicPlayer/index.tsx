@@ -4,7 +4,7 @@
  * 濞达綀娉曢弫?MetingJS 缂傚啯鍨跺Σ妤佺閹达妇鍙惧☉?API
  */
 
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import './styles.css'
 
 // 濠㈠湱澧楀Σ?MetingJS 闁汇劌瀚崣蹇曚沪閳ь剛鐚剧拠鑼偓?
@@ -29,20 +29,62 @@ declare global {
 }
 
 export function MusicPlayer() {
+  const [isReady, setIsReady] = useState(false)
+
   useEffect(() => {
-    // 闁告柣鍔嶉埀顑跨婵偞娼?MetingJS 闁煎瓨纰嶅﹢?
-    const script = document.createElement('script')
-    script.src = 'https://cdn.jsdelivr.net/npm/meting@2/dist/Meting.min.js'
-    script.async = true
-    document.body.appendChild(script)
+    const ensureLink = (href: string, attr: string) => {
+      let link = document.querySelector<HTMLLinkElement>(`link[${attr}]`)
+      if (!link) {
+        link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = href
+        link.setAttribute(attr, 'true')
+        document.head.appendChild(link)
+      }
+      return link
+    }
+
+    const ensureScript = (src: string, attr: string) => {
+      let script = document.querySelector<HTMLScriptElement>(`script[${attr}]`)
+      if (!script) {
+        script = document.createElement('script')
+        script.src = src
+        script.async = true
+        script.setAttribute(attr, 'true')
+        document.body.appendChild(script)
+      }
+      return script
+    }
+
+    ensureLink(
+      'https://cdn.jsdelivr.net/npm/aplayer/dist/APlayer.min.css',
+      'data-aplayer-css'
+    )
+    ensureScript(
+      'https://cdn.jsdelivr.net/npm/aplayer/dist/APlayer.min.js',
+      'data-aplayer-script'
+    )
+    const metingScript = ensureScript(
+      'https://cdn.jsdelivr.net/npm/meting@2/dist/Meting.min.js',
+      'data-meting-script'
+    )
+
+    const handleReady = () => setIsReady(true)
+
+    if ((window as any).Meting) {
+      setIsReady(true)
+    } else {
+      metingScript.addEventListener('load', handleReady, { once: true })
+    }
 
     return () => {
-      // 婵炴挸鎳愰幃濠囨嚇濮橆厽鎷?
-      if (script.parentNode) {
-        script.parentNode.removeChild(script)
-      }
+      metingScript.removeEventListener('load', handleReady)
     }
   }, [])
+
+  if (!isReady) {
+    return null
+  }
 
   return (
     <meting-js

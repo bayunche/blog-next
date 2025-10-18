@@ -5,4 +5,3 @@
 export * from './storage'
 export * from './token'
 export * from './crypto'
-export { default as request } from './request'

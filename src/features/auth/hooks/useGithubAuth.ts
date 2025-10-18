@@ -8,6 +8,7 @@ import { message } from 'antd'
 import { useAuthStore } from '@shared/stores'
 import { githubAuthCallbackAPI } from '../api'
 import type { GithubCallbackParams } from '../types'
+import { useTranslation } from 'react-i18next'
 
 /**
  * GitHub OAuth Hook 配置
@@ -25,6 +26,7 @@ interface UseGithubAuthOptions {
  */
 export function useGithubAuth(options?: UseGithubAuthOptions) {
   const { setAuth } = useAuthStore()
+  const { t } = useTranslation('auth')
 
   // GitHub 客户端 ID（从环境变量获取）
   const githubClientId = import.meta.env.VITE_GITHUB_CLIENT_ID
@@ -41,7 +43,7 @@ export function useGithubAuth(options?: UseGithubAuthOptions) {
       setAuth(response.user, response.token)
 
       // 显示成功消息
-      message.success('GitHub 登录成功！')
+      message.success(t('github.success'))
 
       // 执行成功回调
       options?.onSuccess?.()
@@ -49,7 +51,7 @@ export function useGithubAuth(options?: UseGithubAuthOptions) {
 
     onError: (error: Error) => {
       // 显示错误消息
-      message.error(error.message || 'GitHub 登录失败')
+      message.error(error.message || t('github.failure'))
 
       // 执行失败回调
       options?.onError?.(error)
@@ -62,7 +64,7 @@ export function useGithubAuth(options?: UseGithubAuthOptions) {
    */
   const startGithubAuth = () => {
     if (!isGithubAuthAvailable) {
-      message.warning('GitHub OAuth 未配置')
+      message.warning(t('github.unavailableTitle'))
       return
     }
 
@@ -94,7 +96,7 @@ export function useGithubAuth(options?: UseGithubAuthOptions) {
     // 验证 state（可选，增强安全性）
     const savedState = sessionStorage.getItem('github_oauth_state')
     if (state && state !== savedState) {
-      message.error('GitHub 登录验证失败')
+      message.error(t('github.stateError'))
       return
     }
 

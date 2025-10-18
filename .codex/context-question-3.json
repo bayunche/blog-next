@@ -1,24 +1,23 @@
-﻿{
-  "question_id": "Q4",
-  "focus": "后端接口差异 (文章归档等)",
-  "findings": [
-    "旧版 Koa 路由 article.js 暴露 getArchives (..\\server\\router\\article.js) 并由控制器实现年度/月度归档统计 (..\\server\\controllers\\article.js#L578)，新版 article 路由缺少该接口，控制器文件也未定义 getArchives。",
-    "新版前端仍调用 GET /article/archives (src\\features\\article\\api\\index.ts)，导致归档页实际请求会 404。",
-    "新旧 server/router 结构看似一致，但需要逐个 diff 以确认其他缺失接口（如点赞、统计）。"
-  ],
+{
+  "question": "项目国际化需要改动哪些核心模块？",
+  "analysis": "入口文件 src/main.tsx 仅挂载 App 并加载全局样式，没有任何 i18n 初始化。应用 Providers 目录中只有 ThemeProvider 和 QueryProvider，缺少语言上下文。大部分 UI 文案散落在 features 模块（如 WebHeader、ArticleDetailPage、AboutPage 等），均为硬编码中文字符串，Ant Design 也未配置 ConfigProvider locale。",
   "evidence": [
-    {"file": "server\\router\\article.js", "description": "新版未注册 /article/archives"},
-    {"file": "..\\server\\router\\article.js", "description": "旧版包含 /article/archives"},
-    {"file": "..\\server\\controllers\\article.js", "description": "旧版 getArchives 实现"},
-    {"file": "src\\features\\article\\api\\index.ts", "description": "新版前端仍调用该接口"}
+    {
+      "file": "src/main.tsx",
+      "snippet": "createRoot(...).render(<StrictMode><App /></StrictMode>)"
+    },
+    {
+      "file": "src/app/providers/index.ts",
+      "snippet": "仅导出 ThemeProvider 和 QueryProvider" 
+    },
+    {
+      "file": "src/features/layout/web/WebHeader.tsx",
+      "snippet": "label: '首页' | '归档' 等硬编码"
+    },
+    {
+      "file": "src/features/article/pages/ArticleDetailPage.tsx",
+      "snippet": "Title/按钮文案均为中文" 
+    }
   ],
-  "gaps": [
-    "需要全面对比 controllers 目录，识别所有缺失/新增接口",
-    "确认数据库模型是否同步更新以支撑新前端需求"
-  ],
-  "next_actions": [
-    "对 server/router 与 controllers 进行逐文件 diff，列出缺失接口列表",
-    "补齐 /article/archives 等关键接口或调整前端调用"
-  ],
-  "cost_notice": "深挖第3次，已花费较多时间，请评估是否继续深入其它接口以避免过度收集"
+  "conclusion": "需要引入 react-i18next 并在 app/providers 中新增 I18nProvider，配置语言资源（至少 zh-CN/en-US），同步 Ant Design ConfigProvider locale，同时创建语言切换器并替换所有硬编码文案为 t('key')。"
 }

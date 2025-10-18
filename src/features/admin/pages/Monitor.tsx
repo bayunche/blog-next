@@ -1,17 +1,16 @@
 ﻿/**
  * 系统监控页面
- * 读取性能监控 Store 与 socket.io 实时数据，展示前端与服务端的运行态。
+ * 结合 performanceStore 和 socket.io 数据展示运行指标。
  */
-
 import { useMemo } from 'react'
-import { Row, Col, Card, Statistic, Table, Progress, Space, Tag, Empty } from 'antd'
+import { Card, Col, Empty, Progress, Row, Space, Statistic, Table, Tag } from 'antd'
 import {
-  DashboardOutlined,
-  ClockCircleOutlined,
-  ThunderboltOutlined,
   ApiOutlined,
   CheckCircleOutlined,
+  ClockCircleOutlined,
   CloseCircleOutlined,
+  DashboardOutlined,
+  ThunderboltOutlined,
 } from '@ant-design/icons'
 import { Area, Line } from '@ant-design/plots'
 import dayjs from 'dayjs'
@@ -20,7 +19,7 @@ import { usePerformanceStore } from '@shared/stores/performanceStore'
 
 type MetricRating = 'good' | 'needs-improvement' | 'poor'
 
-const getRatingColor = (rating: MetricRating) => {
+function getRatingColor(rating: MetricRating) {
   switch (rating) {
     case 'good':
       return 'green'
@@ -38,16 +37,15 @@ export function Monitor() {
   const systemPerformance = usePerformanceStore((state) => state.systemPerformance)
   const metrics = usePerformanceStore((state) => state.metrics)
   const fpsHistory = usePerformanceStore((state) => state.fpsHistory)
-  const memoryStats = usePerformanceStore((state) => state.memoryUsage)
+  const memoryUsage = usePerformanceStore((state) => state.memoryUsage)
   const navigationHistory = usePerformanceStore((state) => state.navigationHistory)
 
-  const latestSystem = systemPerformance.length > 0 ? systemPerformance.at(-1)! : null
-
-  const cpuPercent = latestSystem
-    ? Math.round(Math.max(0, Math.min(1, latestSystem.cpuUsage)) * 100)
-    : null
+  const latestSystem =
+    systemPerformance.length > 0 ? systemPerformance[systemPerformance.length - 1] : null
+  const latestFps = fpsHistory.length > 0 ? fpsHistory[fpsHistory.length - 1].fps : null
+  const cpuPercent = latestSystem ? Math.round(Math.min(1, Math.max(0, latestSystem.cpuUsage)) * 100) : null
   const memoryPercent = latestSystem
-    ? Math.round(Math.max(0, Math.min(1, latestSystem.memoryUsage)) * 100)
+    ? Math.round(Math.min(1, Math.max(0, latestSystem.memoryUsage)) * 100)
     : null
 
   const systemTrend = useMemo(() => {
@@ -58,12 +56,12 @@ export function Monitor() {
           {
             time,
             metric: 'CPU',
-            value: Math.round(Math.max(0, Math.min(1, item.cpuUsage)) * 100),
+            value: Math.round(Math.min(1, Math.max(0, item.cpuUsage)) * 100),
           },
           {
             time,
             metric: '内存',
-            value: Math.round(Math.max(0, Math.min(1, item.memoryUsage)) * 100),
+            value: Math.round(Math.min(1, Math.max(0, item.memoryUsage)) * 100),
           },
         ]
       })
@@ -78,8 +76,8 @@ export function Monitor() {
     }))
   }, [fpsHistory])
 
-  const metricsTable = useMemo(() => {
-    return metrics.slice(0, 10).map((metric) => ({
+  const metricRows = useMemo(() => {
+    return metrics.slice(0, 12).map((metric) => ({
       key: metric.timestamp,
       name: metric.name,
       value: metric.value.toFixed(2),
@@ -89,8 +87,8 @@ export function Monitor() {
     }))
   }, [metrics])
 
-  const navigationTable = useMemo(() => {
-    return navigationHistory.slice(0, 10).map((record, index) => ({
+  const navigationRows = useMemo(() => {
+    return navigationHistory.slice(0, 12).map((record, index) => ({
       key: `${record.path}-${record.timestamp}-${index}`,
       path: record.path,
       event: record.event,
@@ -125,19 +123,15 @@ export function Monitor() {
       width: 160,
       render: (rating: MetricRating) => (
         <Tag color={getRatingColor(rating)}>
-          {rating === 'good'
-            ? '优秀'
-            : rating === 'needs-improvement'
-              ? '需优化'
-              : '较差'}
+          {rating === 'good' ? '优秀' : rating === 'needs-improvement' ? '需优化' : '较差'}
         </Tag>
       ),
     },
     {
-      title: '时间',
+      title: '采集时间',
       dataIndex: 'recordedAt',
       key: 'recordedAt',
-      width: 140,
+      width: 150,
     },
   ]
 
@@ -154,9 +148,7 @@ export function Monitor() {
       key: 'event',
       width: 120,
       render: (event: 'enter' | 'leave') => (
-        <Tag color={event === 'enter' ? 'blue' : 'purple'}>
-          {event === 'enter' ? '进入' : '离开'}
-        </Tag>
+        <Tag color={event === 'enter' ? 'blue' : 'purple'}>{event === 'enter' ? '进入' : '离开'}</Tag>
       ),
     },
     {
@@ -170,7 +162,7 @@ export function Monitor() {
       dataIndex: 'duration',
       key: 'duration',
       width: 160,
-      render: (value: number | null) => (value ? value : '—'),
+      render: (value: number | null) => (value ?? '—'),
     },
   ]
 
@@ -179,7 +171,7 @@ export function Monitor() {
       <Row gutter={[16, 16]}>
         <Col span={24}>
           <Card>
-            <Space align="center" size="middle">
+            <Space size="large">
               <Tag
                 color={isConnected ? 'green' : 'red'}
                 icon={isConnected ? <CheckCircleOutlined /> : <CloseCircleOutlined />}
@@ -204,10 +196,7 @@ export function Monitor() {
               prefix={<DashboardOutlined />}
               valueStyle={{ color: cpuPercent && cpuPercent > 80 ? '#cf1322' : '#3f8600' }}
             />
-            <Progress
-              percent={cpuPercent ?? 0}
-              status={cpuPercent && cpuPercent > 80 ? 'exception' : 'active'}
-            />
+            <Progress percent={cpuPercent ?? 0} status={cpuPercent && cpuPercent > 80 ? 'exception' : 'active'} />
           </Card>
         </Col>
         <Col xs={24} sm={12} lg={6}>
@@ -219,37 +208,30 @@ export function Monitor() {
               prefix={<DashboardOutlined />}
               valueStyle={{ color: memoryPercent && memoryPercent > 80 ? '#cf1322' : '#3f8600' }}
             />
-            <Progress
-              percent={memoryPercent ?? 0}
-              status={memoryPercent && memoryPercent > 80 ? 'exception' : 'active'}
-            />
+            <Progress percent={memoryPercent ?? 0} status={memoryPercent && memoryPercent > 80 ? 'exception' : 'active'} />
           </Card>
         </Col>
         <Col xs={24} sm={12} lg={6}>
           <Card>
             <Statistic
               title="当前 FPS"
-              value={fpsHistory.at(-1)?.fps ?? 0}
+              value={latestFps ?? 0}
               suffix="fps"
               prefix={<ThunderboltOutlined />}
-              valueStyle={{ color: (fpsHistory.at(-1)?.fps ?? 0) < 30 ? '#cf1322' : '#3f8600' }}
+              valueStyle={{ color: (latestFps ?? 0) < 30 ? '#cf1322' : '#3f8600' }}
             />
             <Progress
-              percent={Math.min(100, Math.round(((fpsHistory.at(-1)?.fps ?? 0) / 60) * 100))}
-              status={(fpsHistory.at(-1)?.fps ?? 0) < 30 ? 'exception' : 'active'}
+              percent={Math.min(100, Math.round(((latestFps ?? 0) / 60) * 100))}
+              status={(latestFps ?? 0) < 30 ? 'exception' : 'active'}
             />
           </Card>
         </Col>
         <Col xs={24} sm={12} lg={6}>
           <Card>
+            <Statistic title="JS 内存使用" value={memoryUsage ? memoryUsage.used.toFixed(1) : '—'} suffix="MB" />
             <Statistic
-              title="JS 内存使用"
-              value={memoryStats ? memoryStats.used.toFixed(1) : '—'}
-              suffix="MB"
-            />
-            <Statistic
-              title="距离上次变化"
-              value={memoryStats ? `${memoryStats.increase >= 0 ? '+' : ''}${memoryStats.increase.toFixed(1)} MB` : '—'}
+              title="较上次变化"
+              value={memoryUsage ? `${memoryUsage.increase >= 0 ? '+' : ''}${memoryUsage.increase.toFixed(1)} MB` : '—'}
             />
           </Card>
         </Col>
@@ -265,9 +247,9 @@ export function Monitor() {
                 yField="value"
                 seriesField="metric"
                 smooth
-                animation={{ appear: { animation: 'path-in', duration: 600 } }}
-                yAxis={{ max: 100, min: 0, title: { text: '百分比 (%)' } }}
+                yAxis={{ min: 0, max: 100, title: { text: '百分比 (%)' } }}
                 tooltip={{ showMarkers: true }}
+                animation={{ appear: { animation: 'path-in', duration: 600 } }}
               />
             ) : (
               <Empty description="暂无系统指标" />
@@ -298,10 +280,11 @@ export function Monitor() {
           <Card title={<Space><ApiOutlined />Web Vitals 指标</Space>}>
             <Table
               columns={metricColumns}
-              dataSource={metricsTable}
-              pagination={false}
+              dataSource={metricRows}
               size="small"
+              pagination={false}
               locale={{ emptyText: '暂无性能指标' }}
+              rowKey="key"
             />
           </Card>
         </Col>
@@ -309,10 +292,11 @@ export function Monitor() {
           <Card title={<Space><ClockCircleOutlined />页面导航记录</Space>}>
             <Table
               columns={navigationColumns}
-              dataSource={navigationTable}
-              pagination={false}
+              dataSource={navigationRows}
               size="small"
+              pagination={false}
               locale={{ emptyText: '暂无导航数据' }}
+              rowKey="key"
             />
           </Card>
         </Col>

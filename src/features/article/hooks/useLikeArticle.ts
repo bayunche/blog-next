@@ -7,6 +7,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { message } from 'antd'
 import { likeArticleAPI, unlikeArticleAPI } from '../api'
 import type { LikeArticleParams, ArticleDetail } from '../types'
+import { useTranslation } from 'react-i18next'
 
 /**
  * 点赞文章 Hook 配置
@@ -36,12 +37,18 @@ export interface UseLikeArticleOptions {
  */
 export function useLikeArticle(options?: UseLikeArticleOptions) {
   const queryClient = useQueryClient()
+  const { t } = useTranslation('article')
 
   // 点赞 Mutation
   const likeMutation = useMutation({
     mutationFn: (params: LikeArticleParams) => likeArticleAPI(params),
 
     onSuccess: (response, variables) => {
+      if (response.success === false) {
+        message.error(t('messages.likeFailed'))
+        return
+      }
+
       // 乐观更新：立即更新缓存中的文章详情
       queryClient.setQueryData<ArticleDetail>(
         ['article', variables.id],
@@ -55,12 +62,12 @@ export function useLikeArticle(options?: UseLikeArticleOptions) {
         }
       )
 
-      message.success('点赞成功')
+      message.success(t('messages.likeSuccess'))
       options?.onSuccess?.()
     },
 
     onError: (error: Error) => {
-      message.error(error.message || '点赞失败')
+      message.error(error.message || t('messages.likeFailed'))
       options?.onError?.(error)
     },
   })
@@ -70,6 +77,11 @@ export function useLikeArticle(options?: UseLikeArticleOptions) {
     mutationFn: (params: LikeArticleParams) => unlikeArticleAPI(params),
 
     onSuccess: (response, variables) => {
+      if (response.success === false) {
+        message.error(t('messages.operationFailed'))
+        return
+      }
+
       // 乐观更新：立即更新缓存中的文章详情
       queryClient.setQueryData<ArticleDetail>(
         ['article', variables.id],
@@ -83,12 +95,12 @@ export function useLikeArticle(options?: UseLikeArticleOptions) {
         }
       )
 
-      message.success('已取消点赞')
+      message.success(t('messages.unlikeSuccess'))
       options?.onSuccess?.()
     },
 
     onError: (error: Error) => {
-      message.error(error.message || '操作失败')
+      message.error(error.message || t('messages.operationFailed'))
       options?.onError?.(error)
     },
   })

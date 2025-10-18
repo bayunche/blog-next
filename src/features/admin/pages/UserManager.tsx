@@ -191,6 +191,7 @@ export function UserManager() {
           placeholder="选择角色"
           allowClear
           style={{ width: 150 }}
+          value={role}
           onChange={(value) => {
             setRole(value)
             setPage(1)

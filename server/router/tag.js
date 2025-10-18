@@ -1,5 +1,5 @@
 const Router = require('koa-router')
-const router = new Router({ prefix: '/tag' })
+const router = new Router({ prefix: '/api/tag' })
 
 const { getTagList } = require('../controllers/tag')
 

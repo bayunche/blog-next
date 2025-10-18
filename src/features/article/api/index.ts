@@ -2,7 +2,7 @@
  * 文章模块 API
  */
 
-import request from '@shared/utils/request'
+import request from '@shared/api/axios'
 import type {
   ArticleListParams,
   ArticleListResponse,
@@ -50,18 +50,57 @@ export const getArticleListAPI = async (
     ...(orderBy && orderDirection ? { order: `${orderBy} ${orderDirection}` } : {}),
   }
 
-  // 后端返回 { rows, count } 格式，转换为前端期望的格式
+  // 后端返回 { list, total, page, pageSize } 格式
   const response: any = await request.get('/article/list', {
     params: requestParams,
   })
 
+  console.log('[DEBUG] getArticleListAPI RAW response:', {
+    responseType: typeof response,
+    responseKeys: Object.keys(response || {}),
+    response: JSON.stringify(response).slice(0, 200),
+    hasList: !!response.list,
+    hasRows: !!response.rows,
+    listType: typeof response.list,
+    listIsArray: Array.isArray(response.list),
+    listLength: response.list?.length,
+    rowsLength: response.rows?.length,
+    total: response.total,
+    count: response.count
+  })
+
   const page = Number(params?.page) || 1
   const pageSize = Number(params?.pageSize) || 10
-  const total = response.count || 0
+  // 修复：后端返回 total 而不是 count
+  const total = response.total || 0
   const totalPages = Math.ceil(total / pageSize)
 
-  // 转换后端数据格式
-  const list = (response.rows || []).map(transformArticle)
+  // 修复：后端返回 list 而不是 rows
+  // 添加类型安全检查
+  const rawList = response.list || []
+  console.log('[DEBUG] rawList check:', {
+    rawListType: typeof rawList,
+    rawListIsArray: Array.isArray(rawList),
+    rawListValue: JSON.stringify(rawList).slice(0, 100)
+  })
+
+  // 确保 list 是数组
+  if (!Array.isArray(rawList)) {
+    console.error('[ERROR] response.list is not an array:', {
+      type: typeof rawList,
+      value: rawList
+    })
+    // 返回空列表而非抛出错误
+    return {
+      list: [],
+      total: 0,
+      page,
+      pageSize,
+      totalPages: 0,
+    }
+  }
+
+  const list = rawList.map(transformArticle)
 
   return {
     list,
