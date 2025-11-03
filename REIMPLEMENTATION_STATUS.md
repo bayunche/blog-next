@@ -115,7 +115,7 @@ HeroIntro：
 
 行1：Hi, <YourName> 或自定义签名。
 
-行2：简介一句（如“写代码是热爱，写到世界充满爱！”）。
+行2：简介一句（如“Crafted in logic, shaped by soul.”）。
 Hi, DIYgod
 
 SocialLinks：图标与顺序严格包含：GitHub、Twitter、Bilibili、Telegram、Email、Steam、PlayStation、Nintendo Switch（保持与目标一致；“follow”图标为 RSS/订阅可自定）。

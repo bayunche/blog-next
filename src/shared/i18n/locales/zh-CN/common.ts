@@ -1,6 +1,6 @@
 const common = {
   'app.title': '八云澈的小站',
-  'app.subtitle': '写代码是热爱，写到世界充满爱！',
+  'app.subtitle': 'Crafted in logic, shaped by soul.',
   'actions.confirm': '确认',
   'actions.cancel': '取消',
   'actions.close': '关闭',

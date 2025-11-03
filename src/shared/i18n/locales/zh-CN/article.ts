@@ -5,7 +5,7 @@ const article = {
   'meta.comments': '{{count}} 条评论',
   'meta.updatedAt': '最后更新',
   'meta.updatedAtShort': '更新于 {{date}}',
-  'meta.greeting': 'Hi, 八云澈',
+  'meta.greeting': '逻辑锻造，灵魂塑形',
   'meta.localeSwitcher': '切换语言',
   'meta.info': '文章信息',
   'meta.musicPlayer': '文章配乐',

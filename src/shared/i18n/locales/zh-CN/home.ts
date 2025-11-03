@@ -1,6 +1,6 @@
 const home = {
-  headline: 'Hi, 八云澈',
-  subline: '写代码是热爱，写到世界充满爱！',
+  headline: '逻辑锻造，灵魂塑形',
+  subline: 'Crafted in logic, shaped by soul.',
   description: '我是一个热衷于开源与分享的开发者，欢迎通过下列社交平台与我交流。',
   feed: {
     title: '最新发布',
