@@ -64,11 +64,14 @@ export function Sidebar() {
         </div>
       ) : (
         <ul className="sidebar-article-list">
-          {hotArticles?.list.map((article) => (
-            <li key={article.id}>
-              <Link to={`/article/${article.id}`}>{article.title}</Link>
-            </li>
-          ))}
+          {hotArticles?.list.map((article) => {
+            const href = article.slug ? `/posts/${article.slug}` : `/article/${article.id}`
+            return (
+              <li key={article.id}>
+                <Link to={href}>{article.title}</Link>
+              </li>
+            )
+          })}
         </ul>
       )}
 
@@ -82,7 +85,7 @@ export function Sidebar() {
         <div className="sidebar-tags">
           {tags?.map((tag) => (
             <Tag key={tag.id} color="blue">
-              <Link to={`/tags/${tag.name}`}>{tag.name}</Link>
+              <Link to={`/tag/${tag.name}`}>{tag.name}</Link>
             </Tag>
           ))}
         </div>

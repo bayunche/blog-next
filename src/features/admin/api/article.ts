@@ -19,6 +19,14 @@ export interface ArticleManageParams {
 /**
  * 文章管理列表项
  */
+export interface ArticleMusicConfig {
+  server: string
+  type: string
+  id: string
+  autoplay?: boolean
+  lrcType?: number | string | null
+}
+
 export interface ArticleManageItem {
   id: number
   title: string
@@ -33,6 +41,7 @@ export interface ArticleManageItem {
   commentCount: number
   createdAt: string
   updatedAt: string
+  music?: ArticleMusicConfig | null
 }
 
 /**
@@ -56,6 +65,7 @@ export interface ArticleFormData {
   categoryId?: number
   tagIds?: number[]
   status?: 'draft' | 'published'
+  music?: ArticleMusicConfig | null
 }
 
 /**

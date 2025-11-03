@@ -1,0 +1,184 @@
+.page {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 112px 20px 120px;
+  display: grid;
+  gap: 56px;
+}
+
+.status {
+  text-align: center;
+  padding: 120px 16px;
+  color: rgba(21, 21, 21, 0.5);
+  font-size: 1rem;
+}
+
+.header {
+  text-align: center;
+  display: grid;
+  gap: 12px;
+}
+
+.title {
+  margin: 0;
+  font-size: clamp(2.3rem, 4vw, 2.9rem);
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.subtitle {
+  margin: 0;
+  color: rgba(21, 21, 21, 0.6);
+  letter-spacing: 0.12em;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+}
+
+.yearList {
+  display: grid;
+  gap: 48px;
+}
+
+.yearSection {
+  display: grid;
+  gap: 18px;
+}
+
+.yearTitle {
+  margin: 0;
+  font-size: 1.6rem;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgba(21, 21, 21, 0.7);
+}
+
+.postList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 14px;
+}
+
+.postItem {
+  display: grid;
+  grid-template-columns: 96px 1fr;
+  align-items: baseline;
+  gap: 16px;
+}
+
+.postDate {
+  font-size: 0.88rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(21, 21, 21, 0.45);
+}
+
+.postLink {
+  color: var(--text-primary);
+  text-decoration: none;
+  font-size: 1rem;
+  position: relative;
+  transition: color 0.2s ease;
+
+  &:hover {
+    color: var(--primary-color);
+  }
+}
+
+.chain {
+  background: rgba(255, 255, 255, 0.92);
+  border-radius: 24px;
+  padding: 28px;
+  box-shadow: 0 24px 48px rgba(12, 15, 23, 0.08);
+  display: grid;
+  gap: 18px;
+}
+
+.chainTitle {
+  margin: 0;
+  font-size: 1.05rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(21, 21, 21, 0.65);
+}
+
+.chainList {
+  display: grid;
+  gap: 14px;
+
+  div {
+    display: grid;
+    gap: 4px;
+  }
+
+  dt {
+    font-size: 0.8rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: rgba(21, 21, 21, 0.45);
+  }
+
+  dd {
+    margin: 0;
+    font-weight: 600;
+    font-size: 0.95rem;
+  }
+
+  a {
+    color: var(--primary-color);
+    text-decoration: none;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+}
+
+@media (max-width: 640px) {
+  .page {
+    padding: 88px 16px 96px;
+  }
+
+  .postItem {
+    grid-template-columns: 80px 1fr;
+    gap: 12px;
+  }
+}
+
+html[data-theme='dark'] {
+  .status {
+    color: rgba(232, 232, 232, 0.65);
+  }
+
+  .subtitle {
+    color: rgba(232, 232, 232, 0.6);
+  }
+
+  .postDate {
+    color: rgba(232, 232, 232, 0.55);
+  }
+
+  .chain {
+    background: rgba(16, 16, 18, 0.9);
+    box-shadow: 0 28px 52px rgba(0, 0, 0, 0.45);
+  }
+
+  .chainTitle {
+    color: rgba(232, 232, 232, 0.6);
+  }
+
+  .chainList dt {
+    color: rgba(232, 232, 232, 0.5);
+  }
+
+  .chainList dd {
+    color: rgba(232, 232, 232, 0.88);
+  }
+
+  .chainList a {
+    color: rgba(239, 179, 153, 0.9);
+  }
+}

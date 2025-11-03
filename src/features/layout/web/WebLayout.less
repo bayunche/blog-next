@@ -8,46 +8,122 @@
   display: flex;
   flex-direction: column;
   position: relative;
-  overflow: hidden;
+  overflow: visible;
 
   // 头部导航
   .web-header {
-    background: var(--bg-secondary);
-    box-shadow: var(--shadow-sm);
-    padding: 0;
     position: sticky;
     top: 0;
     z-index: 100;
-    border-bottom: none; // 极简风格，无边框
+    background: rgba(255, 255, 255, 0.72);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.52);
+    backdrop-filter: saturate(180%) blur(22px);
+    -webkit-backdrop-filter: saturate(180%) blur(22px);
+    box-shadow: 0 18px 42px rgba(15, 23, 42, 0.08);
 
-    .header-content {
-      max-width: 1200px;
+    .web-header__inner {
+      max-width: 960px;
       margin: 0 auto;
-      padding: 0 24px;
+      padding: 28px 24px 18px;
       display: flex;
+      flex-direction: column;
+      gap: 28px;
+      text-align: center;
+    }
+
+    .web-header__brandBlock {
+      display: grid;
+      gap: 12px;
+      justify-items: center;
+    }
+
+    .web-header__brandTitle {
+      font-size: 1.5rem;
+      font-weight: 600;
+      letter-spacing: 0.22em;
+      color: var(--text-primary);
+    }
+
+    .web-header__brandTagline {
+      font-size: 0.95rem;
+      color: rgba(31, 29, 28, 0.6);
+      letter-spacing: 0.12em;
+    }
+
+    .web-header__brandMeta {
+      display: inline-flex;
       align-items: center;
-      justify-content: space-between;
-      height: 64px;
+      gap: 18px;
+      font-size: 0.88rem;
+      color: rgba(31, 29, 28, 0.6);
+    }
 
-      .logo {
-        font-size: 20px;
-        font-weight: 600;
-        color: var(--primary-color);
-        cursor: pointer;
-        transition: color 0.3s var(--ease-out-cubic);
-        user-select: none;
+    .web-header__brandEmail {
+      letter-spacing: 0.12em;
+    }
 
-        &:hover {
-          color: var(--primary-dark);
-        }
+    .web-header__language {
+      min-width: 132px;
+      background: rgba(255, 255, 255, 0.9);
+      border-radius: 999px;
+      box-shadow: inset 0 0 0 1px rgba(214, 127, 71, 0.18);
+
+      :global(.ant-select-selector) {
+        border: none !important;
+        background: transparent !important;
+        border-radius: 999px !important;
+        padding: 0 0.75rem !important;
       }
 
-      // 用户名样式
-      .user-name {
-        color: var(--text-primary);
-        font-size: 14px;
-        font-weight: 500;
-        transition: color 0.3s var(--ease-out-cubic);
+      :global(.ant-select-arrow) {
+        color: rgba(31, 29, 28, 0.45) !important;
+      }
+    }
+
+    .web-header__nav {
+      display: inline-flex;
+      justify-content: center;
+      align-items: center;
+      gap: 32px;
+      margin: 0 auto;
+    }
+
+    .web-header__navItem {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 6px 4px;
+      font-size: 0.95rem;
+      letter-spacing: 0.14em;
+      color: rgba(31, 29, 28, 0.55);
+      text-decoration: none;
+      transition: color 0.2s ease;
+
+      &::after {
+        content: '';
+        position: absolute;
+        bottom: -12px;
+        left: 50%;
+        width: 26px;
+        height: 2px;
+        border-radius: 999px;
+        background: transparent;
+        transform: translateX(-50%);
+        transition: background 0.2s ease, transform 0.2s ease;
+      }
+
+      &:hover {
+        color: var(--primary-color);
+      }
+
+      &.is-active {
+        color: var(--primary-color);
+
+        &::after {
+          background: var(--primary-color);
+          transform: translateX(-50%) scaleX(1.2);
+        }
       }
     }
   }
@@ -55,7 +131,7 @@
   // 主内容区
   .web-content {
     flex: 1;
-    padding: 24px 0;
+    padding: 48px 0 24px;
     background: transparent;
 
     .content-wrapper {
@@ -67,14 +143,47 @@
 
   // 页脚
   .web-footer {
-    background: var(--bg-secondary);
-    border-top: none; // 极简风格，无边框
-    text-align: center;
-    padding: 24px 0;
+    background: rgba(255, 255, 255, 0.9);
+    border-top: 1px solid rgba(214, 127, 71, 0.12);
+    padding: 32px 0;
 
-    .footer-content {
-      color: var(--text-secondary);
-      font-size: 14px;
+    .web-footer__inner {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 0 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+    }
+
+    .web-footer__meta {
+      display: grid;
+      gap: 6px;
+      font-size: 0.85rem;
+      color: rgba(31, 29, 28, 0.6);
+    }
+
+    .web-footer__social {
+      display: flex;
+      gap: 14px;
+
+      a {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.85);
+        box-shadow: 0 12px 24px rgba(214, 127, 71, 0.18);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--primary-color);
+        transition: transform 0.2s ease;
+
+        &:hover {
+          transform: translateY(-3px);
+        }
+      }
     }
   }
 }
@@ -105,6 +214,44 @@
 
 html[data-theme='dark'] {
   .web-layout {
+    .web-header {
+      background: rgba(24, 24, 26, 0.72);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      box-shadow: 0 24px 48px rgba(0, 0, 0, 0.55);
+      backdrop-filter: saturate(160%) blur(20px);
+      -webkit-backdrop-filter: saturate(160%) blur(20px);
+
+      .web-header__brandTitle {
+        color: rgba(255, 244, 237, 0.9);
+      }
+
+      .web-header__brandTagline,
+      .web-header__brandMeta,
+      .web-header__brandEmail {
+        color: rgba(255, 244, 237, 0.7);
+      }
+
+      .web-header__language {
+        box-shadow: inset 0 0 0 1px rgba(255, 210, 185, 0.28);
+
+        :global(.ant-select-selection-item) {
+          color: rgba(255, 244, 237, 0.92) !important;
+        }
+
+        :global(.ant-select-arrow) {
+          color: rgba(255, 244, 237, 0.75) !important;
+        }
+      }
+
+      .web-header__navItem {
+        color: rgba(228, 223, 217, 0.6);
+
+        &:hover,
+        &.is-active {
+          color: rgba(255, 210, 185, 0.95);
+        }
+      }
+    }
   }
 
   .web-layout__background {
@@ -120,14 +267,50 @@ html[data-theme='dark'] {
       );
     }
   }
+  .web-footer {
+    background: rgba(24, 22, 21, 0.9);
+
+    .web-footer__meta {
+      color: rgba(255, 244, 237, 0.75);
+    }
+
+    .web-footer__social a {
+      background: rgba(31, 29, 28, 0.85);
+      color: rgba(255, 210, 185, 0.9);
+    }
+  }
 }
 
 // 响应式设计
-@media (max-width: 768px) {
+@media (max-width: 900px) {
   .web-layout {
-    .web-header .header-content,
+    .web-header {
+      .web-header__inner {
+        padding: 20px 20px 16px;
+        gap: 16px;
+      }
+
+      .web-header__topBar {
+        flex-direction: column;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .web-header__nav {
+        justify-content: center;
+        flex-wrap: wrap;
+        row-gap: 12px;
+      }
+    }
+
     .web-content .content-wrapper {
       padding: 0 16px;
     }
+  }
+}
+
+[data-theme='dark'] {
+  .web-layout .web-header .web-header__navItem.is-active::after {
+    background: rgba(255, 210, 185, 0.9) !important;
   }
 }

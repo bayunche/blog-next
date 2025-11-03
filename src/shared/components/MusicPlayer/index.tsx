@@ -5,6 +5,7 @@
  */
 
 import { useEffect, useState } from 'react'
+import { loadMetingAssets } from '@shared/utils/meting'
 import './styles.css'
 
 // 濠㈠湱澧楀Σ?MetingJS 闁汇劌瀚崣蹇曚沪閳ь剛鐚剧拠鑼偓?
@@ -32,54 +33,12 @@ export function MusicPlayer() {
   const [isReady, setIsReady] = useState(false)
 
   useEffect(() => {
-    const ensureLink = (href: string, attr: string) => {
-      let link = document.querySelector<HTMLLinkElement>(`link[${attr}]`)
-      if (!link) {
-        link = document.createElement('link')
-        link.rel = 'stylesheet'
-        link.href = href
-        link.setAttribute(attr, 'true')
-        document.head.appendChild(link)
-      }
-      return link
-    }
-
-    const ensureScript = (src: string, attr: string) => {
-      let script = document.querySelector<HTMLScriptElement>(`script[${attr}]`)
-      if (!script) {
-        script = document.createElement('script')
-        script.src = src
-        script.async = true
-        script.setAttribute(attr, 'true')
-        document.body.appendChild(script)
-      }
-      return script
-    }
-
-    ensureLink(
-      'https://cdn.jsdelivr.net/npm/aplayer/dist/APlayer.min.css',
-      'data-aplayer-css'
-    )
-    ensureScript(
-      'https://cdn.jsdelivr.net/npm/aplayer/dist/APlayer.min.js',
-      'data-aplayer-script'
-    )
-    const metingScript = ensureScript(
-      'https://cdn.jsdelivr.net/npm/meting@2/dist/Meting.min.js',
-      'data-meting-script'
-    )
-
-    const handleReady = () => setIsReady(true)
-
+    if (typeof window === 'undefined') return
     if ((window as any).Meting) {
       setIsReady(true)
-    } else {
-      metingScript.addEventListener('load', handleReady, { once: true })
+      return
     }
-
-    return () => {
-      metingScript.removeEventListener('load', handleReady)
-    }
+    loadMetingAssets(() => setIsReady(true))
   }, [])
 
   if (!isReady) {
@@ -99,6 +58,7 @@ export function MusicPlayer() {
       list-folded="true"
       lrc-type="3"
       mutex="true"
+      api="https://netease.hasunemiku.top/api?server=:server&type=:type&id=:id&r=:r"
     />
   )
 }

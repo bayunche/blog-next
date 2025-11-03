@@ -1,7 +1,7 @@
-﻿# 上下文充分性检查
-- [x] 我能定义清晰的接口契约吗？（Monitor 读取 performanceStore/systemPerformance；贡献图调用 GET /user/github/contributions -> [{ date, count }].）
-- [x] 我理解关键技术选型吗？（沿用现有 TanStack Query + Zustand；可引入 react-calendar-heatmap 复刻体验。）
-- [x] 我识别了主要风险点吗？（Socket 不在线、GitHub 抓取缓慢、第三方库样式冲突。）
-- [x] 我知道如何验证实现吗？（Vitest 覆盖组件/Hook，手动模拟 store 数据，运行前端请求。）
+# 上下文充分性检查
+- [ ] 我能定义清晰的接口契约吗？（缺乏 diygod.cc 各页面的完整布局与元素明细，仅有单张截图，无法确定具体模块、排版与文案要求。）
+- [x] 我理解关键技术选型吗？（前台仍基于 React 19 + Ant Design + Less，自定义 design-system token 可复用，但需要统一来源。）
+- [x] 我识别了主要风险点吗？（需要全面替换 Ant 组件、剥离阴影/玻璃拟态、补齐全局 token；缺乏设计稿导致实现方向可能偏离。）
+- [ ] 我知道如何验证实现吗？（目前没有可对照的页面级验收标准或测试脚本，无法确认“符合 diygod.cc” 的客观标准。）
 
-→ 可以进入规划阶段。
+→ 暂不能进入规划阶段。需要补充：1) diygod.cc 各页面的最新截图或设计规范；2) 明确验收标准（例如关键元素、尺寸、色值、字体），再制定验证方案。

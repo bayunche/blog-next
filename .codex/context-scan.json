@@ -1,4 +1,147 @@
 {
+  "reimplementation_alignment": {
+    "timestamp": "2025-10-22T09:15:00Z",
+    "target_routes": {
+      "home": {
+        "path": "src/features/home/pages/HomePage.tsx",
+        "styles": "src/features/home/pages/HomePage.module.less",
+        "current": "Hero 区块包含语言切换、社交导航以及跳转按钮和链上信息列表，与目标的极简欢迎页差异较大。"
+      },
+      "article_detail": {
+        "path": "src/features/article/pages/ArticleDetailPage.tsx",
+        "styles": "src/features/article/pages/ArticleDetailPage.module.less",
+        "current": "文章详情页带有点赞、分享、音乐播放器、评论区与链上信息，排版偏双列并包含抽屉式 TOC。"
+      },
+      "archives": {
+        "path": "src/features/article/pages/ArchivesPage.tsx",
+        "current": "使用 Ant Design Timeline 展示年份与月份，条目附带分类/tag/统计标签，需要改造成纯年份列表与链上信息块。"
+      },
+      "tag_detail": {
+        "path": "src/features/article/pages/TagDetailPage.tsx",
+        "current": "页面采用卡片栅格与 Breadcrumb，需要收敛为极简列表样式且路由统一到 /tag/:slug。",
+        "related": [
+          "src/features/article/pages/TagsPage.tsx",
+          "src/features/article/components/ArticleCard.tsx"
+        ]
+      },
+      "layout": {
+        "path": "src/features/layout/web/WebLayout.tsx",
+        "header": "src/features/layout/web/components/WebHeader.tsx",
+        "current": "全局布局始终渲染顶栏、背景特效、Live2D、音乐播放器等挂件；首页也走 WebLayout，需根据目标决定是否隐藏或剥离。"
+      },
+      "routing": {
+        "config": "src/app/routes/routes.config.tsx",
+        "current": "`/` 路径重定向到 /home，文章详情支持 /article/:id 与 /posts/:slug；需要对齐文档所述路由结构。"
+      }
+    },
+    "content_sources": {
+      "markdown": "待确认文章数据源：src/features/article/hooks/useArticleDetail 通过后端接口返回 HTML 内容，目前未实现多语言 markdown 方案。",
+      "chain_meta": "链上信息常量位于 src/shared/constants/blog.config.ts。"
+    },
+    "similar_references": [
+      "旧版 blog-next 在 src/features/layout/web 目录下已有 MinimalHeader 备选组件，可参考大纲。",
+      "docs/legacy-parity-report.md 列出了与旧站点的功能差异，可帮助识别需删除的组件。"
+    ],
+    "testing_notes": {
+      "unit": "当前未发现针对 HomePage、ArticleDetailPage、ArchivesPage 等页面的 Vitest 覆盖。",
+      "helpers": "MarkdownRenderer、TableOfContents 等存在单元测试，可复用其工具函数。",
+      "implication": "需要补充页面级测试或确保主流程通过端到端脚本验证。"
+    },
+    "observations": [
+      "现有页面强依赖 Ant Design 组件和炫酷动画，迁移到极简样式需大幅重写 less。",
+      "多语言逻辑目前依赖 i18next，缺少 URL 参数驱动的内容加载，需要新增 slug+locale 解析层。",
+      "ArticleDetailPage 已带有 Drawer TOC，可重用逻辑并调整呈现方式；HomePage 的语言切换 SEGMENTED 交互可能与目标不符，需要评估保留策略。"
+    ],
+    "open_questions_reference": ".codex/key-questions.json"
+  },
+  "diygod_fullstyle_gap_2025_10_27": {
+    "timestamp": "2025-10-27T06:27:10Z",
+    "requested_scope": "整体对齐 diygod.cc 站点的页面结构与样式，包括首页、文章、关于、归档、标签等所有前台页面。",
+    "targets": {
+      "layout": {
+        "component": "src/features/layout/web/WebLayout.tsx",
+        "styles": "src/features/layout/web/WebLayout.less",
+        "current": "仍依赖 Ant Design Layout 结构与多余阴影、背景，页脚社交图标和 Live2D/MusicPlayer 与目标站的极简底部存在差异。"
+      },
+      "home": {
+        "component": "src/features/home/pages/HomePage.tsx",
+        "styles": "src/features/home/pages/HomePage.module.less",
+        "current": "呈现卡片化文章列表与圆形社交按钮，配色和层次感明显重于 diygod.cc 的纯文字与极简线条。"
+      },
+      "about": {
+        "component": "src/features/about/pages/AboutPage.tsx",
+        "styles": "src/features/about/pages/AboutPage.module.less",
+        "current": "内容分段与标题样式基本居中但仍使用栅格与色块，缺少 diygod.cc 中的左右分割线与微妙排版。"
+      },
+      "article_list": {
+        "component": "src/features/article/pages/ArticleListPage.tsx",
+        "styles": "src/features/article/pages/ArticleListPage.module.less",
+        "current": "采用卡片和自定义分页按钮，与 diygod.cc 的纯文本列表差异较大。"
+      },
+      "article_detail": {
+        "component": "src/features/article/pages/ArticleDetailPage.tsx",
+        "styles": "src/features/article/pages/ArticleDetailPage.module.less",
+        "current": "版心宽度、标题排版与引言样式与目标页面不符，仍保留自定义标签块和信息栏。"
+      },
+      "archives": {
+        "component": "src/features/article/pages/ArchivesPage.tsx",
+        "current": "沿用时间轴样式，未收敛到纯文本年份段落。"
+      },
+      "tags": {
+        "component": "src/features/article/pages/TagsPage.tsx",
+        "current": "仍使用网格卡片与统计徽章，与目标站点的标签云排版不同。"
+      }
+    },
+    "tech_stack": {
+      "core": "React 19 + Ant Design 5 + Less 模块化样式",
+      "animation": "Framer Motion 仍用于页面淡入，需要评估是否保留",
+      "icons": "Ant Design Icons 与自定义 SVG 并存"
+    },
+    "tests": {
+      "existing": "前台页面缺乏 Vitest 覆盖，仅 Live2D 等组件具备单测。",
+      "implication": "全面改版需自建回归测试或依赖人工验证。"
+    },
+    "observations": [
+      "当前 CSS 偏向玻璃拟态与阴影效果，配色与 diygod.cc 的白底+细分隔线冲突。",
+      "多处依赖 AntD 组件（Layout、Select、Pagination），需要评估是否直接替换为语义化原生结构。",
+      "路由结构与内容组织已做部分对齐，但页面层级与文案排版仍与目标站差距显著。"
+    ],
+    "gaps": [
+      "缺少统一的排版系统（字体、字号、行距、间距）。",
+      "文章与列表对齐方式未统一，最大宽度与 margin 需要集中配置。",
+      "交互组件（Live2D、音乐播放器、返回顶部）在目标站呈现方式不同，需要确认是否保留。"
+    ]
+  },
+  "layout_shell_refactor_2025_10_27": {
+    "timestamp": "2025-10-27T07:45:20Z",
+    "request_summary": "用户要求将抬头（品牌信息）与导航栏移动到最外层，使其与各页面主体彻底分离。",
+    "current_structure": {
+      "component": "src/features/layout/web/WebLayout.tsx",
+      "details": "当前使用 antd Layout，将 Header、Content、Footer 包裹在同一组件内；Header 与页面内容位于同一层级，导致文章详情页上方结构显得拥挤。",
+      "styles": "src/features/layout/web/WebLayout.less 为 Header、Content 共享 max-width 与内边距，使导航条与正文布局耦合。"
+    },
+    "desired_structure": "在 WebLayout 根节点上将抬头与导航独立成最外层容器，页面主体仅负责渲染 Outlet 内容，二者之间保留明确分隔。",
+    "risks": [
+      "需全面重写 WebLayout.less，确保背景层、Live2D、MusicPlayer 等全球组件定位不受影响。",
+      "首页隐藏导航的逻辑必须在新结构下重新评估，以免破坏差异化展示。",
+      "Footer 与 RopeToTop 的位置及层级需重新确认，防止重构后出现遮挡或重叠。"
+    ]
+  },
+  "article_music_feature_2025_10_27": {
+    "timestamp": "2025-10-27T08:02:30Z",
+    "request_summary": "为文章详情新增推歌功能：作者输入歌曲 ID，使用 MetingJS 播放，离开视窗后播放器漂浮到右下角，保持播放不中断。",
+    "existing_assets": {
+      "component": "src/features/article/components/ArticleMusicPlayer.tsx",
+      "styles": "src/features/article/components/ArticleMusicPlayer.less",
+      "utils": "src/shared/utils/meting.ts 提供 MetingJS 资源加载与 hook",
+      "global_player": "src/shared/components/MusicPlayer/index.tsx 固定播放列表播放器"
+    },
+    "gaps": [
+      "ArticleMusicPlayer 仅实现静态嵌入，缺少滚动浮动逻辑与自适应样式。",
+      "ArticleDetailPage 未挂载 ArticleMusicPlayer，也没有读取 music 字段或 query 参数。",
+      "需要统一 Meting 实例，避免组件卸载时音乐中断。"
+    ]
+  },
   "timestamp": "2025-10-12T07:08:30Z",
   "new_project": {
     "base_path": "blog-next/",
@@ -47,6 +190,43 @@
       "Legacy project exposes word-split service & additional scripts (../word-split-service) that may not be ported."
     ]
   },
+  "web_header_review": {
+    "timestamp": "2025-10-21T09:05:17Z",
+    "locations": {
+      "component": "src/features/layout/web/components/WebHeader.tsx",
+      "layout_wrapper": "src/features/layout/web/WebLayout.tsx",
+      "styles": "src/features/layout/web/WebLayout.less"
+    },
+    "current_implementation": {
+      "navigation": "基于 Ant Design Menu 渲染静态路由项，使用 Tag 作为 Logo 徽章。",
+      "actions": "右侧集成语言切换 Select 与登录/注册按钮或用户下拉菜单。",
+      "layout": "头部容器采用毛玻璃背景与圆角导航胶囊，所有元素水平排列。"
+    },
+    "similar_examples": [
+      "历史实现沿用 diygod.cc 暖色系渐变导航，但整体更厚重且未包含文章摘要概览。",
+      "ArticleListPage 顶部的 hero 区域展示统计信息，可作为将导航与文章头部信息解耦的参考。"
+    ],
+    "testing": "当前无针对 WebHeader 的单元测试，整体依赖端到端验证。"
+  },
+  "article_list_presentation": {
+    "timestamp": "2025-10-21T09:05:17Z",
+    "locations": {
+      "page": "src/features/article/pages/ArticleListPage.tsx",
+      "card_component": "src/features/article/components/ArticleCard.tsx",
+      "card_styles": "src/features/article/components/ArticleCard.module.less",
+      "page_styles": "src/features/article/pages/ArticleListPage.module.less"
+    },
+    "current_implementation": {
+      "layout": "列表页包含 Hero 区块、右侧 Sidebar 与 ArticleCard 列表，分页使用 Ant Pagination。",
+      "metrics": "ArticleCard 显示阅读/点赞/评论统计，Hero 区块展示文章总数、热门分类与最新文章。",
+      "data": "useArticleList hook 通过 React Query 拉取分页数据，并传递到 ArticleCard。"
+    },
+    "related_components": [
+      "Sidebar 组件提供热门标签、分类等扩展信息，与 diygod 文章页的右侧目录类似。",
+      "QuickNav 组件根据当前列表生成锚点导航。"
+    ],
+    "testing": "ArticleListPage 未提供 Vitest 覆盖，ArticleCard 也缺少单测，需要手动验证。"
+  },
   "live2d_investigation": {
     "timestamp": "2025-10-12T09:24:00Z",
     "feature_scope": "Web 前台布局中的 Live2D 看板娘展示",
@@ -86,5 +266,74 @@
       "src/shared/components/Live2D/index.test.tsx"
     ],
     "existing_tests": "Vitest 针对 Live2D 的测试仅覆盖首次挂载与显隐切换，尚未验证 rest/active 状态同步问题。"
+  },
+  "live2d_position_error": {
+    "timestamp": "2025-10-18T13:26:30Z",
+    "symptoms": "控制台报错 TypeError: Cannot set properties of undefined (setting 'x')，堆栈指向 oh-my-live2d 的 setPosition。",
+    "reproduction": "访问任意允许展示 Live2D 的页面（例如 /home）时立即出现，组件初始化阶段触发 applyResponsiveStage。",
+    "current_implementation": {
+      "entry": "src/shared/components/Live2D/index.tsx#getResponsiveStage/applyResponsiveStage",
+      "invocation": "初次挂载时在实例创建后立即调用 applyResponsiveStage(instance)，无模型就绪校验。"
+    },
+    "suspected_root_cause": "在模型加载完成前调用 instance.setModelPosition，内部尝试访问 this.model.x 时 this.model 尚未赋值。",
+    "evidence": [
+      "node_modules/oh-my-live2d/dist/modules/models.d.ts 提示 setPosition(x?: number, y?: number) 直接操作 this.model。",
+      "node_modules/oh-my-live2d/dist/index.js#21165 的 setPosition 函数中存在 this.model.x = t 赋值语句。"
+    ],
+    "tests_and_gaps": "现有的 src/shared/components/Live2D/index.test.tsx 使用 mock 模型立即就绪，无法覆盖模型未加载时的调用场景。",
+    "follow_up": "需要在 applyResponsiveStage 中增加模型就绪校验或延迟逻辑，避免在 model 未加载时调用 setModelPosition。"
+  },
+  "regression_2025_10_22": {
+    "timestamp": "2025-10-22T11:05:00Z",
+    "symptoms": {
+      "article_detail": "文章正文区域只显示多行 \"[object Object]\"，代码块高亮与样式全部失效。",
+      "live2d": "Live2D 舞台及音乐播放器在首页等前台页面缺失，仅后台排除逻辑应生效。",
+      "layout": "顶部导航与背景图嵌套错乱，背景未铺满首页。"
+    },
+    "locations": {
+      "article_page": "src/features/article/pages/ArticleDetailPage.tsx",
+      "markdown_renderer": "src/features/article/components/MarkdownRenderer.tsx",
+      "layout": "src/features/layout/web/WebLayout.tsx / WebLayout.less",
+      "music_player": "src/shared/components/MusicPlayer/index.tsx",
+      "live2d": "src/shared/components/Live2D/index.tsx"
+    },
+    "recent_changes": [
+      "ArticleDetailPage 近期新增 locale 切换与 references 渲染，同时改用 MarkdownRenderer。",
+      "WebLayout 在首页条件渲染 Header、背景、Live2D 和 MusicPlayer，可能导致组件未挂载。",
+      "MarkdownRenderer 引入 rehype-highlight + 自定义 code 渲染器，需确认 children 结构是否仍为字符串。"
+    ],
+    "observations": [
+      "旧版项目中 Live2D 与 MusicPlayer 始终挂载于 WebLayout，且首页背景与顶栏共存；当前条件渲染与用户预期不符。",
+      "文章 API transformArticle 会将响应展开到 ArticleDetail，但未显式确保 content 为 string；若后端返回对象会直接透传。",
+      "代码块复制功能依赖 ReactMarkdown 传入的 node/children，对 rehype-highlight 生成的节点需确认兼容性。"
+    ],
+    "related_logs": [
+      "浏览器控制台报错 `getGreetingByTime is not defined`、“ROUTE_TIPS is not defined”等说明全局常量在最新实现中丢失或作用域不当。",
+      "构建日志提示 ArticleDetailPage locale 常量写法导致 esbuild 报错，已修复但仍需回归测试。"
+    ],
+    "next_steps": [
+      "验证 ArticleDetail API 返回结构，必要时在 transformArticle 保障 content 为 string。",
+      "调整 WebLayout 条件渲染逻辑，恢复 Live2D/MusicPlayer 在非后台路由下的挂载，并确保背景层始终存在。",
+      "复查 MarkdownRenderer code 组件对 children/node 调用，确认不会将 React 元素强制 toString。"
+    ]
+  },
+  "home_feed_gap": {
+    "timestamp": "2025-10-22T11:46:00Z",
+    "symptoms": "首页未展示任何文章列表，也未触发文章接口请求，只有简介与社交链接。",
+    "locations": {
+      "page": "src/features/home/pages/HomePage.tsx",
+      "styles": "src/features/home/pages/HomePage.module.less",
+      "data_hook": "src/features/article/hooks/useArticleList.ts"
+    },
+    "observations": [
+      "HomePage 仅渲染 hero 与社交导航，没有任何数据请求逻辑或文章组件。",
+      "旧版站点首页提供文章 feed、音乐、看板娘等内容，当前实现严重缺失核心内容。",
+      "文章列表页 `ArticleListPage.tsx` 与 `ArticleCard` 组件仍存在，可复用以展示最新文章。"
+    ],
+    "next_steps": [
+      "为 HomePage 增加文章数据获取（使用 useArticleList）并渲染最新文章列表。",
+      "确认文章卡片样式是否需适配首页简化设计，避免与列表页重复度过高。",
+      "根据需要增加加载与空状态提示，确保接口正常失败时仍有反馈。"
+    ]
   }
 }

@@ -17,6 +17,7 @@ import {
 } from "@features/article"
 import { AboutPage } from "@features/about"
 import { FragmentPage } from "@features/fragment"
+import { HomePage } from "@features/home"
 import {
   AdminLayout,
   ArticleEditor,
@@ -42,19 +43,27 @@ const PlaceholderPage = ({ title }: { title: string }) => (
 export const routes: RouteObject[] = [
   {
     path: "/",
-    element: <Navigate to="/home" replace />,
-  },
-  {
-    path: "/",
     element: <WebLayout />,
     children: [
       {
+        index: true,
+        element: <HomePage />,
+      },
+      {
         path: "home",
-        element: <ArticleListPage />,
+        element: <Navigate to="/" replace />,
       },
       {
         path: "article/:id",
         element: <ArticleDetailPage />,
+      },
+      {
+        path: "posts/:slug",
+        element: <ArticleDetailPage />,
+      },
+      {
+        path: "feed",
+        element: <ArticleListPage />,
       },
       {
         path: "article/share/:uuid",
@@ -75,6 +84,10 @@ export const routes: RouteObject[] = [
       {
         path: "tags",
         element: <TagsPage />,
+      },
+      {
+        path: "tag/:name",
+        element: <TagDetailPage />,
       },
       {
         path: "tags/:name",

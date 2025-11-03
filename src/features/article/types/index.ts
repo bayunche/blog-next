@@ -34,6 +34,8 @@ export interface ArticleListItem {
   id: number
   /** 文章标题 */
   title: string
+  /** 文章 Slug */
+  slug?: string
   /** 文章描述/摘要 */
   description: string
   /** 文章封面图 */
@@ -52,6 +54,19 @@ export interface ArticleListItem {
   createdAt: string
   /** 更新时间 */
   updatedAt: string
+}
+
+export interface ArticleMusic {
+  /** 音乐来源平台（meting 支持，如 netease、tencent、kugou 等） */
+  server: string
+  /** 类型，常见为 song/playlist/album */
+  type: string
+  /** 对应平台的资源 ID */
+  id: string
+  /** 是否自动播放 */
+  autoplay?: boolean
+  /** LRC 歌词类型 */
+  lrcType?: number | string
 }
 
 /**
@@ -78,6 +93,13 @@ export interface ArticleDetail extends ArticleListItem {
   }
   /** 是否已点赞 */
   isLiked?: boolean
+  /** 文章专属音乐分享信息 */
+  music?: ArticleMusic | null
+  /** 外部链接列表 */
+  references?: Array<{
+    title: string
+    url: string
+  }>
 }
 
 /**
@@ -133,7 +155,11 @@ export interface ArticleListResponse {
  */
 export interface ArticleDetailParams {
   /** 文章 ID */
-  id: number
+  id?: number
+  /** 文章 Slug */
+  slug?: string
+  /** 语言参数 */
+  locale?: string
 }
 
 /**

@@ -53,3 +53,13 @@ export const QUICK_NAV_CONFIG = {
   /** 标题 */
   title: '快速导航',
 }
+
+export const OWNERSHIP_INFO = {
+  owner: '0xDIYgod.eth',
+  creationTx: '0x6f1f...abcd',
+  creationTxUrl: 'https://etherscan.io/tx/0x6f1f...abcd',
+  lastUpdateTx: '0x9e3d...42ff',
+  lastUpdateTxUrl: 'https://etherscan.io/tx/0x9e3d...42ff',
+  ipfsHash: 'bafybeigdyrztg42examplehash',
+  ipfsGateway: 'https://ipfs.io/ipfs/bafybeigdyrztg42examplehash',
+}

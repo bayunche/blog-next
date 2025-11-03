@@ -1,17 +1,38 @@
 {
-  "request_id": "2025-10-12-live2d-stabilization",
-  "summary": "按官方 omL2D 文档重写 Live2D 集成，解决组件反复销毁重建及自动关闭的问题。",
+  "request_id": "2025-10-22-reimplementation-align",
+  "summary": "按照 REIMPLEMENTATION_STATUS.md 要求重新实现前台首页、文章详情、归档与标签等页面的极简布局，并在推进过程中同步更新状态文档，完成前执行指定站点截图流程。",
   "deliverables": [
-    "研读 https://oml2d.hacxy.cn/guide/ 并形成最佳实践结论",
-    "更新 src/shared/components/Live2D/index.tsx 使其使用单例挂载并阻止重复初始化",
-    "修正 WebLayout 等调用侧逻辑，确保 Live2D 在允许页面持续展示且不会闪烁",
-    "补充或更新 Live2D 相关测试验证挂载、显隐与清理流程"
+    "梳理现有前台路由与页面实现，确定需调整的组件树与样式文件列表，并在 `.codex` 目录记录上下文。",
+    "重构首页、文章详情、归档、标签等页面结构与样式，对齐 REIMPLEMENTATION_STATUS.md 提供的 IA、设计令牌与交互细节。",
+    "实现 ?locale 查询参数驱动的多语言内容加载策略（至少覆盖 /posts/:slug），并确保文章页文末外链、TOC 浮动按钮逻辑符合规范。",
+    "删减或替换与目标站点不符的侧栏、统计模块等 UI，同时保持既有数据源与请求逻辑可用。",
+    "更新 REIMPLEMENTATION_STATUS.md 中对应任务条目的完成状态，补充必要说明或引用。",
+    "在完成交付前访问 https://diygod.cc/ 与 https://diygod.cc/palworld 获取截屏，记录流程并等待用户提供当前站点截图后再继续文档更新。"
   ],
   "constraints": [
-    "仅复用官方 oh-my-live2d API，禁止自研替代实现",
-    "移除或拒绝所有安全性设计",
-    "遵循项目既有 TypeScript + React 风格"
+    "仅复用现有 React 19 + Ant Design 等生态依赖，禁止引入自研组件库。",
+    "遵循仓库编码规范与中文注释要求，移除多余的安全性处理。",
+    "坚持破坏性变更策略，清理旧版首页及文章侧栏实现，不保留兼容层。"
   ],
-  "external_reference": "https://oml2d.hacxy.cn/guide/",
-  "open_questions_reference": ".codex/key-questions.json"
+  "external_reference": [
+    "REIMPLEMENTATION_STATUS.md",
+    "https://diygod.cc/",
+    "https://diygod.cc/palworld"
+  ],
+  "open_questions_reference": ".codex/key-questions.json",
+  "follow_up_request": {
+    "request_id": "2025-10-22-regression-live2d-content",
+    "summary": "修复极简化改造后出现的回归问题：文章详情内容与代码高亮解析异常，Live2D 与音乐播放器未在前台展示，并恢复背景图与导航层级的正确渲染。",
+    "deliverables": [
+      "定位 ArticleDetailPage / MarkdownRenderer 导致正文渲染为 [object Object] 的根因，恢复 Markdown 文本与代码块高亮展示。",
+      "确保 Live2D 组件仅在非后台页面加载，同时在首页等前台页面重新挂载；音乐播放器亦需恢复常驻展示。",
+      "调整 WebLayout 背景与头部嵌套逻辑，保证背景图在首页可见且导航布局不再错位。",
+      "补充调试日志或最小复现片段，验证文章详情在带/不带音乐字段时均能正确渲染并记录测试结果。"
+    ],
+    "constraints": [
+      "继续沿用官方 oh-my-live2d 与 meting.js 生态，不引入额外依赖。",
+      "保留中文注释与现有设计语言，避免重新引入旧版复杂 UI。"
+    ],
+    "notes": "任务来源于 2025-10-22 用户反馈“文章不展示、Live2D 和音乐播放器缺失”，需在修复后更新 `.codex/testing.md` 与 `verification.md` 的验证记录。"
+  }
 }

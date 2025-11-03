@@ -12,7 +12,9 @@ const layout = {
   'nav.register': '注册',
   'nav.openMenu': '展开导航',
   'backToTop': '回到顶部',
-  'footer.copyright': '八云澈的小站 ©{{year}} 使用 React 19 + Vite 7 构建',
+  'header.tagline': '要具备能瞬间的愉悦把想法做出来就好了',
+  'footer.copyright': '八云澈的小站 ©{{year}}',
+  'footer.powered': 'Powered by MoeBlog · Web3 Inspired',
 }
 
 export default layout

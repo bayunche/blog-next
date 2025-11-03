@@ -12,7 +12,9 @@ const layout = {
   'nav.register': 'Register',
   'nav.openMenu': 'Open navigation',
   'backToTop': 'Back to top',
-  'footer.copyright': 'Aya Station ©{{year}} Powered by React 19 + Vite 7',
+  'header.tagline': 'Make delightful ideas happen instantly.',
+  'footer.copyright': 'Aya Station ©{{year}}',
+  'footer.powered': 'Powered by React · Inspired by xLog',
 }
 
 export default layout

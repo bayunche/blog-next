@@ -8,6 +8,7 @@ import { Anchor } from 'antd'
 import type { TocItem } from '../types'
 import { useTranslation } from 'react-i18next'
 import { createSlugger } from '../utils/slugger'
+import './TableOfContents.less'
 
 /**
  * 目录组件 Props
@@ -166,44 +167,12 @@ export function TableOfContents({
 
   return (
     <div className={`table-of-contents ${className}`}>
-      <div style={{ marginBottom: '1rem', fontWeight: 600, fontSize: '1rem' }}>
-        {t('toc.title')}
-      </div>
+      <div className="table-of-contents__title">{t('toc.title')}</div>
       <Anchor
         affix={false}
         items={convertToAnchorItems(toc)}
         getCurrentAnchor={() => (activeAnchor ? `#${activeAnchor}` : '')}
       />
-
-      <style>{`
-        .table-of-contents {
-          padding: 1rem;
-          background-color: var(--bg-secondary);
-          border-radius: var(--radius-md);
-          position: sticky;
-          top: 80px;
-          max-height: calc(100vh - 100px);
-          overflow-y: auto;
-        }
-
-        .table-of-contents .ant-anchor {
-          font-size: 0.875rem;
-        }
-
-        .table-of-contents .ant-anchor-link-title {
-          color: var(--text-secondary);
-          transition: color 0.2s;
-        }
-
-        .table-of-contents .ant-anchor-link-active > .ant-anchor-link-title {
-          color: var(--primary-color);
-          font-weight: 500;
-        }
-
-        .table-of-contents .ant-anchor-link-title:hover {
-          color: var(--primary-color);
-        }
-      `}</style>
     </div>
   )
 }

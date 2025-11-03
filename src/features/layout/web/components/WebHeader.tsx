@@ -1,190 +1,78 @@
-﻿/**
- * Web 顶部导航组件
- */
-
-import { useMemo, useState } from 'react'
-import { Avatar, Button, Dropdown, Menu, Space, Select, type MenuProps } from 'antd'
-import { useLocation, useNavigate } from 'react-router-dom'
-import {
-  AppstoreOutlined,
-  BulbOutlined,
-  DashboardOutlined,
-  HomeOutlined,
-  InfoCircleOutlined,
-  LoginOutlined,
-  LogoutOutlined,
-  TagsOutlined,
-  UserOutlined,
-} from '@ant-design/icons'
-import { useAuth } from '@features/auth/hooks'
-import { AuthModal } from '@features/auth/components'
+import { useMemo } from 'react'
+import { NavLink, useLocation } from 'react-router-dom'
+import { Select } from 'antd'
 import { useTranslation } from 'react-i18next'
 import { useLanguage } from '@shared/hooks'
 import type { SupportedLanguage } from '@shared/i18n/locales'
 
-type AuthTab = 'login' | 'register'
-
-type MenuItem = Required<MenuProps>['items'][number]
-
-const NAV_CONFIG = [
-  {
-    key: '/home',
-    icon: <HomeOutlined />,
-    labelKey: 'nav.home',
-  },
-  {
-    key: '/archives',
-    icon: <AppstoreOutlined />,
-    labelKey: 'nav.archives',
-  },
-  {
-    key: '/categories',
-    icon: <AppstoreOutlined />,
-    labelKey: 'nav.categories',
-  },
-  {
-    key: '/tags',
-    icon: <TagsOutlined />,
-    labelKey: 'nav.tags',
-  },
-  {
-    key: '/about',
-    icon: <InfoCircleOutlined />,
-    labelKey: 'nav.about',
-  },
-  {
-    key: '/fragment',
-    icon: <BulbOutlined />,
-    labelKey: 'nav.fragment',
-  },
+const NAV_ITEMS = [
+  { path: '/', labelKey: 'nav.home', exact: true },
+  { path: '/archives', labelKey: 'nav.archives' },
+  { path: '/tags', labelKey: 'nav.tags' },
+  { path: '/about', labelKey: 'nav.about' },
+  { path: '/fragment', labelKey: 'nav.fragment' },
 ]
 
-/**
- * Web 顶部导航
- */
+const CONTACT_EMAIL = 'bayunche@gmail.com'
+
 export function WebHeader() {
-  const navigate = useNavigate()
   const location = useLocation()
-  const { user, isAuthenticated, isAdmin, logout, isLoggingOut } = useAuth()
   const { t: tLayout } = useTranslation('layout')
   const { t: tCommon } = useTranslation('common')
-  const { language, supportedLanguages, setLanguage } = useLanguage()
+  const { language, setLanguage, supportedLanguages } = useLanguage()
 
-  const [authModalVisible, setAuthModalVisible] = useState(false)
-  const [authModalType, setAuthModalType] = useState<AuthTab>('login')
-
-  const navMenuItems = useMemo<MenuProps['items']>(() => {
-    return NAV_CONFIG.map((item) => ({
-      key: item.key,
-      icon: item.icon,
-      label: tLayout(item.labelKey),
-    }))
-  }, [tLayout])
-
-  const userMenuItems = useMemo<MenuProps['items']>(() => {
-    const items: MenuItem[] = [
-      {
-        key: 'profile',
-        icon: <UserOutlined />,
-        label: tLayout('nav.profile'),
-        onClick: () => navigate('/profile'),
-      },
-    ]
-
-    if (isAdmin) {
-      items.push({ type: 'divider' })
-      items.push({
-        key: 'admin',
-        icon: <DashboardOutlined />,
-        label: tLayout('nav.admin'),
-        onClick: () => navigate('/admin'),
-      })
-    }
-
-    items.push({ type: 'divider' })
-    items.push({
-      key: 'logout',
-      icon: <LogoutOutlined />,
-      label: tLayout('nav.logout'),
-      onClick: logout,
-      disabled: isLoggingOut,
-    })
-
-    return items
-  }, [isAdmin, isLoggingOut, logout, navigate, tLayout])
-
-  const handleMenuClick: MenuProps['onClick'] = ({ key }) => {
-    navigate(key)
-  }
-
-  const openAuthModal = (tab: AuthTab) => {
-    setAuthModalType(tab)
-    setAuthModalVisible(true)
-  }
-
-  const closeAuthModal = () => {
-    setAuthModalVisible(false)
-  }
-
-  const selectedKeys = useMemo(() => {
-    const path = location.pathname
-    const matched = NAV_CONFIG.find((item) => item.key === path)
-    if (matched) {
-      return [path]
-    }
-    const fuzzy = NAV_CONFIG.find((item) => path.startsWith(String(item.key)))
-    return fuzzy && typeof fuzzy.key === 'string' ? [fuzzy.key] : []
+  const activePath = useMemo(() => {
+    const exactItem = NAV_ITEMS.find((item) => item.exact && location.pathname === item.path)
+    if (exactItem) return exactItem.path
+    const fuzzyItem = NAV_ITEMS.filter((item) => !item.exact).find((item) =>
+      location.pathname.startsWith(item.path)
+    )
+    return fuzzyItem?.path ?? ''
   }, [location.pathname])
 
+  const isArticleDetail =
+    location.pathname.startsWith('/article/') || location.pathname.startsWith('/posts/')
+
   return (
-    <>
-      <div className="header-content">
-        <div className="logo" onClick={() => navigate('/home')} style={{ cursor: 'pointer' }}>
-          {tCommon('app.title')}
-        </div>
-
-        <Menu
-          mode="horizontal"
-          selectedKeys={selectedKeys}
-          items={navMenuItems}
-          onClick={handleMenuClick}
-          style={{ flex: 1, minWidth: 0, borderBottom: 'none' }}
-        />
-
-        <Space size="middle">
-          <Select
-            value={language as SupportedLanguage}
-            size="small"
-            onChange={(value) => setLanguage(value as SupportedLanguage)}
-            options={supportedLanguages.map((lng) => ({
-              value: lng,
-              label: tCommon(`languages.${lng}` as const),
-            }))}
-            style={{ width: 120 }}
-          />
-
-          {isAuthenticated ? (
-            <Dropdown menu={{ items: userMenuItems }} placement="bottomRight">
-              <Space style={{ cursor: 'pointer' }}>
-                <Avatar src={user?.avatar} icon={!user?.avatar && <UserOutlined />} size="small" />
-                <span className="user-name">{user?.username || tCommon('user.visitor')}</span>
-              </Space>
-            </Dropdown>
-          ) : (
-            <Space>
-              <Button type="text" icon={<LoginOutlined />} onClick={() => openAuthModal('login')}>
-                {tLayout('nav.login')}
-              </Button>
-              <Button type="primary" onClick={() => openAuthModal('register')}>
-                {tLayout('nav.register')}
-              </Button>
-            </Space>
+    <header className="web-header__inner" role="banner">
+      <div className="web-header__brandBlock">
+        <div className="web-header__brandTitle">{tCommon('app.title')}</div>
+        <div className="web-header__brandTagline">{tLayout('header.tagline')}</div>
+        <div className="web-header__brandMeta">
+          <span className="web-header__brandEmail">{CONTACT_EMAIL}</span>
+          {!isArticleDetail && (
+            <Select
+              value={language as SupportedLanguage}
+              onChange={(value) => setLanguage(value as SupportedLanguage)}
+              options={supportedLanguages.map((lng) => ({
+                value: lng,
+                label: tCommon(`languages.${lng}` as const),
+              }))}
+              size="small"
+              className="web-header__language"
+              bordered={false}
+            />
           )}
-        </Space>
+        </div>
       </div>
 
-      <AuthModal visible={authModalVisible} onClose={closeAuthModal} defaultTab={authModalType} />
-    </>
+      <nav className="web-header__nav" aria-label={tLayout('nav.openMenu')}>
+        {NAV_ITEMS.map((item) => (
+          <NavLink
+            key={item.path}
+            to={item.path}
+            end={item.exact}
+            className={({ isActive }) =>
+              ['web-header__navItem', isActive || activePath === item.path ? 'is-active' : '']
+                .filter(Boolean)
+                .join(' ')
+            }
+          >
+            {tLayout(item.labelKey)}
+          </NavLink>
+        ))}
+      </nav>
+    </header>
   )
 }
 

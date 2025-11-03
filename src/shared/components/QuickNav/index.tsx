@@ -34,13 +34,16 @@ export function QuickNav({ articles }: QuickNavProps) {
     <div className="quick-nav-list">
       {showTitle && <Divider>{QUICK_NAV_CONFIG.title}</Divider>}
       <ul>
-        {displayArticles.map((article) => (
-          <li key={article.id}>
-            <Link to={`/article/${article.id}`} onClick={() => setDrawerVisible(false)}>
-              {article.title}
-            </Link>
-          </li>
-        ))}
+        {displayArticles.map((article) => {
+          const href = article.slug ? `/posts/${article.slug}` : `/article/${article.id}`
+          return (
+            <li key={article.id}>
+              <Link to={href} onClick={() => setDrawerVisible(false)}>
+                {article.title}
+              </Link>
+            </li>
+          )
+        })}
       </ul>
     </div>
   )

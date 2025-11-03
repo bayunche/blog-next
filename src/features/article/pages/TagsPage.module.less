@@ -1,0 +1,103 @@
+.page {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 112px 20px 96px;
+  display: grid;
+  gap: 48px;
+}
+
+.status {
+  text-align: center;
+  padding: 120px 16px;
+  color: rgba(21, 21, 21, 0.5);
+  font-size: 1rem;
+}
+
+.header {
+  text-align: center;
+  display: grid;
+  gap: 12px;
+}
+
+.title {
+  margin: 0;
+  font-size: clamp(2.2rem, 4vw, 2.8rem);
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.subtitle {
+  margin: 0;
+  color: rgba(21, 21, 21, 0.6);
+  letter-spacing: 0.12em;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+}
+
+.tagList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 12px;
+}
+
+.tagItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 18px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 16px 30px rgba(12, 15, 23, 0.08);
+}
+
+.tagLink {
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 1rem;
+  color: var(--text-primary);
+  letter-spacing: 0.04em;
+  transition: color 0.2s ease;
+}
+
+.tagLink:hover {
+  color: var(--primary-color);
+}
+
+.tagCount {
+  font-size: 0.85rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(21, 21, 21, 0.45);
+}
+
+@media (max-width: 600px) {
+  .page {
+    padding: 88px 16px 72px;
+  }
+
+  .tagItem {
+    padding: 12px 16px;
+  }
+}
+
+html[data-theme='dark'] {
+  .status {
+    color: rgba(232, 232, 232, 0.65);
+  }
+
+  .subtitle {
+    color: rgba(232, 232, 232, 0.6);
+  }
+
+  .tagItem {
+    background: rgba(16, 16, 18, 0.9);
+    box-shadow: 0 18px 36px rgba(0, 0, 0, 0.45);
+  }
+
+  .tagCount {
+    color: rgba(232, 232, 232, 0.55);
+  }
+}

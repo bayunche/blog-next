@@ -51,12 +51,33 @@ export function MarkdownRenderer({
     )
   }
 
+  const extractTextContent = (input: ReactNode): string => {
+    if (input == null) return ''
+    if (typeof input === 'string') return input
+    if (Array.isArray(input)) return input.map(extractTextContent).join('')
+    if (typeof input === 'object' && 'props' in input) {
+      return extractTextContent((input as any).props?.children)
+    }
+    return ''
+  }
+
+  const extractNodeText = (node: any): string => {
+    if (!node) return ''
+    if (node.type === 'text') return node.value ?? ''
+    if (Array.isArray(node.children)) {
+      return node.children.map((child: any) => extractNodeText(child)).join('')
+    }
+    return ''
+  }
+
   const renderCodeBlock = useMemo(() => {
     return ({ node, inline, className, children, ...props }: any) => {
-      const text = String(children).replace(/\n$/, '')
       const languageClass = className || node?.properties?.className?.join(' ')
       const match = /language-(\w+)/.exec(languageClass || '')
-      const language = match?.[1] || (node && isMdxCodeBlock(node) ? node.properties?.className?.[0]?.split('-')?.[1] : 'text')
+      const language =
+        match?.[1] ||
+        (node && isMdxCodeBlock(node) ? node.properties?.className?.[0]?.split('-')?.[1] : 'text')
+      const plainText = extractNodeText(node) || extractTextContent(children).replace(/\n$/, '')
 
       if (inline) {
         return (
@@ -74,7 +95,7 @@ export function MarkdownRenderer({
               type="button"
               onClick={async () => {
                 try {
-                  await navigator.clipboard.writeText(text)
+                  await navigator.clipboard.writeText(plainText)
                 } catch (error) {
                   console.warn('复制失败', error)
                 }
@@ -84,7 +105,7 @@ export function MarkdownRenderer({
             </button>
           </div>
           <pre {...props}>
-            <code className={languageClass}>{text}</code>
+            <code className={languageClass}>{children}</code>
           </pre>
         </div>
       )

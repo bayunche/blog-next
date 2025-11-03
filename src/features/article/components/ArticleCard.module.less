@@ -3,6 +3,11 @@
  * 基于 diygod.cc 的暖色调设计 - 纵向布局
  */
 
+.articleLink {
+  display: block;
+  text-decoration: none;
+}
+
 .articleCard {
   border-radius: var(--radius-xl);
   border: none;
@@ -13,120 +18,112 @@
 
   &:hover {
     box-shadow: var(--shadow-md);
-    transform: translateY(-4px);
+    transform: translateY(-6px);
     background: var(--bg-hover);
 
     .coverImage {
-      transform: scale(1.03);
+      transform: scale(1.04);
+    }
+
+    .coverImage::after {
+      opacity: 0.25;
     }
   }
 
-  // 卡片内容区域
   :global(.ant-card-body) {
-    display: flex;
-    flex-direction: column;
+    display: grid;
     gap: var(--spacing-sm);
     padding: var(--spacing-lg) !important;
   }
 }
 
-// 封面容器 - 16:9 比例
 .coverWrapper {
   position: relative;
   width: 100%;
-  padding-bottom: 56.25%; // 16:9 aspect ratio
+  padding-bottom: 56.25%;
   overflow: hidden;
   background: var(--bg-secondary);
 }
 
-// 封面图片
 .coverImage {
   position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
+  inset: 0;
   background-size: cover;
   background-position: center;
   transition: transform 0.6s ease;
+
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, transparent 45%, rgba(22, 20, 19, 0.35));
+    opacity: 0;
+    transition: opacity 0.4s ease;
+  }
 }
 
-// 无封面占位符
 .coverPlaceholder {
   position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
+  inset: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, var(--bg-secondary), var(--bg-tertiary));
+  background: linear-gradient(135deg, var(--bg-secondary), var(--bg-hover));
   color: var(--text-muted);
   font-size: 1rem;
 }
 
-// 标题
 .title {
   color: var(--text-primary);
-  margin-bottom: var(--spacing-sm) !important;
+  margin-bottom: var(--spacing-xs) !important;
   font-weight: 600;
-  font-size: 1.375rem !important;
+  font-size: 1.4rem !important;
   line-height: 1.5 !important;
   transition: color 0.3s ease;
   letter-spacing: -0.02em;
 
-  // 标题最多显示2行
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
 
-// 描述文本
 .description {
   color: var(--text-secondary);
-  font-size: 0.9375rem;
+  font-size: 0.95rem;
   line-height: 1.7;
   margin-bottom: var(--spacing-md) !important;
-  flex: 1; // 占据剩余空间
-  opacity: 0.85;
+  opacity: 0.9;
 }
 
-// 元信息容器
 .metaWrapper {
   display: flex;
+  flex-wrap: wrap;
   justify-content: space-between;
-  align-items: center;
+  gap: var(--spacing-sm);
   margin-top: auto;
   padding-top: var(--spacing-md);
   border-top: 1px solid rgba(0, 0, 0, 0.05);
 }
 
-// 元信息
-.meta {
+.metaStats {
+  display: flex;
+  gap: var(--spacing-sm);
   font-size: 0.85rem;
   color: var(--text-muted);
-
-  :global(.anticon) {
-    margin-right: 4px;
-    font-size: 0.9rem;
-  }
-
-  :global(.ant-typography) {
-    color: var(--text-muted);
-    font-size: 0.85rem;
-  }
 }
 
-// 分隔符
-.divider {
-  color: var(--text-muted);
-  margin: 0 var(--spacing-xs);
+.statItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
 }
 
-// 标签容器
 .tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+
   :global(.ant-tag) {
     border-radius: var(--radius-sm);
     border: none;
@@ -136,7 +133,6 @@
   }
 }
 
-// 分类标签 (暖橙色)
 .categoryTag {
   background: var(--primary-color);
   color: white;
@@ -149,7 +145,6 @@
   }
 }
 
-// 普通标签 (柔和灰色)
 .normalTag {
   background: rgba(0, 0, 0, 0.04);
   color: var(--text-secondary);
@@ -158,5 +153,17 @@
 
   &:hover {
     background: rgba(0, 0, 0, 0.08);
+  }
+}
+
+@media (max-width: 768px) {
+  .articleCard :global(.ant-card-body) {
+    padding: var(--spacing-md) !important;
+  }
+
+  .metaWrapper {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--spacing-sm);
   }
 }

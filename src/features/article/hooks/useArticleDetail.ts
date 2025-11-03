@@ -13,7 +13,11 @@ import type { ArticleDetail, ShareArticle } from '../types'
 export interface UseArticleDetailOptions
   extends Omit<UseQueryOptions<ArticleDetail, Error>, 'queryKey' | 'queryFn'> {
   /** 文章 ID */
-  id: number
+  id?: number
+  /** 文章 Slug */
+  slug?: string
+  /** 语言参数 */
+  locale?: string
 }
 
 /**
@@ -25,13 +29,13 @@ export interface UseArticleDetailOptions
  * ```
  */
 export function useArticleDetail(options: UseArticleDetailOptions) {
-  const { id, ...queryOptions } = options
+  const { id, slug, locale, ...queryOptions } = options
 
   return useQuery<ArticleDetail, Error>({
-    queryKey: ['article', id],
-    queryFn: () => getArticleDetailAPI({ id }),
-    staleTime: 1000 * 60 * 5, // 5 分钟内数据保持新鲜
-    enabled: !!id, // 只有当 id 存在时才执行查询
+    queryKey: ['article', id ?? null, slug ?? null, locale ?? null],
+    queryFn: () => getArticleDetailAPI({ id, slug, locale }),
+    staleTime: 1000 * 60 * 5,
+    enabled: Boolean(id || slug),
     ...queryOptions,
   })
 }

@@ -6,7 +6,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { message } from 'antd'
 import { likeArticleAPI, unlikeArticleAPI } from '../api'
-import type { LikeArticleParams, ArticleDetail } from '../types'
+import type { LikeArticleParams } from '../types'
 import { useTranslation } from 'react-i18next'
 
 /**
@@ -50,17 +50,8 @@ export function useLikeArticle(options?: UseLikeArticleOptions) {
       }
 
       // 乐观更新：立即更新缓存中的文章详情
-      queryClient.setQueryData<ArticleDetail>(
-        ['article', variables.id],
-        (oldData) => {
-          if (!oldData) return oldData
-          return {
-            ...oldData,
-            likeCount: response.likeCount,
-            isLiked: response.isLiked,
-          }
-        }
-      )
+
+      queryClient.invalidateQueries({ queryKey: ['article'] })
 
       message.success(t('messages.likeSuccess'))
       options?.onSuccess?.()
@@ -83,17 +74,7 @@ export function useLikeArticle(options?: UseLikeArticleOptions) {
       }
 
       // 乐观更新：立即更新缓存中的文章详情
-      queryClient.setQueryData<ArticleDetail>(
-        ['article', variables.id],
-        (oldData) => {
-          if (!oldData) return oldData
-          return {
-            ...oldData,
-            likeCount: response.likeCount,
-            isLiked: response.isLiked,
-          }
-        }
-      )
+      queryClient.invalidateQueries({ queryKey: ['article'] })
 
       message.success(t('messages.unlikeSuccess'))
       options?.onSuccess?.()

@@ -53,7 +53,7 @@ export function WelcomePage({ typingInterval = 90, revealDelay = 480 }: WelcomeP
   }, [typedText, showMessages, typingInterval, revealDelay])
 
   const handleEnter = () => {
-    navigate('/home', { replace: true })
+    navigate('/', { replace: true })
   }
 
   return (

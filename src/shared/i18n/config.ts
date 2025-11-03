@@ -4,7 +4,7 @@ import LanguageDetector from 'i18next-browser-languagedetector'
 import { resources, supportedLanguages, type SupportedLanguage } from './locales'
 
 export const defaultNamespace = 'common'
-export const supportedNamespaces = ['common', 'layout', 'article', 'about', 'auth'] as const
+export const supportedNamespaces = ['common', 'layout', 'article', 'about', 'auth', 'home'] as const
 
 declare module 'i18next' {
   interface CustomTypeOptions {

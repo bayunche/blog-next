@@ -1,250 +1,194 @@
-/**
- * 文章详情页面
- * 展示文章完整内容，支持点赞、评论等交互
- */
-
-import { useParams, Link } from 'react-router-dom'
-import {
-  Row,
-  Col,
-  Typography,
-  Tag,
-  Space,
-  Button,
-  Spin,
-  Alert,
-  Divider,
-} from 'antd'
-import {
-  EyeOutlined,
-  LikeOutlined,
-  LikeFilled,
-  CommentOutlined,
-  CalendarOutlined,
-  LeftOutlined,
-  RightOutlined,
-} from '@ant-design/icons'
+﻿import { useEffect, useMemo, useState } from 'react'
+import { useParams, useSearchParams } from 'react-router-dom'
 import dayjs from 'dayjs'
-import { useArticleDetail, useLikeArticle } from '../hooks'
-import { MarkdownRenderer } from '../components/MarkdownRenderer'
-import { TableOfContents } from '../components/TableOfContents'
-import { CommentList } from '@features/comment'
 import { useTranslation } from 'react-i18next'
+import { useArticleDetail } from '../hooks'
+import { MarkdownRenderer } from '../components/MarkdownRenderer'
+import { ArticleMusicPlayer } from '../components/ArticleMusicPlayer'
+import { useLanguage } from '@shared/hooks'
+import type { ArticleMusic } from '../types'
+import styles from './ArticleDetailPage.module.less'
 
-const { Title, Text } = Typography
+const LOCALE_TO_LANG = {
+  zh: 'zh-CN',
+  en: 'en-US',
+  'zh-TW': 'zh-TW',
+} as const
 
-/**
- * 文章详情页面
- */
+type LocaleKey = keyof typeof LOCALE_TO_LANG
+type LanguageKey = (typeof LOCALE_TO_LANG)[LocaleKey]
+
+const DEFAULT_LOCALE: LocaleKey = 'zh'
+
+const LOCALE_OPTIONS: Array<{ value: LocaleKey; labelKey: LanguageKey }> = [
+  { value: 'zh', labelKey: 'zh-CN' },
+  { value: 'en', labelKey: 'en-US' },
+  { value: 'zh-TW', labelKey: 'zh-TW' },
+]
+
 export function ArticleDetailPage() {
-  const { id } = useParams<{ id: string }>()
-  const articleId = parseInt(id || '0', 10)
-  const { t } = useTranslation('article')
+  const params = useParams<{ id?: string; slug?: string }>()
+  const [searchParams, setSearchParams] = useSearchParams()
+  const { t, i18n } = useTranslation('article')
+  const { t: tCommon } = useTranslation('common')
+  const { setLanguage } = useLanguage()
 
-  // 获取文章详情
-  const { data: article, isLoading, error } = useArticleDetail({ id: articleId })
+  const rawLocale = (searchParams.get('locale') ?? DEFAULT_LOCALE) as string
+  const localeKey: LocaleKey = rawLocale in LOCALE_TO_LANG ? (rawLocale as LocaleKey) : DEFAULT_LOCALE
+  const languageKey = LOCALE_TO_LANG[localeKey]
 
-  // 点赞功能
-  const { likeArticle, unlikeArticle, isLiking } = useLikeArticle()
+  const [hasTriedFallback, setHasTriedFallback] = useState(false)
 
-  // 处理点赞
-  const handleLike = () => {
-    if (!article) return
-    if (article.isLiked) {
-      unlikeArticle(articleId)
-    } else {
-      likeArticle(articleId)
+  useEffect(() => {
+    if (i18n.language !== languageKey) {
+      setLanguage(languageKey)
     }
+  }, [i18n.language, languageKey, setLanguage])
+
+  const articleQuery = useArticleDetail({
+    id: params.id ? Number(params.id) : undefined,
+    slug: params.slug,
+    locale: localeKey,
+  })
+  const { data: article, isLoading, error } = articleQuery
+
+  const queryMusicId = searchParams.get('musicId') ?? undefined
+  const queryMusicServer = searchParams.get('musicServer') ?? 'netease'
+  const queryMusicType = searchParams.get('musicType') ?? 'song'
+  const queryMusicAutoplay = searchParams.get('musicAutoplay') === 'true'
+  const queryMusicLrcType = searchParams.get('musicLrcType') ?? undefined
+
+  const fallbackMusic = useMemo<ArticleMusic | null>(() => {
+    if (!queryMusicId) return null
+    return {
+      server: queryMusicServer,
+      type: queryMusicType,
+      id: queryMusicId,
+      autoplay: queryMusicAutoplay,
+      lrcType: queryMusicLrcType,
+    }
+  }, [queryMusicAutoplay, queryMusicId, queryMusicLrcType, queryMusicServer, queryMusicType])
+
+  const music = useMemo<ArticleMusic | null>(() => {
+    if (article?.music) return article.music
+    return fallbackMusic
+  }, [article?.music, fallbackMusic])
+
+  useEffect(() => {
+    if (article?.title) {
+      document.title = `${article.title} · ${tCommon('app.title')}`
+    } else {
+      document.title = tCommon('app.title')
+    }
+  }, [article?.title, tCommon])
+
+  useEffect(() => {
+    if (!hasTriedFallback && error && localeKey !== DEFAULT_LOCALE) {
+      setHasTriedFallback(true)
+      const next = new URLSearchParams(searchParams)
+      next.set('locale', DEFAULT_LOCALE)
+      setSearchParams(next, { replace: true })
+    }
+  }, [error, hasTriedFallback, localeKey, searchParams, setSearchParams])
+
+  const references = useMemo(() => article?.references ?? [], [article?.references])
+
+  const handleLocaleChange = (value: LocaleKey) => {
+    if (value === localeKey) return
+    const next = new URLSearchParams(searchParams)
+    next.set('locale', value)
+    setHasTriedFallback(false)
+    setSearchParams(next, { replace: true })
   }
 
-  // 错误处理
-  if (error) {
-    return (
-      <div style={{ padding: '2rem' }}>
-        <Alert
-          message={t('error.title')}
-          description={error.message}
-          type="error"
-          showIcon
-        />
-      </div>
-    )
+  if (error && localeKey === DEFAULT_LOCALE) {
+    return <div className={styles.status}>{t('error.title')}</div>
   }
 
-  // 加载状态
-  if (isLoading) {
-    return (
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          minHeight: '60vh',
-        }}
-      >
-        <Spin size="large" tip={t('loading')} />
-      </div>
-    )
-  }
-
-  // 文章不存在
-  if (!article) {
-    return (
-      <div style={{ padding: '2rem' }}>
-        <Alert message={t('notFound')} type="warning" showIcon />
-      </div>
-    )
+  if (isLoading || !article) {
+    return <div className={styles.status}>{t('loading')}</div>
   }
 
   return (
-    <div style={{ padding: '2rem', maxWidth: '1400px', margin: '0 auto' }}>
-      <Row gutter={[24, 24]}>
-        {/* 主内容区 */}
-        <Col xs={24} lg={18}>
-          {/* 文章头部 */}
-          <div style={{ marginBottom: '2rem' }}>
-            {/* 标题 */}
-            <Title level={1} style={{ marginBottom: '1rem' }}>
-              {article.title}
-            </Title>
-
-            {/* 元信息 */}
-            <Space
-              wrap
-              split={<span style={{ color: 'var(--border-color)' }}>|</span>}
-              style={{ marginBottom: '1rem' }}
-            >
-              <Text type="secondary">
-                <CalendarOutlined /> {t('meta.publishedAt')}{' '}
-                {dayjs(article.createdAt).format('YYYY-MM-DD HH:mm')}
-              </Text>
-              <Text type="secondary">
-                <EyeOutlined /> {t('meta.views', { count: article.viewCount })}
-              </Text>
-              <Text type="secondary">
-                <LikeOutlined /> {t('meta.likes', { count: article.likeCount })}
-              </Text>
-              <Text type="secondary">
-                <CommentOutlined /> {t('meta.comments', { count: article.commentCount })}
-              </Text>
-            </Space>
-
-            {/* 分类和标签 */}
-            <Space wrap>
-              {article.category && (<Tag color="magenta">{article.category.name}</Tag>)}
-              {article.tags && article.tags.length > 0 && article.tags.map((tag) => (
-                <Tag key={tag.id} color="blue">
-                  {tag.name}
-                </Tag>
-              ))}
-            </Space>
+    <article className={styles.page}>
+      <header className={styles.header}>
+        <div className={styles.headerMeta}>
+          <div className={styles.metaLine} aria-label={t('meta.info', { defaultValue: '文章信息' })}>
+            {article.category?.name && (
+              <span className={styles.metaItem}>{article.category.name}</span>
+            )}
+            <span className={styles.metaDivider} aria-hidden="true">·</span>
+            <time className={styles.metaItem} dateTime={article.createdAt}>
+              {dayjs(article.createdAt).format('YYYY-MM-DD')}
+            </time>
+            {article.updatedAt && (
+              <>
+                <span className={styles.metaDivider} aria-hidden="true">·</span>
+                <span className={styles.metaItem}>
+                  {t('meta.updatedAtShort', {
+                    defaultValue: '更新于',
+                    date: dayjs(article.updatedAt).format('YYYY-MM-DD'),
+                  })}
+                </span>
+              </>
+            )}
           </div>
+          <ul className={styles.localeSwitch} aria-label={t('meta.localeSwitcher', { defaultValue: '切换语言' })}>
+            {LOCALE_OPTIONS.map((option) => (
+              <li key={option.value}>
+                <button
+                  type="button"
+                  className={[
+                    styles.localeButton,
+                    option.value === localeKey ? styles.localeButtonActive : '',
+                  ]
+                    .filter(Boolean)
+                    .join(' ')}
+                  onClick={() => handleLocaleChange(option.value)}
+                >
+                  {tCommon(`languages.${option.labelKey}` as const)}
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+        <h1 className={styles.title}>{article.title}</h1>
+      </header>
 
-          <Divider />
+      {music && (
+        <section className={styles.musicSection} aria-label={t('meta.musicPlayer', { defaultValue: '文章配乐' })}>
+          <ArticleMusicPlayer music={music} />
+        </section>
+      )}
 
-          {/* 文章内容 */}
-          <div style={{ marginBottom: '2rem' }}>
-            <MarkdownRenderer content={article.content} />
-          </div>
+      <div className={styles.content}>
+        <MarkdownRenderer content={article.content ?? ''} />
+      </div>
 
-          <Divider />
+      {(article.tags?.length ?? 0) > 0 && (
+        <ul className={styles.tags} aria-label={t('meta.tags', { defaultValue: '文章标签' })}>
+          {article.tags?.map((tag) => (
+            <li key={tag.id}>#{tag.name}</li>
+          ))}
+        </ul>
+      )}
 
-          {/* 操作按钮 */}
-          <div
-            style={{
-              display: 'flex',
-              justifyContent: 'center',
-              marginBottom: '2rem',
-            }}
-          >
-            <Button
-              type={article.isLiked ? 'primary' : 'default'}
-              icon={article.isLiked ? <LikeFilled /> : <LikeOutlined />}
-              size="large"
-              loading={isLiking}
-              onClick={handleLike}
-            >
-              {t('likeButton', {
-                status: article.isLiked ? t('actions.liked') : t('actions.like'),
-                count: article.likeCount,
-              })}
-            </Button>
-          </div>
+      {references.length > 0 && (
+        <section className={styles.references} aria-labelledby="references-title">
+          <h2 id="references-title">{t('references.title')}</h2>
+          <ul>
+            {references.map((item) => (
+              <li key={item.url}>
+                <a href={item.url} target="_blank" rel="noreferrer">
+                  {item.title || item.url}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
-          {/* 上一篇/下一篇 */}
-          {(article.prev || article.next) && (
-            <>
-              <Divider />
-              <div
-                style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  gap: '1rem',
-                }}
-              >
-                {article.prev ? (
-                  <Link
-                    to={`/article/${article.prev.id}`}
-                    style={{ flex: 1, textDecoration: 'none' }}
-                  >
-                    <div
-                      style={{
-                        padding: '1rem',
-                        background: 'var(--bg-secondary)',
-                        borderRadius: 'var(--radius-md)',
-                      }}
-                    >
-                      <Text type="secondary">
-                        <LeftOutlined /> {t('prevArticle')}
-                      </Text>
-                      <div style={{ marginTop: '0.5rem' }}>
-                        {article.prev.title}
-                      </div>
-                    </div>
-                  </Link>
-                ) : (
-                  <div style={{ flex: 1 }} />
-                )}
-
-                {article.next ? (
-                  <Link
-                    to={`/article/${article.next.id}`}
-                    style={{ flex: 1, textDecoration: 'none' }}
-                  >
-                    <div
-                      style={{
-                        padding: '1rem',
-                        background: 'var(--bg-secondary)',
-                        borderRadius: 'var(--radius-md)',
-                        textAlign: 'right',
-                      }}
-                    >
-                      <Text type="secondary">
-                        {t('nextArticle')} <RightOutlined />
-                      </Text>
-                      <div style={{ marginTop: '0.5rem' }}>
-                        {article.next.title}
-                      </div>
-                    </div>
-                  </Link>
-                ) : (
-                  <div style={{ flex: 1 }} />
-                )}
-              </div>
-            </>
-          )}
-
-          {/* 评论区 */}
-          <CommentList articleId={articleId} />
-        </Col>
-
-        {/* 侧边栏 */}
-        <Col xs={24} lg={6}>
-          {/* 目录 */}
-          <TableOfContents content={article.content} />
-        </Col>
-      </Row>
-    </div>
+    </article>
   )
 }
 

@@ -15,25 +15,99 @@ import type {
   Category,
   Tag,
   ArticleListItem,
+  ArticleMusic,
 } from '../types'
+
+type NormalizedArticle = ArticleListItem & {
+  content?: string
+  music?: ArticleMusic | null
+  references?: ArticleDetail['references']
+}
+
+const normalizeContent = (input: unknown): string => {
+  if (input == null) return ''
+  if (typeof input === 'string') return input
+  if (Array.isArray(input)) {
+    return input.map((item) => normalizeContent(item)).join('')
+  }
+  if (typeof input === 'object') {
+    const value = (input as any).value ?? (input as any).text ?? ''
+    if (typeof value === 'string') {
+      return value
+    }
+    const children = (input as any).children
+    if (Array.isArray(children)) {
+      return normalizeContent(children)
+    }
+    return ''
+  }
+  return String(input)
+}
+
+const normalizeReferences = (input: unknown): ArticleDetail['references'] => {
+  if (!Array.isArray(input)) {
+    return []
+  }
+
+  return input
+    .map((item) => {
+      if (!item || typeof item !== 'object') {
+        return null
+      }
+      const title =
+        typeof (item as any).title === 'string'
+          ? (item as any).title.trim()
+          : ''
+      const url = typeof (item as any).url === 'string' ? (item as any).url : ''
+      if (!url) {
+        return null
+      }
+      return {
+        title: title || url,
+        url,
+      }
+    })
+    .filter(Boolean) as ArticleDetail['references']
+}
 
 /**
  * 转换后端文章数据格式为前端格式
  * 后端返回 categories 数组和 tags 数组，前端期望 category 对象和 tags 数组
  */
-function transformArticle(article: any): ArticleListItem {
-  return {
+function transformArticle(article: any): NormalizedArticle {
+  const contentExists = typeof article?.content !== 'undefined'
+  const normalizedContent = normalizeContent(article?.content)
+  const descriptionSource =
+    typeof article?.description === 'string'
+      ? article.description
+      : normalizedContent
+
+  const transformed: NormalizedArticle = {
     ...article,
     // 后端返回 categories 数组，取第一个作为 category
-    category: article.categories?.[0] || { id: 0, name: '未分类' },
+    category: article?.categories?.[0] || { id: 0, name: '未分类' },
     // 后端返回 tags 数组，保持原样
-    tags: article.tags || [],
+    tags: article?.tags || [],
     // 计算评论数
-    commentCount: article.comments?.length || 0,
+    commentCount: Array.isArray(article?.comments) ? article.comments.length : 0,
     // 默认值
-    likeCount: article.likeCount || 0,
-    description: article.description || article.content?.slice(0, 200) || '',
+    likeCount: article?.likeCount || 0,
+    description: (descriptionSource || '').toString().slice(0, 200),
   }
+
+  if (contentExists) {
+    transformed.content = normalizedContent
+  }
+
+  if (Array.isArray(article?.references)) {
+    transformed.references = normalizeReferences(article.references)
+  }
+
+  if (article?.music) {
+    transformed.music = article.music as ArticleMusic
+  }
+
+  return transformed
 }
 
 /**
@@ -117,8 +191,21 @@ export const getArticleListAPI = async (
 export const getArticleDetailAPI = async (
   params: ArticleDetailParams
 ): Promise<ArticleDetail> => {
-  const response: any = await request.get(`/article/${params.id}`)
-  return transformArticle(response) as ArticleDetail
+  const { id, slug, locale } = params
+  if (!id && !slug) {
+    throw new Error('Article identifier (id or slug) is required')
+  }
+
+  const endpoint = slug ? `/article/slug/${slug}` : `/article/${id}`
+  const response: any = await request.get(endpoint, {
+    params: locale ? { locale } : undefined,
+  })
+
+  const transformed = transformArticle(response) as ArticleDetail
+  transformed.content = normalizeContent(response?.content)
+  transformed.references = normalizeReferences(response?.references)
+  transformed.music = response?.music ? (response.music as ArticleMusic) : transformed.music ?? null
+  return transformed
 }
 
 /**
@@ -128,7 +215,15 @@ export const getShareArticleAPI = async (uuid: string): Promise<ShareArticle> =>
   const response: any = await request.get(`/article/share/${uuid}`)
   return {
     ...response,
-    article: transformArticle(response.article) as ArticleDetail,
+    article: (() => {
+      const transformed = transformArticle(response.article) as ArticleDetail
+      transformed.content = normalizeContent(response?.article?.content)
+      transformed.references = normalizeReferences(response?.article?.references)
+      transformed.music = response?.article?.music
+        ? (response.article.music as ArticleMusic)
+        : transformed.music ?? null
+      return transformed
+    })(),
   }
 }
 

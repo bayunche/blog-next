@@ -58,7 +58,7 @@ export function CategoryDetailPage() {
         style={{ marginBottom: '2rem' }}
         items={[
           {
-            href: '/home',
+            href: '/',
             title: (
               <>
                 <HomeOutlined />

@@ -72,7 +72,7 @@ describe('Monitor', () => {
         },
         navigationHistory: [
           {
-            path: '/home',
+            path: '/',
             event: 'enter',
             timestamp: now,
           },

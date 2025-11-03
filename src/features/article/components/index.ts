@@ -5,4 +5,5 @@
 export * from './ArticleCard'
 export * from './MarkdownRenderer'
 export * from './TableOfContents'
+export * from './ArticleMusicPlayer'
 export * from './GithubContribution'

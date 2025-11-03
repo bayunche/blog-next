@@ -18,7 +18,7 @@ export function AdminHeader() {
     {
       key: 'home',
       label: '返回主页',
-      onClick: () => navigate('/home'),
+      onClick: () => navigate('/'),
     },
     {
       type: 'divider',

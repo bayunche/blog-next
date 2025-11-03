@@ -42,6 +42,7 @@ export function RopeToTop() {
         }
       }}
     >
+      <div className="rope-top-cap" aria-hidden="true" />
       <div className="rope-line" aria-hidden="true" />
       <div className="rope-handle">
         <span>{t('backToTop')}</span>

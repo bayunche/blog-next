@@ -1,178 +1,97 @@
-/**
- * 归档页面
- * 按时间线展示所有文章
- */
-
-import { Timeline, Spin, Alert, Typography, Space, Tag } from 'antd'
-import { ClockCircleOutlined, CalendarOutlined } from '@ant-design/icons'
-import { Link } from 'react-router-dom'
 import dayjs from 'dayjs'
+import { Link } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { useArchives } from '../hooks'
+import { OWNERSHIP_INFO } from '@shared/constants/blog.config'
+import styles from './ArchivesPage.module.less'
 
-const { Title, Text } = Typography
-
-/**
- * 归档页面组件
- */
 export function ArchivesPage() {
   const { data, isLoading, error } = useArchives()
+  const { t } = useTranslation('article')
 
   if (error) {
-    return (
-      <div style={{ padding: '2rem' }}>
-        <Alert message="加载失败" description={error.message} type="error" showIcon />
-      </div>
-    )
+    return <div className={styles.status}>归档加载失败，请稍后再试。</div>
   }
 
-  if (isLoading) {
-    return (
-      <div
-        data-testid="archives-loading"
-        style={{
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          minHeight: '60vh',
-        }}
-      >
-        <Spin size="large" tip="加载中..." />
-      </div>
-    )
+  if (isLoading || !data) {
+    return <div className={styles.status}>加载中...</div>
   }
 
-  const years = data?.years ?? []
-  const totalArticles = data?.total ?? 0
-
-  if (years.length === 0) {
-    return (
-      <div data-testid="archives-empty" style={{ padding: '2rem', maxWidth: '1200px', margin: '0 auto' }}>
-        <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-secondary)' }}>
-          暂无归档数据
-        </div>
-      </div>
-    )
-  }
+  const { years = [], total = 0 } = data
+  const hasArticles = years.length > 0
 
   return (
-    <div data-testid="archives-content" style={{ padding: '2rem', maxWidth: '1000px', margin: '0 auto' }}>
-      {/* 页面标题 */}
-      <div style={{ marginBottom: '2rem', textAlign: 'center' }}>
-        <Title level={1}>
-          <ClockCircleOutlined /> 文章归档
-        </Title>
-        <p style={{ color: 'var(--text-secondary)', fontSize: '1rem' }}>共 {totalArticles} 篇文章</p>
+    <section className={styles.page}>
+      <header className={styles.header}>
+        <h1 className={styles.title}>Archives</h1>
+        <p className={styles.subtitle}>{hasArticles ? `共 ${total} 篇文章` : '暂未发布文章'}</p>
+      </header>
+
+      <div className={styles.yearList}>
+        {years.map((year) => {
+          const articles = year.months
+            .flatMap((month) => month.articles)
+            .sort((a, b) => dayjs(b.createdAt).valueOf() - dayjs(a.createdAt).valueOf())
+
+          return (
+            <section key={year.year} className={styles.yearSection}>
+              <h2 className={styles.yearTitle}>{year.year}</h2>
+              <ul className={styles.postList}>
+                {articles.map((article) => (
+                  <li key={`${year.year}-${article.id}`} className={styles.postItem}>
+                    <time className={styles.postDate} dateTime={article.createdAt}>
+                      {dayjs(article.createdAt).format('MM-DD')}
+                    </time>
+                    <Link
+                      to={article.slug ? `/posts/${article.slug}` : `/article/${article.id}`}
+                      className={styles.postLink}
+                    >
+                      {article.title}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )
+        })}
       </div>
 
-      {years.map((yearData) => (
-        <div key={yearData.year} style={{ marginBottom: '3rem' }}>
-          <div
-            style={{
-              marginBottom: '1.5rem',
-              paddingBottom: '0.5rem',
-              borderBottom: '2px solid var(--border-color)',
-            }}
-          >
-            <Title level={2} style={{ marginBottom: '0.25rem' }}>
-              <CalendarOutlined /> {yearData.year}
-            </Title>
-            <Text type="secondary">共 {yearData.count} 篇文章</Text>
+      <section className={styles.chain} aria-labelledby="chain-meta-title">
+        <h2 id="chain-meta-title" className={styles.chainTitle}>
+          {t('ownership.title')}
+        </h2>
+        <dl className={styles.chainList}>
+          <div>
+            <dt>{t('ownership.owner')}</dt>
+            <dd>{OWNERSHIP_INFO.owner}</dd>
           </div>
-
-          <Timeline
-            items={yearData.months.map((monthData) => ({
-              color: 'blue',
-              children: (
-                <div key={`${yearData.year}-${monthData.month}`}>
-                  <Title level={4} style={{ marginTop: 0, marginBottom: '1rem' }}>
-                    {String(monthData.month).padStart(2, '0')} 月
-                    <Tag color="blue" style={{ marginLeft: '0.5rem' }}>
-                      {monthData.count} 篇
-                    </Tag>
-                  </Title>
-
-                  <Space direction="vertical" size="middle" style={{ width: '100%' }}>
-                    {monthData.articles.map((article) => (
-                      <div
-                        key={article.id}
-                        style={{
-                          padding: '1rem',
-                          background: 'var(--bg-secondary)',
-                          borderRadius: 'var(--radius-md)',
-                          transition: 'all 0.3s',
-                        }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.transform = 'translateX(8px)'
-                          e.currentTarget.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.1)'
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.transform = 'translateX(0)'
-                          e.currentTarget.style.boxShadow = 'none'
-                        }}
-                      >
-                        <Link
-                          to={`/article/${article.id}`}
-                          style={{
-                            fontSize: '1.1rem',
-                            fontWeight: 500,
-                            color: 'var(--text-primary)',
-                            textDecoration: 'none',
-                          }}
-                        >
-                          {article.title}
-                        </Link>
-
-                        <div
-                          style={{
-                            marginTop: '0.5rem',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '1rem',
-                            flexWrap: 'wrap',
-                          }}
-                        >
-                          <Text type="secondary" style={{ fontSize: '0.875rem' }}>
-                            {dayjs(article.createdAt).format('MM-DD')}
-                          </Text>
-
-                          {article.category && article.category.name && (
-                            <Link to={`/categories/${article.category.name}`} style={{ textDecoration: 'none' }}>
-                              <Tag color="orange">{article.category.name}</Tag>
-                            </Link>
-                          )}
-
-                          {Array.isArray(article.tags) && article.tags.length > 0 && (
-                            <>
-                              {article.tags.slice(0, 3).map((tag) => (
-                                <Link key={tag.id ?? tag.name} to={`/tags/${tag.name}`} style={{ textDecoration: 'none' }}>
-                                  <Tag color="blue">{tag.name}</Tag>
-                                </Link>
-                              ))}
-                            </>
-                          )}
-
-                          {typeof article.viewCount === 'number' && (
-                            <Text type="secondary" style={{ fontSize: '0.875rem' }}>
-                              阅读 {article.viewCount}
-                            </Text>
-                          )}
-
-                          {typeof article.likeCount === 'number' && (
-                            <Text type="secondary" style={{ fontSize: '0.875rem' }}>
-                              点赞 {article.likeCount}
-                            </Text>
-                          )}
-                        </div>
-                      </div>
-                    ))}
-                  </Space>
-                </div>
-              ),
-            }))}
-          />
-        </div>
-      ))}
-    </div>
+          <div>
+            <dt>{t('ownership.creationTx')}</dt>
+            <dd>
+              <a href={OWNERSHIP_INFO.creationTxUrl} target="_blank" rel="noreferrer">
+                {OWNERSHIP_INFO.creationTx}
+              </a>
+            </dd>
+          </div>
+          <div>
+            <dt>{t('ownership.updateTx')}</dt>
+            <dd>
+              <a href={OWNERSHIP_INFO.lastUpdateTxUrl} target="_blank" rel="noreferrer">
+                {OWNERSHIP_INFO.lastUpdateTx}
+              </a>
+            </dd>
+          </div>
+          <div>
+            <dt>{t('ownership.ipfs')}</dt>
+            <dd>
+              <a href={OWNERSHIP_INFO.ipfsGateway} target="_blank" rel="noreferrer">
+                {OWNERSHIP_INFO.ipfsHash}
+              </a>
+            </dd>
+          </div>
+        </dl>
+      </section>
+    </section>
   )
 }
 

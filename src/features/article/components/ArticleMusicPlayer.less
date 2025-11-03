@@ -1,0 +1,99 @@
+.article-music-player__outer {
+  position: relative;
+  margin: var(--spacing-xl) 0;
+}
+
+.article-music-player__spacer {
+  transition: height 0.25s ease;
+}
+
+.article-music-player {
+  background: rgba(255, 255, 255, 0.85);
+  border-radius: 28px;
+  padding: 24px 24px 20px;
+  box-shadow: 0 28px 54px rgba(15, 23, 42, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  display: grid;
+  gap: 18px;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(22px) saturate(140%);
+  -webkit-backdrop-filter: blur(22px) saturate(140%);
+  max-width: 680px;
+}
+
+.article-music-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+
+  .label {
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+
+  .value {
+    color: var(--primary-color);
+  }
+}
+
+.article-music-player meting-js {
+  display: block;
+  width: 100%;
+}
+
+.article-music-player.is-floating {
+  position: fixed;
+  bottom: 32px;
+  right: 32px;
+  max-width: min(360px, 92vw);
+  width: min(360px, 92vw);
+  z-index: 1200;
+  padding: 20px;
+  border-radius: 24px;
+  box-shadow: 0 30px 65px rgba(15, 23, 42, 0.18);
+}
+
+.article-music-player.is-floating .article-music-info {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+}
+
+html[data-theme='dark'] {
+  .article-music-player {
+    background: rgba(30, 30, 33, 0.82);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 32px 72px rgba(0, 0, 0, 0.55);
+
+    .article-music-info {
+      color: rgba(232, 232, 232, 0.75);
+
+      .label {
+        color: rgba(232, 232, 232, 0.85);
+      }
+
+      .value {
+        color: rgba(255, 210, 185, 0.92);
+      }
+    }
+  }
+
+  .article-music-player.is-floating {
+    box-shadow: 0 40px 90px rgba(0, 0, 0, 0.65);
+  }
+}
+
+@media (max-width: 768px) {
+  .article-music-player.is-floating {
+    right: 16px;
+    bottom: 24px;
+  }
+
+  .article-music-player {
+    padding: 20px 18px;
+    border-radius: 24px;
+  }
+}

@@ -3,7 +3,7 @@
  * 用于展示文章列表项
  */
 
-import { Card, Tag, Space, Typography } from 'antd'
+import { Card, Tag, Space, Typography, Tooltip } from 'antd'
 import {
   EyeOutlined,
   LikeOutlined,
@@ -15,24 +15,17 @@ import type { ArticleListItem } from '../types'
 import dayjs from 'dayjs'
 import styles from './ArticleCard.module.less'
 
-const { Title, Paragraph, Text } = Typography
+const { Title, Paragraph } = Typography
 
-/**
- * 文章卡片 Props
- */
 export interface ArticleCardProps {
-  /** 文章数据 */
   article: ArticleListItem
-  /** 是否显示封面 */
   showCover?: boolean
 }
 
-/**
- * 文章卡片组件
- */
-export function ArticleCard({ article, showCover = true }: ArticleCardProps) {
+export function ArticleCard({ article }: ArticleCardProps) {
   const {
     id,
+    slug,
     title,
     description,
     cover,
@@ -44,55 +37,68 @@ export function ArticleCard({ article, showCover = true }: ArticleCardProps) {
     createdAt,
   } = article
 
+  const articleHref = slug ? `/posts/${slug}` : `/article/${id}`
+
   return (
-    <Link to={`/article/${id}`} style={{ textDecoration: 'none' }}>
+    <Link to={articleHref} className={styles.articleLink}>
       <Card
         hoverable
         cover={
-          cover ? (
-            <div className={styles.coverWrapper}>
-              <div
-                className={styles.coverImage}
-                style={{
-                  backgroundImage: `url(${cover})`,
-                }}
-              />
-            </div>
-          ) : (
-            <div className={styles.coverWrapper}>
+          <div className={styles.coverWrapper}>
+            <div
+              className={styles.coverImage}
+              style={{
+                backgroundImage: cover
+                  ? `url(${cover})`
+                  : 'linear-gradient(135deg, rgba(214, 127, 71, 0.25), rgba(214, 127, 71, 0.05))',
+              }}
+            />
+            {!cover && (
               <div className={styles.coverPlaceholder}>
                 <span>暂无封面</span>
               </div>
-            </div>
-          )
+            )}
+          </div>
         }
         className={styles.articleCard}
-        styles={{ body: { padding: 'var(--spacing-md)' } }}
       >
-        {/* 标题 */}
         <Title level={3} className={styles.title}>
           {title}
         </Title>
 
-        {/* 描述 */}
         <Paragraph ellipsis={{ rows: 2 }} className={styles.description}>
           {description}
         </Paragraph>
 
-        {/* 元信息 */}
         <div className={styles.metaWrapper}>
-          <Space size="small" className={styles.meta}>
-            <Text type="secondary">
-              <CalendarOutlined /> {dayjs(createdAt).format('MMM DD, YYYY')}
-            </Text>
-            <span className={styles.divider}>·</span>
-            <Text type="secondary">
-              <EyeOutlined /> {viewCount}
-            </Text>
-          </Space>
+          <div className={styles.metaStats}>
+            <Tooltip title="发布时间">
+              <span className={styles.statItem}>
+                <CalendarOutlined />
+                {dayjs(createdAt).format('MMM DD, YYYY')}
+              </span>
+            </Tooltip>
+            <Tooltip title="阅读量">
+              <span className={styles.statItem}>
+                <EyeOutlined />
+                {viewCount}
+              </span>
+            </Tooltip>
+            <Tooltip title="点赞数">
+              <span className={styles.statItem}>
+                <LikeOutlined />
+                {likeCount}
+              </span>
+            </Tooltip>
+            <Tooltip title="评论数">
+              <span className={styles.statItem}>
+                <CommentOutlined />
+                {commentCount}
+              </span>
+            </Tooltip>
+          </div>
 
-          {/* 分类和标签 */}
-          <Space size={4} className={styles.tags}>
+          <Space size={6} className={styles.tags}>
             <Tag className={styles.categoryTag}>{category.name}</Tag>
             {tags.slice(0, 2).map((tag) => (
               <Tag key={tag.id} className={styles.normalTag}>
@@ -105,3 +111,5 @@ export function ArticleCard({ article, showCover = true }: ArticleCardProps) {
     </Link>
   )
 }
+
+export default ArticleCard

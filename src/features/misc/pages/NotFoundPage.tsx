@@ -14,7 +14,7 @@ export function NotFoundPage() {
       title="404"
       subTitle="抱歉，您访问的页面不存在。"
       extra={
-        <Button type="primary" onClick={() => navigate('/home', { replace: true })}>
+        <Button type="primary" onClick={() => navigate('/', { replace: true })}>
           返回首页
         </Button>
       }

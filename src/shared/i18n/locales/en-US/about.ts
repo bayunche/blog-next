@@ -1,63 +1,89 @@
 const about = {
   hero: {
     title: "Hi, I'm Aya",
-    subtitle: 'Full-stack engineer · Indie hacker · Storyteller',
-    quote: '“Coding is my love language. I want software to feel warm because people touched it.”',
+    tagline: 'Full-stack maker who writes product stories in code',
+    description:
+      "A decade across product and engineering. I turn loose ideas into software that feels crafted, then document the journey so others can reuse the path.",
+    meta: [
+      { label: 'Based in', value: 'Hangzhou · Remote friendly' },
+      { label: 'Currently', value: 'Indie builder & product advisor' },
+      { label: 'Availability', value: 'Open for Q4 2025 collaborations' },
+    ],
+    callToAction: 'Scroll down and you’ll meet the version of me who is building right now.',
     avatarAlt: 'Aya avatar',
   },
-  story: {
-    title: 'My story',
+  narrative: {
+    title: 'How I got here',
     paragraphs: [
-      'Welcome to my digital garden. I am Aya, a full-stack engineer who turns ideas into code and code into stories. This blog captures the footprints of me wandering between product, engineering, and everyday life.',
-      'One typhoon night in 2014 I typed “Hello World” in a dorm room. Ten years later I have travelled across embedded systems, web stacks, enterprise products, and solo building, always obsessed with shipping experiences that feel alive.',
-      'I enjoy untangling complex problems and polishing ordinary days with better tools. Every article, release, and tiny feature here is a way for me to converse with the world.',
+      'My first “Hello World” happened in a dorm room during a typhoon night in 2014. Since then I have shipped embedded firmware, large-scale web apps, enterprise tooling, and indie experiments—always chasing the feeling of shipping something alive.',
+      'I enjoy decomposing ambiguous problems into human stories, mapping them to interfaces and systems, and leaving behind notes, utilities, and open-source crumbs for whoever comes next.',
+      'Writing, coding, and shipping are the same act to me: exploring how software can stay warm, intentional, and approachable.',
     ],
   },
-  projects: {
-    title: 'What I am crafting',
-    intro: 'I love turning whimsical ideas into tangible products. These are the three builds that keep me awake lately.',
+  focus: {
+    title: 'What keeps me busy',
     items: [
       {
-        name: 'MoePress',
-        description: 'An open-source blog engine embracing modern frontends with pluggable writing experiences and playful animations.',
-        link: 'https://github.com/bayunche/moepress',
+        title: 'MoePress Studio',
+        description: 'Rebuilding my blog engine into a write-publish-iterate studio that reduces creator friction end to end.',
       },
       {
-        name: 'NightWind Dashboard',
-        description: 'An indie creator cockpit that merges metrics, releases, and feedback into a single “night navigation” map.',
-        link: 'https://github.com/bayunche/nightwind',
+        title: 'Creator workflow experiments',
+        description: 'Designing a suite of lightweight tools that turn product decisions, knowledge capture, and publishing cadence into a repeatable rhythm.',
       },
       {
-        name: 'Canvas Circuit',
-        description: 'A WebGL + Canvas playground that fuses physics simulation, music beats, and visual art into an interactive stage.',
-        link: 'https://github.com/bayunche/canvas-circuit',
+        title: 'Open advisory',
+        description: 'Partnering with early-stage teams on product and frontend strategy, iterating in small, verifiable steps.',
       },
     ],
-    more: 'See more experiments on my GitHub.',
   },
-  life: {
-    title: 'Beyond the keyboard',
-    paragraphs: [
-      'After shipping code I keep writing — notes about clouds on the road, midnight breezes, and those lightning-flash ideas.',
-      'I love ACG culture and film photography, and I often run through the city at night listening to lo-fi while plotting product directions.',
-      'I believe a broader life experience always returns to the keyboard, helping me craft products that carry warmth and clarity.',
+  stack: {
+    title: 'Toolbox I reach for',
+    groups: [
+      {
+        label: 'Frontend',
+        items: ['React 19', 'Vite 7', 'TanStack Query', 'Zustand', 'Tailwind / Less'],
+      },
+      {
+        label: 'Backend & Ops',
+        items: ['Koa 2', 'Sequelize', 'MySQL 8', 'Docker Compose', 'Cloudflare Workers'],
+      },
+      {
+        label: 'Craft & collaboration',
+        items: ['Notion', 'Figma', 'Obsidian', 'Linear', 'Raycast'],
+      },
+    ],
+  },
+  values: {
+    title: 'Principles I keep',
+    principles: [
+      'Software is not a checklist—it should answer why it deserves to exist.',
+      'Products feel better when they embrace rhythm, pacing, and deliberate tone like good writing.',
+      'Complexity is a last resort. Keep systems light enough to maintain with kindness.',
     ],
   },
   contact: {
-    title: 'Say hello',
-    description: 'Let’s talk about products, engineering, or any spark that excites you.',
-    github: {
-      label: 'GitHub',
-      url: 'https://github.com/bayunche',
-    },
-    email: {
-      label: 'Email',
-      url: 'mailto:hi@bayunche.dev',
-    },
-    wechat: {
-      label: 'WeChat',
-      value: 'bayunche',
-    },
+    title: 'Let’s build something meaningful',
+    description: 'Email me or drop a note if you want to jam on products, code, or any idea that sparks.',
+    channels: [
+      {
+        label: 'Email',
+        value: 'hi@bayunche.dev',
+        url: 'mailto:hi@bayunche.dev',
+      },
+      {
+        label: 'GitHub',
+        value: 'github.com/bayunche',
+        url: 'https://github.com/bayunche',
+      },
+      {
+        label: 'WeChat',
+        value: 'bayunche',
+      },
+    ],
+  },
+  comments: {
+    title: 'Guestbook',
   },
 }
 
