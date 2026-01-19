@@ -1,0 +1,209 @@
+# Sakurairo Blog Docker 部署指南
+
+## 📋 目录结构
+
+```
+blog-sakurairo/
+├── docker/
+│   ├── nginx/
+│   │   ├── nginx.conf        # Nginx 主配置
+│   │   ├── default.conf      # 站点配置
+│   │   └── ssl/              # SSL 证书目录（可选）
+│   └── mysql/
+│       └── init/             # 数据库初始化脚本
+├── server/                   # 后端代码
+│   └── Dockerfile
+├── Dockerfile.frontend       # 前端 Dockerfile
+├── docker-compose.yml        # Docker Compose 配置
+├── .env.docker              # 环境变量模板
+└── .dockerignore
+```
+
+---
+
+## 🚀 快速启动
+
+### 1. 准备环境变量
+
+```bash
+# 复制环境变量模板
+cp .env.docker .env
+
+# 编辑配置（必须修改敏感信息）
+nano .env
+```
+
+**必须修改的配置项：**
+- `MYSQL_ROOT_PASSWORD` - MySQL root 密码
+- `MYSQL_PASSWORD` - 应用数据库密码
+- `TOKEN_SECRET` - JWT 密钥（生产环境务必修改）
+
+### 2. 启动服务
+
+```bash
+# 构建并启动所有服务
+docker-compose up -d --build
+
+# 查看服务状态
+docker-compose ps
+
+# 查看日志
+docker-compose logs -f
+```
+
+### 3. 访问应用
+
+- **前端**: http://localhost:3000
+- **后端 API**: http://localhost:6060
+- **Nginx 代理**: http://localhost:80
+
+---
+
+## 🔧 服务说明
+
+| 服务 | 端口 | 说明 |
+|------|------|------|
+| mysql | 3306 | MySQL 8.0 数据库 |
+| server | 6060 | Node.js 后端 API |
+| web | 3000 | Next.js 前端 |
+| nginx | 80/443 | 反向代理 |
+
+---
+
+## 📦 常用命令
+
+```bash
+# 停止所有服务
+docker-compose down
+
+# 停止并删除数据卷（清空数据库）
+docker-compose down -v
+
+# 重新构建单个服务
+docker-compose build web
+docker-compose build server
+
+# 查看特定服务日志
+docker-compose logs -f web
+docker-compose logs -f server
+docker-compose logs -f mysql
+
+# 进入容器调试
+docker-compose exec server sh
+docker-compose exec mysql mysql -u root -p
+```
+
+---
+
+## 🌐 生产环境部署
+
+### 1. 配置 HTTPS（推荐）
+
+```bash
+# 将 SSL 证书放入 docker/nginx/ssl/
+cp your_cert.pem docker/nginx/ssl/cert.pem
+cp your_key.pem docker/nginx/ssl/key.pem
+```
+
+编辑 `docker/nginx/default.conf`，取消 HTTPS server 块的注释。
+
+### 2. 使用外部数据库
+
+如果使用云数据库（如 RDS），修改 `.env`：
+
+```env
+MYSQL_HOST=your-rds-endpoint.com
+MYSQL_PORT=3306
+MYSQL_DATABASE=sakurairo_blog
+MYSQL_USER=your_user
+MYSQL_PASSWORD=your_password
+```
+
+然后在 `docker-compose.yml` 中注释掉 `mysql` 服务。
+
+### 3. 配置 GitHub OAuth
+
+```env
+GITHUB_CLIENT_ID=your_client_id
+GITHUB_CLIENT_SECRET=your_client_secret
+ADMIN_GITHUB_LOGIN_NAME=your_github_username
+```
+
+---
+
+## 🔍 健康检查
+
+```bash
+# 检查所有服务状态
+docker-compose ps
+
+# 检查 Nginx 健康端点
+curl http://localhost/health
+
+# 检查后端 API
+curl http://localhost/api/article/list
+```
+
+---
+
+## ⚠️ 故障排除
+
+### MySQL 连接失败
+
+```bash
+# 检查 MySQL 是否启动
+docker-compose logs mysql
+
+# 等待 MySQL 完全启动（约 30 秒）
+docker-compose exec mysql mysql -u root -p -e "SHOW DATABASES;"
+```
+
+### 前端构建失败
+
+```bash
+# 检查构建日志
+docker-compose logs web
+
+# 清理并重新构建
+docker-compose down
+docker system prune -f
+docker-compose up -d --build
+```
+
+### 端口冲突
+
+```bash
+# 检查端口占用
+netstat -tulpn | grep :80
+netstat -tulpn | grep :3306
+
+# 修改 docker-compose.yml 中的端口映射
+```
+
+---
+
+## 📊 资源需求
+
+| 服务 | CPU | 内存 |
+|------|-----|------|
+| MySQL | 0.5 核 | 512MB |
+| Server | 0.25 核 | 256MB |
+| Web | 0.5 核 | 512MB |
+| Nginx | 0.1 核 | 64MB |
+| **总计** | **~1.5 核** | **~1.3GB** |
+
+---
+
+## 🔄 备份与恢复
+
+### 备份数据库
+
+```bash
+docker-compose exec mysql mysqldump -u root -p sakurairo_blog > backup.sql
+```
+
+### 恢复数据库
+
+```bash
+docker-compose exec -T mysql mysql -u root -p sakurairo_blog < backup.sql
+```

@@ -1,0 +1,80 @@
+version: '3.8'
+
+# 开发/测试环境简化版 Docker Compose
+# 不包含 Nginx，直接暴露前后端端口
+
+services:
+  # MySQL 数据库
+  mysql:
+    image: mysql:8.0
+    container_name: sakurairo-mysql-dev
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root123456}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-sakurairo_blog}
+      MYSQL_USER: ${MYSQL_USER:-sakurairo}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-sakurairo123}
+      TZ: Asia/Shanghai
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data_dev:/var/lib/mysql
+      - ./docker/mysql/init:/docker-entrypoint-initdb.d
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    healthcheck:
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - sakurairo-dev
+
+  # 后端服务
+  server:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    container_name: sakurairo-server-dev
+    restart: unless-stopped
+    environment:
+      NODE_ENV: development
+      SERVER_PORT: 6060
+      MYSQL_HOST: mysql
+      MYSQL_PORT: 3306
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-sakurairo_blog}
+      MYSQL_USER: ${MYSQL_USER:-sakurairo}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-sakurairo123}
+      TOKEN_SECRET: ${TOKEN_SECRET:-dev_jwt_secret}
+      TOKEN_EXPIRES_IN: 720h
+    ports:
+      - "6060:6060"
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - sakurairo-dev
+
+  # 前端服务
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    container_name: sakurairo-web-dev
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+    ports:
+      - "3000:3000"
+    depends_on:
+      - server
+    networks:
+      - sakurairo-dev
+
+volumes:
+  mysql_data_dev:
+
+
+networks:
+  sakurairo-dev:
+    driver: bridge
