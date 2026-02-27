@@ -1,6 +1,7 @@
 var os = require('os')
 const koa = require('koa')
 const http = require('http')
+const { article: ArticleModel, comment: CommentModel, reply: ReplyModel } = require('../models')
 const app = new koa()
 const server = http.createServer(app.callback())
 const options = {
@@ -27,6 +28,27 @@ function updateCPU() {
 
 //start() // 直接运行
 class MonitorController {
+  static async summary(ctx) {
+    const where = {
+      id: {
+        $not: -1 // 排除 about 占位文章
+      }
+    }
+
+    const [articleCount, commentCount, replyCount, viewCountSum] = await Promise.all([
+      ArticleModel.count({ where }),
+      CommentModel.count(),
+      ReplyModel.count(),
+      ArticleModel.sum('viewCount', { where })
+    ])
+
+    ctx.body = {
+      articleCount: Number(articleCount || 0),
+      commentCount: Number((commentCount || 0) + (replyCount || 0)),
+      viewCount: Number(viewCountSum || 0)
+    }
+  }
+
   static async sysMonitor(ctx) {
     io.on('connection', (socket) => {
       //连接事件

@@ -11,8 +11,10 @@ module.exports = (sequelize, dataTypes) => {
       description: { type: dataTypes.STRING(500), allowNull: true }, // 文章描述
       viewCount: { type: dataTypes.INTEGER(11), defaultValue: 0 }, // 阅读数
       likeCount: { type: dataTypes.INTEGER(11), defaultValue: 0 }, // 点赞数
-      type: { type: dataTypes.BOOLEAN, defaultValue: true}, // 是否私密
-      top: {type: dataTypes.BOOLEAN, defaultValue: false},
+      type: { type: dataTypes.BOOLEAN, defaultValue: true }, // 是否私密
+      top: { type: dataTypes.BOOLEAN, defaultValue: false },
+      musicId: { type: dataTypes.STRING(50), allowNull: true }, // 背景音乐 ID
+      musicName: { type: dataTypes.STRING(255), allowNull: true }, // 背景音乐名称
       uuid: {
         type: dataTypes.STRING(32),
         allowNull: true,

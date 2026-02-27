@@ -36,6 +36,7 @@ services:
     environment:
       NODE_ENV: production
       SERVER_PORT: 6060
+      MUSIC_API_URL: http://music-api:3000
       MYSQL_HOST: mysql
       MYSQL_PORT: 3306
       MYSQL_DATABASE: ${MYSQL_DATABASE:-sakurairo_blog}
@@ -47,10 +48,14 @@ services:
       GITHUB_CLIENT_SECRET: ${GITHUB_CLIENT_SECRET:-}
       ADMIN_GITHUB_LOGIN_NAME: ${ADMIN_GITHUB_LOGIN_NAME:-}
     ports:
-      - "6060:6060"
+      - "6062:6060"
+    volumes:
+      - ./server/data:/app/data
     depends_on:
       mysql:
         condition: service_healthy
+      music-api:
+        condition: service_started
     networks:
       - sakurairo-network
 
@@ -59,15 +64,38 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.frontend
+      args:
+        API_URL: http://server:6060
+        INTERNAL_API_URL: http://server:6060
+        NEXT_PUBLIC_REMARK42_URL: ${NEXT_PUBLIC_REMARK42_URL:-http://localhost:8080}
+        NEXT_PUBLIC_REMARK42_SITE_ID: ${NEXT_PUBLIC_REMARK42_SITE_ID:-sakurairo}
+        NEXT_PUBLIC_GITHUB_CLIENT_ID: ${NEXT_PUBLIC_GITHUB_CLIENT_ID:-}
     container_name: sakurairo-web
     restart: unless-stopped
     environment:
       NODE_ENV: production
       PORT: 3000
+      API_URL: http://server:6060
+      INTERNAL_API_URL: http://server:6060
+      NEXT_PUBLIC_REMARK42_URL: ${NEXT_PUBLIC_REMARK42_URL:-http://localhost:8080}
+      NEXT_PUBLIC_REMARK42_SITE_ID: ${NEXT_PUBLIC_REMARK42_SITE_ID:-sakurairo}
+      NEXT_PUBLIC_GITHUB_CLIENT_ID: ${NEXT_PUBLIC_GITHUB_CLIENT_ID:-}
     ports:
-      - "3000:3000"
+      - "3002:3000"
     depends_on:
       - server
+    networks:
+      - sakurairo-network
+
+  # 网易云音乐 API 服务
+  music-api:
+    build: ./server/netease_api
+    container_name: sakurairo-music-api
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+    ports:
+      - "3003:3000"
     networks:
       - sakurairo-network
 
@@ -86,6 +114,25 @@ services:
     depends_on:
       - web
       - server
+    networks:
+      - sakurairo-network
+
+  # Remark42 评论系统
+  remark42:
+    image: umputun/remark42:latest
+    container_name: sakurairo-remark42
+    restart: unless-stopped
+    environment:
+      - REMARK_URL=${REMARK42_URL:-http://localhost:8080}
+      - SECRET=${REMARK42_SECRET:-secret}
+      - SITE=${REMARK42_SITE_ID:-sakurairo}
+      - AUTH_GITHUB_CID=${REMARK42_GITHUB_CLIENT_ID}
+      - AUTH_GITHUB_CSEC=${REMARK42_GITHUB_CLIENT_SECRET}
+      - ORIGIN=${REMARK42_ORIGIN_PROD:-http://localhost:3002}
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./docker/remark42:/srv/var
     networks:
       - sakurairo-network
 

@@ -43,10 +43,12 @@ class ArticleController {
       tagList: Joi.array(),
       type: Joi.boolean(),
       top: Joi.boolean(),
+      musicId: Joi.string().allow('', null),
+      musicName: Joi.string().allow('', null),
     })
 
     if (validator) {
-      const { title, content, cover, description, categoryList = [], tagList = [], authorId, type, top } = ctx.request.body
+      const { title, content, cover, description, categoryList = [], tagList = [], authorId, type, top, musicId, musicName } = ctx.request.body
       const result = await ArticleModel.findOne({ where: { title } })
       if (result) {
         ctx.throw(403, '创建失败，该文章已存在！')
@@ -55,7 +57,7 @@ class ArticleController {
         const categories = categoryList.map(c => ({ name: c }))
         const uuid = uuidv4().toString().replace(/-/g, '')
         const data = await ArticleModel.create(
-          { title, content, cover, description, authorId, tags, categories, type, top, uuid },
+          { title, content, cover, description, authorId, tags, categories, type, top, uuid, musicId, musicName },
           { include: [TagModel, CategoryModel] }
         )
         ctx.body = data
@@ -308,14 +310,16 @@ class ArticleController {
         tags: Joi.array(),
         type: Joi.boolean(),
         top: Joi.boolean(),
+        musicId: Joi.string().allow('', null),
+        musicName: Joi.string().allow('', null),
       }
     )
     if (validator) {
-      const { title, content, cover, description, categories = [], tags = [], type, top } = ctx.request.body
+      const { title, content, cover, description, categories = [], tags = [], type, top, musicId, musicName } = ctx.request.body
       const articleId = parseInt(ctx.params.id)
       const tagList = tags.map(tag => ({ name: tag, articleId }))
       const categoryList = categories.map(cate => ({ name: cate, articleId }))
-      await ArticleModel.update({ title, content, cover, description, type, top }, { where: { id: articleId } })
+      await ArticleModel.update({ title, content, cover, description, type, top, musicId, musicName }, { where: { id: articleId } })
       await TagModel.destroy({ where: { articleId } })
       await TagModel.bulkCreate(tagList)
       await CategoryModel.destroy({ where: { articleId } })

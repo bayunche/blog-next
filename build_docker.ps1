@@ -32,9 +32,23 @@ while ($true) {
 
     switch ($choice) {
         "1" {
-            Write-Host "`n🚀 正在构建并启动服务..." -ForegroundColor Green
+            Write-Host "`n📦 正在检查依赖..." -ForegroundColor Cyan
+            if (-not (Test-Path "node_modules")) {
+                Write-Host "Installing dependencies..." -ForegroundColor Yellow
+                npm install
+            }
+
+            Write-Host "`n🔨 正在本地构建 Next.js 应用..." -ForegroundColor Cyan
+            $env:NODE_ENV = "production"
+            npm run build
+            if (-not $?) {
+                Write-Host "构建失败！" -ForegroundColor Red
+                break
+            }
+
+            Write-Host "`n🚀 正在构建并启动 Docker 服务..." -ForegroundColor Green
             docker-compose up -d --build
-            if ($?) { Write-Host "`n✅ 服务已启动！访问 http://localhost:3000" -ForegroundColor Green }
+            if ($?) { Write-Host "`n✅ 服务已启动！访问 http://localhost (Nginx) 或 http://localhost:3002 (前端直连)" -ForegroundColor Green }
             Pause
         }
         "2" {

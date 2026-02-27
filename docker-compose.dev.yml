@@ -48,6 +48,8 @@ services:
       TOKEN_EXPIRES_IN: 720h
     ports:
       - "6060:6060"
+    volumes:
+      - ./server/data:/app/data
     depends_on:
       mysql:
         condition: service_healthy
@@ -59,15 +61,45 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.frontend
+      args:
+        API_URL: http://server:6060
+        INTERNAL_API_URL: http://server:6060
+        NEXT_PUBLIC_REMARK42_URL: ${NEXT_PUBLIC_REMARK42_URL:-http://localhost:8080}
+        NEXT_PUBLIC_REMARK42_SITE_ID: ${NEXT_PUBLIC_REMARK42_SITE_ID:-sakurairo}
+        NEXT_PUBLIC_GITHUB_CLIENT_ID: ${NEXT_PUBLIC_GITHUB_CLIENT_ID:-}
     container_name: sakurairo-web-dev
     restart: unless-stopped
     environment:
       NODE_ENV: production
       PORT: 3000
+      API_URL: http://server:6060
+      INTERNAL_API_URL: http://server:6060
+      NEXT_PUBLIC_REMARK42_URL: ${NEXT_PUBLIC_REMARK42_URL:-http://localhost:8080}
+      NEXT_PUBLIC_REMARK42_SITE_ID: ${NEXT_PUBLIC_REMARK42_SITE_ID:-sakurairo}
+      NEXT_PUBLIC_GITHUB_CLIENT_ID: ${NEXT_PUBLIC_GITHUB_CLIENT_ID:-}
     ports:
       - "3000:3000"
     depends_on:
       - server
+    networks:
+      - sakurairo-dev
+
+  # Remark42 评论系统
+  remark42:
+    image: umputun/remark42:latest
+    container_name: sakurairo-remark42-dev
+    restart: unless-stopped
+    environment:
+      - REMARK_URL=${REMARK42_URL:-http://localhost:8080}
+      - SECRET=${REMARK42_SECRET:-secret}
+      - SITE=${REMARK42_SITE_ID:-sakurairo}
+      - AUTH_GITHUB_CID=${REMARK42_GITHUB_CLIENT_ID:-}
+      - AUTH_GITHUB_CSEC=${REMARK42_GITHUB_CLIENT_SECRET:-}
+      - ORIGIN=${REMARK42_ORIGIN:-http://localhost:3000}
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./docker/remark42:/srv/var
     networks:
       - sakurairo-dev
 

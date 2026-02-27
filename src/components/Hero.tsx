@@ -1,9 +1,10 @@
 'use client';
 
 import { useEffect, useState, useRef } from 'react';
-import { FaGithub, FaTwitter, FaEnvelope, FaChevronDown, FaTelegram, FaRss } from 'react-icons/fa';
-import { SiTiktok, SiBilibili } from 'react-icons/si';
+import { FaGithub, FaTwitter, FaChevronDown, FaTelegram, FaRss } from 'react-icons/fa';
+import { SiBilibili } from 'react-icons/si';
 import Image from 'next/image';
+import { MOTION, clamp, getScrollProgress } from '@/shared/constants/motion';
 
 // 一言 API 或静态格言
 const HITOKOTO_LIST = [
@@ -58,11 +59,13 @@ export const Hero = () => {
     // 视差偏移计算 - 优化版：背景固定，内容上移，整体渐隐
     const heroHeight = typeof window !== 'undefined' ? window.innerHeight : 1000;
     // 背景固定，不移动，但渐隐
-    const backgroundOpacity = Math.max(0, 1 - scrollY / (heroHeight * 0.8));
+    const backgroundProgress = getScrollProgress(scrollY, heroHeight, MOTION.hero.backgroundFadeRatio);
+    const backgroundOpacity = clamp(1 - backgroundProgress, 0, 1);
     // 内容区域向上移动并渐隐
-    const contentOffset = scrollY * 0.4;
-    const contentOpacity = Math.max(0, 1 - scrollY / (heroHeight * 0.6));
-    const contentScale = Math.max(0.8, 1 - scrollY / 3000);
+    const contentProgress = getScrollProgress(scrollY, heroHeight, MOTION.hero.contentFadeRatio);
+    const contentOffset = scrollY * MOTION.hero.contentOffsetFactor;
+    const contentOpacity = clamp(1 - contentProgress, 0, 1);
+    const contentScale = Math.max(MOTION.hero.contentScaleMin, 1 - scrollY / MOTION.hero.contentScaleDivisor);
 
     return (
         <section
@@ -71,14 +74,14 @@ export const Hero = () => {
         >
             {/* Background - 固定位置，向下滚动渐隐 */}
             <div
-                className="absolute inset-0 bg-gradient-to-br from-pink-400 via-purple-400 to-blue-500 dark:from-gray-900 dark:via-purple-900 dark:to-gray-800 transition-opacity duration-100"
+                className="absolute inset-0 bg-gradient-to-br from-pink-400 via-purple-400 to-blue-500 dark:from-gray-900 dark:via-purple-900 dark:to-gray-800 transition-opacity motion-transition-micro"
                 style={{ opacity: backgroundOpacity }}
             >
                 {/* 背景图片层 - 可选 */}
                 <div
                     className="absolute inset-0 bg-cover bg-center bg-no-repeat"
                     style={{
-                        backgroundImage: 'url(https://api.dujin.org/bing/1920.php)',
+                        backgroundImage: 'url(/images/background.jpg)',
                         opacity: 0.3,
                     }}
                 />
@@ -93,15 +96,15 @@ export const Hero = () => {
                 style={{
                     transform: `translateY(${-contentOffset}px) scale(${contentScale})`,
                     opacity: contentOpacity,
-                    transition: 'opacity 0.05s ease-out'
+                    transition: `opacity ${MOTION.durationMs.micro}ms ${MOTION.easing.decelerate}`,
                 }}
             >
                 {/* Avatar with glow effect */}
                 <div className="relative inline-block">
                     <div className="absolute inset-0 bg-primary/30 rounded-full blur-xl animate-pulse"></div>
-                    <div className="relative w-28 h-28 md:w-32 md:h-32 rounded-full border-4 border-white/50 overflow-hidden mx-auto shadow-2xl animate-glow hover:rotate-[360deg] transition-transform duration-700">
+                    <div className="relative w-28 h-28 md:w-32 md:h-32 rounded-full border-4 border-white/50 overflow-hidden mx-auto shadow-2xl animate-glow hover:rotate-[360deg] motion-transition-slow">
                         <Image
-                            src="https://avatars.githubusercontent.com/u/1?v=4"
+                            src="/images/avatar.jpg"
                             alt="Avatar"
                             fill
                             className="object-cover"
@@ -117,7 +120,7 @@ export const Hero = () => {
 
                 {/* Glassmorphism Hitokoto Box */}
                 <div className="relative mx-4">
-                    <div className="bg-white/20 backdrop-blur-xl rounded-2xl px-8 py-4 border border-white/30 shadow-xl hover:bg-white/25 transition-colors">
+                    <div className="bg-white/20 backdrop-blur-xl rounded-2xl px-8 py-4 border border-white/30 shadow-xl hover:bg-white/25 motion-transition">
                         <p className="text-lg md:text-xl font-medium" suppressHydrationWarning>
                             {mounted ? hitokoto : '...'}
                         </p>
@@ -133,12 +136,12 @@ export const Hero = () => {
                             target="_blank"
                             rel="noopener noreferrer"
                             aria-label={item.label}
-                            className={`group relative p-3 bg-white/20 ${item.color} rounded-full backdrop-blur-md transition-all duration-300 hover:-translate-y-2 hover:shadow-xl`}
+                            className={`group relative p-3 bg-white/20 ${item.color} rounded-full backdrop-blur-md motion-transition hover:-translate-y-2 hover:shadow-xl`}
                             style={{ animationDelay: `${i * 0.1}s` }}
                         >
-                            <item.icon size={20} className="transition-transform group-hover:scale-110" />
+                            <item.icon size={20} className="motion-transition group-hover:scale-110" />
                             {/* Tooltip */}
-                            <span className="absolute -bottom-8 left-1/2 -translate-x-1/2 text-xs bg-black/70 px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                            <span className="absolute -bottom-8 left-1/2 -translate-x-1/2 text-xs bg-black/70 px-2 py-1 rounded opacity-0 group-hover:opacity-100 motion-transition whitespace-nowrap">
                                 {item.label}
                             </span>
                         </a>
@@ -168,7 +171,7 @@ export const Hero = () => {
             {/* Scroll Down Indicator */}
             <button
                 onClick={scrollToContent}
-                className="absolute bottom-16 z-20 animate-bounce cursor-pointer p-2 text-white/80 hover:text-white transition-colors"
+                className="absolute bottom-16 z-20 animate-bounce cursor-pointer p-2 text-white/80 hover:text-white motion-transition"
                 aria-label="Scroll down"
                 style={{ opacity: contentOpacity }}
             >

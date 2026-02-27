@@ -6,6 +6,8 @@ import { notFound } from 'next/navigation';
 import Comments from '@/shared/components/Comments';
 import { TableOfContents } from '@/components/TableOfContents';
 import Link from 'next/link';
+import { ArticleMusic } from '@/components/ArticleMusic';
+import { buildBackgroundImageValue } from '@/shared/constants/backgrounds';
 
 // 标记为动态渲染
 export const dynamic = 'force-dynamic';
@@ -46,16 +48,20 @@ export default async function ArticlePage({ params }: { params: Promise<{ id: st
         notFound();
     }
 
+    const bgImage = buildBackgroundImageValue(article.cover || undefined);
+    const commentCount = (article.comments?.length || 0);
+
     return (
-        <>
+        <div className="relative">
+            {/* 同一张背景图贯穿标题区和内容区 */}
+            <div className="fixed inset-0 z-0 pointer-events-none">
+                <div className="absolute inset-0 bg-cover bg-center bg-no-repeat" style={{ backgroundImage: bgImage }} />
+                <div className="absolute inset-0 bg-gradient-to-b from-black/55 via-black/25 to-background/90" />
+            </div>
+
+            <div className="relative z-10">
             <header className="relative h-[50vh] min-h-[300px] flex items-center justify-center text-white overflow-hidden">
-                {/* Background Image */}
-                <div
-                    className="absolute inset-0 bg-cover bg-center z-0"
-                    style={{ backgroundImage: `url(${article.cover || 'https://api.dujin.org/bing/1920.php'})` }}
-                >
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
-                </div>
+                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/35 to-transparent z-0" />
 
                 {/* Content */}
                 <div className="relative z-20 text-center px-4 max-w-4xl space-y-4 animate-fade-in-up">
@@ -70,8 +76,16 @@ export default async function ArticlePage({ params }: { params: Promise<{ id: st
                     <div className="flex flex-wrap items-center justify-center gap-6 text-sm md:text-base opacity-90">
                         <span className="flex items-center gap-2"><FaCalendar /> {dayjs(article.createdAt).format('YYYY-MM-DD')}</span>
                         <span className="flex items-center gap-2"><FaEye /> {article.viewCount || 0} 阅读</span>
-                        <span className="flex items-center gap-2"><FaComments /> 0 评论</span>
+                        <span className="flex items-center gap-2"><FaComments /> {commentCount} 评论</span>
                     </div>
+
+                    {/* Article Music Sync Button */}
+                    {(article as any).musicId && (
+                        <ArticleMusic
+                            musicId={(article as any).musicId}
+                            musicName={(article as any).musicName || '未知音乐'}
+                        />
+                    )}
                 </div>
 
                 {/* Wave at bottom */}
@@ -143,6 +157,7 @@ export default async function ArticlePage({ params }: { params: Promise<{ id: st
             <div className="lg:hidden">
                 <TableOfContents content={article.content} />
             </div>
-        </>
+            </div>
+        </div>
     );
 }

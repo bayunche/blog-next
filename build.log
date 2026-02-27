@@ -1,0 +1,38 @@
+﻿
+> blog-sakurairo@0.1.0 build
+> next build
+
+鈻?Next.js 16.1.3 (Turbopack)
+- Environments: .env
+
+  Creating an optimized production build ...
+鉁?Compiled successfully in 13.6s
+  Running TypeScript ...
+  Collecting page data using 11 workers ...
+  Generating static pages using 11 workers (0/13) ...
+  Generating static pages using 11 workers (3/13) 
+  Generating static pages using 11 workers (6/13) 
+  Generating static pages using 11 workers (9/13) 
+鉁?Generating static pages using 11 workers (13/13) in 635.2ms
+  Finalizing page optimization ...
+
+Route (app)
+鈹?茠 /
+鈹?鈼?/_not-found
+鈹?鈼?/about
+鈹?鈼?/admin
+鈹?鈼?/admin/articles
+鈹?鈼?/admin/articles/create
+鈹?茠 /admin/articles/edit/[id]
+鈹?鈼?/admin/categories
+鈹?鈼?/admin/tags
+鈹?鈼?/archives
+鈹?鈼?/friends
+鈹?鈼?/login
+鈹?鈼?/posts
+鈹?茠 /posts/[id]
+
+
+鈼? (Static)   prerendered as static content
+茠  (Dynamic)  server-rendered on demand
+

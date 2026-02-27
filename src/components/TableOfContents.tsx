@@ -131,7 +131,7 @@ export const TableOfContents = ({ content, contentSelector = '#article-content' 
                 {/* 浮动按钮 */}
                 <button
                     onClick={() => setIsOpen(!isOpen)}
-                    className="fixed right-4 bottom-32 z-40 p-3 bg-primary text-white rounded-full shadow-lg hover:scale-110 transition-transform"
+                    className="fixed right-4 bottom-32 z-40 p-3 bg-primary text-white rounded-full shadow-lg hover:scale-110 transition-transform motion-transition"
                     title="文章目录"
                 >
                     {isOpen ? <FaTimes size={18} /> : <FaList size={18} />}
@@ -140,7 +140,7 @@ export const TableOfContents = ({ content, contentSelector = '#article-content' 
                 {/* 目录面板 */}
                 <div
                     className={clsx(
-                        'fixed right-4 bottom-48 z-40 w-64 max-h-80 bg-card-bg/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-card-border overflow-hidden transition-all duration-300',
+                        'fixed right-4 bottom-48 z-40 w-64 max-h-80 bg-card-bg/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-card-border overflow-hidden transition-all motion-transition',
                         isOpen ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 pointer-events-none'
                     )}
                 >
@@ -156,7 +156,7 @@ export const TableOfContents = ({ content, contentSelector = '#article-content' 
                                 key={heading.id}
                                 onClick={() => scrollToHeading(heading.id)}
                                 className={clsx(
-                                    'w-full text-left px-3 py-2 text-sm rounded-lg transition-colors truncate',
+                                    'w-full text-left px-3 py-2 text-sm rounded-lg transition-colors motion-transition truncate',
                                     activeId === heading.id
                                         ? 'bg-primary/10 text-primary font-medium'
                                         : 'text-text-muted hover:bg-card-border/50 hover:text-foreground'
@@ -186,7 +186,7 @@ export const TableOfContents = ({ content, contentSelector = '#article-content' 
                             key={heading.id}
                             onClick={() => scrollToHeading(heading.id)}
                             className={clsx(
-                                'block w-full text-left text-sm py-1.5 transition-all truncate border-l-2',
+                                'block w-full text-left text-sm py-1.5 transition-all motion-transition truncate border-l-2',
                                 activeId === heading.id
                                     ? 'border-primary text-primary font-medium pl-3'
                                     : 'border-transparent text-text-muted hover:text-foreground hover:border-primary/50 pl-3'

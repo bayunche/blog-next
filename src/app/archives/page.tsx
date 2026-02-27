@@ -2,6 +2,8 @@ import { articleApi, ArchiveYear } from '@/shared/api/article';
 import Link from 'next/link';
 import { Metadata } from 'next';
 
+export const dynamic = 'force-dynamic';
+
 export const metadata: Metadata = {
     title: '归档 - Sakurairo Blog',
     description: '按时间归档的所有文章',

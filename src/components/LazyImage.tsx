@@ -179,9 +179,8 @@ export const RandomCoverImage = ({
 
     useEffect(() => {
         if (!src) {
-            // 使用必应每日图片 API
-            const randomIndex = Math.floor(Math.random() * 8);
-            setImageSrc(`https://api.dujin.org/bing/1920.php?rand=${randomIndex}`);
+            // 本地优先，避免外部图源不稳定
+            setImageSrc('/images/background.jpg');
         }
     }, [src]);
 

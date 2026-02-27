@@ -15,7 +15,7 @@ export default function CategoryListPage() {
             const res = await categoryApi.getList();
             setCategories(res);
         } catch (error) {
-            message.error('Failed to fetch categories');
+            message.error('获取分类失败');
         } finally {
             setLoading(false);
         }
@@ -28,26 +28,26 @@ export default function CategoryListPage() {
     const handleDelete = async (record: Category) => {
         try {
             await categoryApi.delete(record.name);
-            message.success('Category deleted successfully');
+            message.success('分类删除成功');
             fetchCategories();
         } catch (error) {
-            message.error('Failed to delete category');
+            message.error('分类删除失败');
         }
     };
 
     const handleEdit = (record: Category) => {
         let newName = record.name;
         Modal.confirm({
-            title: 'Edit Category Name',
+            title: '修改分类名称',
             content: <Input defaultValue={record.name} onChange={(e) => newName = e.target.value} />,
             onOk: async () => {
                 if (!newName) return;
                 try {
                     await categoryApi.update(record.name, newName);
-                    message.success('Category updated');
+                    message.success('分类已更新');
                     fetchCategories();
                 } catch (err) {
-                    message.error('Failed to update category');
+                    message.error('分类更新失败');
                 }
             }
         });
@@ -55,12 +55,12 @@ export default function CategoryListPage() {
 
     const columns = [
         {
-            title: 'Name',
+            title: '名称',
             dataIndex: 'name',
             key: 'name',
         },
         {
-            title: 'Count',
+            title: '文章数量',
             dataIndex: 'count',
             key: 'count',
         },
@@ -68,7 +68,7 @@ export default function CategoryListPage() {
 
     return (
         <AdminTable
-            headerTitle="Categories"
+            headerTitle="分类管理"
             columns={columns}
             dataSource={categories}
             loading={loading}

@@ -15,7 +15,7 @@ export default function TagListPage() {
             const res = await tagApi.getList();
             setTags(res);
         } catch (error) {
-            message.error('Failed to fetch tags');
+            message.error('获取标签失败');
         } finally {
             setLoading(false);
         }
@@ -28,26 +28,26 @@ export default function TagListPage() {
     const handleDelete = async (record: Tag) => {
         try {
             await tagApi.delete(record.name);
-            message.success('Tag deleted successfully');
+            message.success('标签删除成功');
             fetchTags();
         } catch (error) {
-            message.error('Failed to delete tag');
+            message.error('标签删除失败');
         }
     };
 
     const handleEdit = (record: Tag) => {
         let newName = record.name;
         Modal.confirm({
-            title: 'Edit Tag Name',
+            title: '修改标签名称',
             content: <Input defaultValue={record.name} onChange={(e) => newName = e.target.value} />,
             onOk: async () => {
                 if (!newName) return;
                 try {
                     await tagApi.update(record.name, newName);
-                    message.success('Tag updated');
+                    message.success('标签已更新');
                     fetchTags();
                 } catch (err) {
-                    message.error('Failed to update tag');
+                    message.error('标签更新失败');
                 }
             }
         });
@@ -55,12 +55,12 @@ export default function TagListPage() {
 
     const columns = [
         {
-            title: 'Name',
+            title: '名称',
             dataIndex: 'name',
             key: 'name',
         },
         {
-            title: 'Count',
+            title: '文章数量',
             dataIndex: 'count',
             key: 'count',
         },
@@ -68,7 +68,7 @@ export default function TagListPage() {
 
     return (
         <AdminTable
-            headerTitle="Tags"
+            headerTitle="标签管理"
             columns={columns}
             dataSource={tags}
             loading={loading}

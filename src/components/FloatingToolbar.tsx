@@ -27,7 +27,7 @@ export const FloatingToolbar = () => {
             {/* Settings Panel */}
             <div
                 className={clsx(
-                    'bg-card-bg/95 backdrop-blur-xl rounded-2xl shadow-xl border border-card-border overflow-hidden transition-all duration-300',
+                    'bg-card-bg/95 backdrop-blur-xl rounded-2xl shadow-xl border border-card-border overflow-hidden transition-all motion-transition',
                     settingsOpen ? 'opacity-100 translate-y-0 mb-2' : 'opacity-0 translate-y-4 pointer-events-none h-0'
                 )}
             >
@@ -37,7 +37,7 @@ export const FloatingToolbar = () => {
                     {/* Theme Toggle */}
                     <button
                         onClick={toggleTheme}
-                        className="w-full flex items-center gap-3 p-3 rounded-xl bg-card-border/50 hover:bg-primary/10 transition-colors text-left"
+                        className="w-full flex items-center gap-3 p-3 rounded-xl bg-card-border/50 hover:bg-primary/10 transition-colors motion-transition text-left"
                     >
                         {theme === 'dark' ? (
                             <FaSun className="text-yellow-500" size={18} />
@@ -61,7 +61,7 @@ export const FloatingToolbar = () => {
                                     key={key}
                                     onClick={() => setPrimaryColor(key)}
                                     className={clsx(
-                                        'relative w-10 h-10 rounded-full border-2 shadow-md transition-all hover:scale-110',
+                                        'relative w-10 h-10 rounded-full border-2 shadow-md transition-all motion-transition hover:scale-110',
                                         colorKey === key
                                             ? 'border-foreground ring-2 ring-offset-2 ring-primary'
                                             : 'border-white/50'
@@ -83,21 +83,21 @@ export const FloatingToolbar = () => {
             <button
                 onClick={() => setSettingsOpen(!settingsOpen)}
                 className={clsx(
-                    'p-4 rounded-full shadow-lg transition-all duration-300',
+                    'p-4 rounded-full shadow-lg transition-all motion-transition',
                     'bg-gradient-to-br from-primary to-pink-500 text-white',
                     'hover:shadow-xl hover:scale-110',
                     settingsOpen && 'rotate-90'
                 )}
                 aria-label="Settings"
             >
-                <FaCog size={20} className="transition-transform" />
+                <FaCog size={20} className="transition-transform motion-transition" />
             </button>
 
             {/* Back to Top Button */}
             <button
                 onClick={scrollToTop}
                 className={clsx(
-                    'p-4 rounded-full shadow-lg transition-all duration-300',
+                    'p-4 rounded-full shadow-lg transition-all motion-transition',
                     'bg-gradient-to-br from-blue-500 to-purple-500 text-white',
                     'hover:shadow-xl hover:scale-110',
                     showBackToTop

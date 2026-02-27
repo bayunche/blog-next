@@ -55,7 +55,7 @@ export const Navbar = () => {
         <>
             <nav
                 className={clsx(
-                    'fixed top-0 left-0 right-0 z-50 transition-all duration-500',
+                    'fixed top-0 left-0 right-0 z-50 transition-all motion-transition-slow',
                     scrolled
                         ? 'bg-white/90 dark:bg-gray-900/90 backdrop-blur-xl shadow-lg border-b border-gray-200/20 dark:border-gray-700/20'
                         : 'bg-transparent'
@@ -65,16 +65,16 @@ export const Navbar = () => {
                     <div className="flex items-center justify-between h-16">
                         {/* Logo with avatar */}
                         <Link href="/" className="flex items-center gap-3 group">
-                            <div className="relative w-10 h-10 rounded-full overflow-hidden border-2 border-primary/50 group-hover:border-primary transition-colors">
+                            <div className="relative w-10 h-10 rounded-full overflow-hidden border-2 border-primary/50 group-hover:border-primary transition-colors motion-transition">
                                 <Image
-                                    src="https://avatars.githubusercontent.com/u/1?v=4"
+                                    src="/images/avatar.jpg"
                                     alt="Site Logo"
                                     fill
                                     className="object-cover"
                                 />
                             </div>
                             <span className={clsx(
-                                'text-xl font-bold font-serif transition-colors',
+                                'text-xl font-bold font-serif transition-colors motion-transition',
                                 scrolled ? 'text-foreground' : 'text-white drop-shadow-lg'
                             )}>
                                 樱落繁星
@@ -88,7 +88,7 @@ export const Navbar = () => {
                                     key={item.path}
                                     href={item.path}
                                     className={clsx(
-                                        'relative px-4 py-2 text-sm font-medium rounded-full transition-all duration-300',
+                                        'relative px-4 py-2 text-sm font-medium rounded-full transition-all motion-transition',
                                         scrolled
                                             ? pathname === item.path
                                                 ? 'bg-primary text-white'
@@ -109,7 +109,7 @@ export const Navbar = () => {
                             <button
                                 onClick={openSearch}
                                 className={clsx(
-                                    'p-2.5 rounded-full transition-all duration-300',
+                                    'p-2.5 rounded-full transition-all motion-transition',
                                     scrolled
                                         ? 'hover:bg-primary/10 text-foreground hover:text-primary'
                                         : 'hover:bg-white/20 text-white'
@@ -123,7 +123,7 @@ export const Navbar = () => {
                             <button
                                 onClick={toggleTheme}
                                 className={clsx(
-                                    'p-2.5 rounded-full transition-all duration-300',
+                                    'p-2.5 rounded-full transition-all motion-transition',
                                     scrolled
                                         ? 'hover:bg-primary/10 text-foreground hover:text-primary'
                                         : 'hover:bg-white/20 text-white'
@@ -139,7 +139,7 @@ export const Navbar = () => {
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className={clsx(
-                                    'p-2.5 rounded-full transition-all duration-300 hidden md:flex',
+                                    'p-2.5 rounded-full transition-all motion-transition hidden md:flex',
                                     scrolled
                                         ? 'hover:bg-primary/10 text-foreground hover:text-primary'
                                         : 'hover:bg-white/20 text-white'
@@ -152,7 +152,7 @@ export const Navbar = () => {
                             <Link
                                 href="/login"
                                 className={clsx(
-                                    'p-2.5 rounded-full transition-all duration-300 hidden md:flex',
+                                    'p-2.5 rounded-full transition-all motion-transition hidden md:flex',
                                     scrolled
                                         ? 'hover:bg-primary/10 text-foreground hover:text-primary'
                                         : 'hover:bg-white/20 text-white'
@@ -164,7 +164,7 @@ export const Navbar = () => {
                             {/* Mobile Menu Toggle */}
                             <button
                                 className={clsx(
-                                    'p-2.5 rounded-full md:hidden transition-all duration-300',
+                                    'p-2.5 rounded-full md:hidden transition-all motion-transition',
                                     scrolled
                                         ? 'hover:bg-primary/10 text-foreground'
                                         : 'hover:bg-white/20 text-white'
@@ -182,7 +182,7 @@ export const Navbar = () => {
             {/* Mobile Menu */}
             <div
                 className={clsx(
-                    'fixed inset-0 z-40 transform transition-all duration-500 md:hidden',
+                    'fixed inset-0 z-40 transform transition-all motion-transition-slow md:hidden',
                     mobileMenuOpen
                         ? 'opacity-100 pointer-events-auto'
                         : 'opacity-0 pointer-events-none'
@@ -197,7 +197,7 @@ export const Navbar = () => {
                 {/* Menu Panel */}
                 <div
                     className={clsx(
-                        'absolute right-0 top-0 h-full w-72 bg-card-bg/95 backdrop-blur-xl shadow-2xl transform transition-transform duration-500',
+                        'absolute right-0 top-0 h-full w-72 bg-card-bg/95 backdrop-blur-xl shadow-2xl transform transition-transform motion-transition-slow',
                         mobileMenuOpen ? 'translate-x-0' : 'translate-x-full'
                     )}
                 >
@@ -207,7 +207,7 @@ export const Navbar = () => {
                                 key={item.path}
                                 href={item.path}
                                 className={clsx(
-                                    'py-4 text-lg font-medium border-b border-card-border transition-all duration-300',
+                                    'py-4 text-lg font-medium border-b border-card-border transition-all motion-transition',
                                     pathname === item.path
                                         ? 'text-primary'
                                         : 'text-foreground hover:text-primary hover:pl-2'
@@ -223,13 +223,13 @@ export const Navbar = () => {
                                 href="https://github.com/mirai-mamori/Sakurairo"
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="p-3 bg-card-border rounded-full hover:bg-primary hover:text-white transition-colors"
+                                className="p-3 bg-card-border rounded-full hover:bg-primary hover:text-white transition-colors motion-transition"
                             >
                                 <FaGithub size={20} />
                             </a>
                             <button
                                 onClick={toggleTheme}
-                                className="p-3 bg-card-border rounded-full hover:bg-primary hover:text-white transition-colors"
+                                className="p-3 bg-card-border rounded-full hover:bg-primary hover:text-white transition-colors motion-transition"
                             >
                                 {theme === 'dark' ? <FaSun size={20} /> : <FaMoon size={20} />}
                             </button>

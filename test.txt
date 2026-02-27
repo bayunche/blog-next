@@ -1,0 +1,9 @@
+
+docker run -d -p 3000:3000 \
+  --name deanxv/done-hub \
+  --restart always \
+  -e TZ=Asia/Shanghai \
+  -e USER_TOKEN_SECRET="user_token_secret" \
+  -e SESSION_SECRET="session_secret" \
+  -v /data/one-hub:/data \
+  ghcr.io/martialbe/one-api

@@ -26,7 +26,7 @@ export const Live2DWidget = () => {
     const [hidden, setHidden] = useState(false);
     const [modelIndex, setModelIndex] = useState(0);
 
-    // 模型列表 - 使用本地模型（从 Resources 目录复制）
+    // 模型列表 - 使用本地模型
     const models = [
         // 本地 Terisa 模型 (Cubism 2.x)
         '/live2d/Terisa/model.json',
@@ -34,8 +34,8 @@ export const Live2DWidget = () => {
         '/live2d/miku/miku.model.json',
         // 本地 kobayaxi 模型 (Cubism 2.x)
         '/live2d/kobayaxi/model.json',
-        // 备用 CDN 模型
-        'https://unpkg.com/live2d-widget-model-shizuku@1.0.5/assets/shizuku.model.json',
+        // 本地 Haru 模型 (注意：Haru 通常是 Cubism 3，可能需要适配，或者只使用 2.x 的模型)
+        // '/live2d/Haru/Haru.model3.json', 
     ];
 
     useEffect(() => {
@@ -95,9 +95,15 @@ export const Live2DWidget = () => {
         };
     }, [hidden]);
 
-    const initLive2D = () => {
+    const initLive2D = (index: number = modelIndex) => {
         // @ts-ignore
         if (!window.L2Dwidget) return;
+
+        // 清理现有的 widget
+        const existingWidget = document.getElementById('live2d-widget');
+        if (existingWidget) {
+            existingWidget.remove();
+        }
 
         // @ts-ignore
         window.L2Dwidget.init({
@@ -107,7 +113,7 @@ export const Live2DWidget = () => {
             tagMode: false,
             debug: false,
             model: {
-                jsonPath: models[modelIndex],
+                jsonPath: models[index],
                 scale: 1,
             },
             display: {
@@ -147,15 +153,11 @@ export const Live2DWidget = () => {
         setMessage('切换模型中...');
         setShowMessage(true);
 
-        // 重新初始化 Live2D
-        const widget = document.getElementById('live2d-widget');
-        if (widget) {
-            widget.remove();
-        }
+        // 延迟初始化新模型，等待状态更新
         setTimeout(() => {
-            initLive2D();
+            initLive2D(newIndex);
             setMessage('新模型加载完成！');
-        }, 500);
+        }, 300);
     };
 
     const captureScreenshot = () => {

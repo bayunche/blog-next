@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test:music:smoke": "node scripts/music_playback_smoke.js"
   },
   "dependencies": {
     "@ant-design/icons": "^6.1.0",
@@ -18,6 +19,7 @@
     "antd": "^6.2.0",
     "axios": "^1.13.2",
     "clsx": "^2.1.1",
+    "crypto-js": "^4.2.0",
     "dayjs": "^1.11.19",
     "framer-motion": "^12.26.2",
     "highlight.js": "^11.11.1",
@@ -35,6 +37,7 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
+    "@types/crypto-js": "^4.2.2",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",

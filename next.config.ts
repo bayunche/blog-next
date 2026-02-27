@@ -7,11 +7,11 @@ const nextConfig: NextConfig = {
     return [
       {
         source: '/api/:path*',
-        destination: 'http://localhost:6060/:path*', // Proxy to backend (strip /api)
+        destination: `${process.env.API_URL || 'http://localhost:6060'}/:path*`, // Proxy to backend (strip /api)
       },
       {
         source: '/public/uploads/:path*',
-        destination: 'http://localhost:6060/public/uploads/:path*',
+        destination: `${process.env.API_URL || 'http://localhost:6060'}/public/uploads/:path*`,
       }
     ];
   },

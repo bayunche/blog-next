@@ -18,7 +18,7 @@ export default function ArticleListPage() {
             const res = await articleApi.getList({ page: 1, pageSize: 100 }); // Simple pagination for now
             setArticles(res.rows);
         } catch (error) {
-            message.error('Failed to fetch articles');
+            message.error('获取文章列表失败');
         } finally {
             setLoading(false);
         }
@@ -31,34 +31,34 @@ export default function ArticleListPage() {
     const handleDelete = async (record: Article) => {
         try {
             await articleApi.delete(record.id);
-            message.success('Article deleted successfully');
+            message.success('文章删除成功');
             fetchArticles(); // Refresh list
         } catch (error) {
-            message.error('Failed to delete article');
+            message.error('文章删除失败');
         }
     };
 
     const columns = [
         {
-            title: 'Title',
+            title: '标题',
             dataIndex: 'title',
             key: 'title',
             width: '30%',
         },
         {
-            title: 'Created At',
+            title: '创建时间',
             dataIndex: 'createdAt',
             key: 'createdAt',
             render: (text: string) => dayjs(text).format('YYYY-MM-DD HH:mm'),
         },
         {
-            title: 'Category',
+            title: '分类',
             dataIndex: 'category',
             key: 'category',
-            render: (cat: any) => cat?.name || 'Uncategorized',
+            render: (cat: any) => cat?.name || '未分类',
         },
         {
-            title: 'Views',
+            title: '查看次数',
             dataIndex: 'viewCount',
             key: 'viewCount',
         },
@@ -66,7 +66,7 @@ export default function ArticleListPage() {
 
     return (
         <AdminTable
-            headerTitle="Articles"
+            headerTitle="文章管理"
             columns={columns}
             dataSource={articles}
             loading={loading}

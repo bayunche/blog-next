@@ -10,6 +10,13 @@
   --card-border: #f0f0f0;
   --text-muted: #666666;
   --text-subtle: #999999;
+  --motion-duration-micro: 100ms;
+  --motion-duration-fast: 180ms;
+  --motion-duration-normal: 300ms;
+  --motion-duration-slow: 500ms;
+  --motion-duration-enter: 800ms;
+  --motion-ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --motion-ease-decelerate: cubic-bezier(0, 0, 0.2, 1);
   /* Sakurairo Pink accent */
 }
 
@@ -42,6 +49,11 @@ body {
   color: var(--foreground);
   font-family: var(--font-sans);
   overflow-x: hidden;
+  cursor: url('/default.cur'), auto;
+}
+
+a, button, [role="button"], .cursor-pointer {
+  cursor: url('/pointer.cur'), pointer !important;
 }
 
 /* Custom Scrollbar */
@@ -95,7 +107,7 @@ body {
 }
 
 .animate-fade-in-up {
-  animation: fadeInUp 0.8s ease-out forwards;
+  animation: fadeInUp var(--motion-duration-enter) var(--motion-ease-decelerate) forwards;
 }
 
 .animate-blink {
@@ -197,6 +209,27 @@ body {
   animation: glow 2s ease-in-out infinite;
 }
 
+/* Motion tokens */
+.motion-transition {
+  transition-duration: var(--motion-duration-normal);
+  transition-timing-function: var(--motion-ease-standard);
+}
+
+.motion-transition-micro {
+  transition-duration: var(--motion-duration-micro);
+  transition-timing-function: var(--motion-ease-decelerate);
+}
+
+.motion-transition-fast {
+  transition-duration: var(--motion-duration-fast);
+  transition-timing-function: var(--motion-ease-standard);
+}
+
+.motion-transition-slow {
+  transition-duration: var(--motion-duration-slow);
+  transition-timing-function: var(--motion-ease-standard);
+}
+
 /* Parallax effect */
 .parallax-container {
   perspective: 1000px;
@@ -205,5 +238,5 @@ body {
 
 .parallax-layer {
   will-change: transform;
-  transition: transform 0.1s ease-out;
+  transition: transform var(--motion-duration-micro) var(--motion-ease-decelerate);
 }

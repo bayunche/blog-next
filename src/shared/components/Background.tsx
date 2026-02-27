@@ -1,59 +1,70 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { clsx } from 'clsx';
+import { MOTION, getScrollProgress } from '@/shared/constants/motion';
 
 export const Background = () => {
-    const [scrolled, setScrolled] = useState(false);
+    const [progress, setProgress] = useState(0);
 
     useEffect(() => {
         const handleScroll = () => {
-            // 使用视口高度作为阈值：只有滚动超过 Hero 区域（一屏高度）时才虚化
             const heroHeight = window.innerHeight;
-            setScrolled(window.scrollY > heroHeight - 100);
+            const scrollY = window.scrollY;
+            // 当滚动到 hero 区域 80% 时达到最大效果
+            // 确保在最顶部时 progress 为 0 (无蒙版)
+            // 越往下滚动，progress 越大，直到 1
+            const newProgress = getScrollProgress(scrollY, heroHeight, MOTION.hero.backgroundFadeRatio);
+            setProgress(newProgress);
         };
+
         window.addEventListener('scroll', handleScroll, { passive: true });
-        // Initial check
-        handleScroll();
+        handleScroll(); // Initial check
         return () => window.removeEventListener('scroll', handleScroll);
     }, []);
 
-    return (
-        <div className="fixed inset-0 z-[-1] overflow-hidden transition-all duration-700 ease-in-out">
-            {/* Base gradient */}
-            <div className="absolute inset-0 bg-gradient-to-br from-pink-50 to-blue-50 opacity-50 dark:opacity-20" />
+    // 动态计算样式
+    // 背景图：随滚动变为“线稿”风格 (去色 + 提高对比度 + 提亮)
+    const bgStyle = {
+        filter: `grayscale(${progress * 100}%) contrast(${100 + progress * MOTION.hero.contrastBoostPercent}%) brightness(${100 + progress * MOTION.hero.brightnessBoostPercent}%) blur(${progress * MOTION.hero.backgroundBlurMaxPx}px)`,
+        transform: `scale(${1 + progress * MOTION.hero.backgroundScaleRange})`,
+        opacity: 1 - progress * MOTION.hero.backgroundOpacityDrop, // 略微降低背景图本身的不透明度
+    };
 
-            {/* Background Image with transitions */}
+    // 遮罩层：随滚动变深
+    // 白天模式：白色遮罩
+    // 夜间模式：深色遮罩
+    const overlayOpacity = progress * MOTION.hero.overlayMaxOpacity;
+
+    return (
+        <div className="fixed inset-0 z-[-1] overflow-hidden">
+            {/* Base gradient */}
+            <div className="absolute inset-0 bg-gradient-to-br from-pink-50 to-blue-50 opacity-50 dark:opacity-20 transition-opacity motion-transition-slow" />
+
+            {/* Background Image with Dynamic Styles */}
             <div
-                className={clsx(
-                    "absolute inset-0 bg-cover bg-center transition-all duration-700 ease-in-out transform",
-                    scrolled ? "blur-md scale-105 opacity-80" : "blur-0 scale-100 opacity-100"
-                )}
-                style={{ backgroundImage: 'url("https://api.dujin.org/bing/1920.php")' }}
+                className="absolute inset-0 bg-cover bg-center transition-transform motion-transition-micro will-change-transform"
+                style={{
+                    backgroundImage: 'url("/images/background.jpg")',
+                    ...bgStyle
+                }}
             />
 
-            {/* Overlay for contrast when scrolled - 增加顶部和底部的渐变遮罩，模拟 Sakurairo 风格 */}
+            {/* Dynamic Overlay Mask */}
             <div
-                className={clsx(
-                    "absolute inset-0 transition-opacity duration-700 pointer-events-none",
-                    scrolled ? "opacity-100" : "opacity-0"
-                )}
+                className="absolute inset-0 pointer-events-none transition-colors motion-transition"
+                style={{
+                    opacity: overlayOpacity,
+                    backgroundColor: 'var(--background)', // 使用全局背景色变量 (white / dark hex)
+                }}
+            />
+
+            {/* 额外的渐变层增加层次感 (仅在滚动后显示) */}
+            <div
+                className="absolute inset-0 pointer-events-none transition-opacity motion-transition-slow"
+                style={{ opacity: progress }}
             >
-                {/* 整体紫色遮罩 */}
-                <div className="absolute inset-0 bg-purple-900/10 mix-blend-overlay" />
-
-                {/* 顶部渐变 - 保证导航栏文字清晰 */}
-                <div className="absolute top-0 left-0 right-0 h-32 bg-gradient-to-b from-purple-900/30 to-transparent" />
-
-                {/* 底部渐变 */}
-                <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-purple-900/30 to-transparent" />
+                <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-background/50" />
             </div>
-
-            {/* 白天模式的额外遮罩，防止背景太亮 */}
-            <div className={clsx(
-                "absolute inset-0 pointer-events-none transition-all duration-700",
-                scrolled ? "bg-white/30 dark:bg-black/40" : "bg-transparent"
-            )} />
         </div>
     );
 };

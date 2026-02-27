@@ -27,7 +27,7 @@ export default function AdminTable<T extends object>({
 }: AdminTableProps<T>) {
 
     const actionColumn = {
-        title: 'Actions',
+        title: '操作',
         key: 'action',
         render: (_: any, record: T) => (
             <Space size="middle">
@@ -38,19 +38,19 @@ export default function AdminTable<T extends object>({
                         onClick={() => onEdit(record)}
                         ghost // Wireframe style
                     >
-                        Edit
+                        编辑
                     </Button>
                 )}
                 {onDelete && (
                     <Popconfirm
-                        title="Delete the task"
-                        description="Are you sure to delete this task?"
+                        title="确定删除？"
+                        description="此操作不可撤销，确定要删除吗？"
                         onConfirm={() => onDelete(record)}
-                        okText="Yes"
-                        cancelText="No"
+                        okText="确定"
+                        cancelText="取消"
                     >
                         <Button type="primary" danger icon={<DeleteOutlined />}>
-                            Delete
+                            删除
                         </Button>
                     </Popconfirm>
                 )}
@@ -61,12 +61,12 @@ export default function AdminTable<T extends object>({
     const finalColumns = [...columns, actionColumn];
 
     return (
-        <div className="bg-white p-6 rounded-lg shadow-sm animate-fade-in-up">
+        <div className="bg-white/70 dark:bg-gray-800/70 backdrop-blur-md p-6 rounded-2xl shadow-xl border border-white/20 animate-fade-in-up">
             <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-bold">{headerTitle || 'List'}</h2>
+                <h2 className="text-xl font-bold">{headerTitle || '列表'}</h2>
                 {onCreate && (
                     <Button type="primary" icon={<PlusOutlined />} onClick={onCreate}>
-                        Create New
+                        新增
                     </Button>
                 )}
             </div>

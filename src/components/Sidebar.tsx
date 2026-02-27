@@ -41,7 +41,7 @@ export const Sidebar = () => {
             <div className="bg-card-bg rounded-xl shadow-sm p-6 text-center animate-fade-in-up transition-colors">
                 <div className="w-24 h-24 mx-auto rounded-full overflow-hidden mb-4 border-2 border-primary/20 relative">
                     <Image
-                        src="https://avatars.githubusercontent.com/u/1?v=4"
+                        src="/images/avatar.jpg"
                         alt="Author"
                         fill
                         className="object-cover transition-transform hover:rotate-[360deg] duration-700"

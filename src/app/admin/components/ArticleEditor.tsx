@@ -1,30 +1,55 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import dynamic from 'next/dynamic';
-import { Button, Input, Form, Select, message, Upload, Modal, Spin, Tooltip } from 'antd';
+import { Button, Input, Form, Select, message, Upload, Modal, Spin, Tooltip, Alert } from 'antd';
 import { UploadOutlined, SaveOutlined, PictureOutlined, ReloadOutlined, EyeOutlined, DeleteOutlined } from '@ant-design/icons';
 import { useRouter } from 'next/navigation';
-import { articleApi, Article } from '@/shared/api/article';
+import { articleApi } from '@/shared/api/article';
 import request from '@/shared/api/request';
+import { useAuthStore } from '@/shared/store/authStore';
+import { categoryApi } from '@/shared/api/category';
+import { tagApi } from '@/shared/api/tag';
 import '@uiw/react-md-editor/markdown-editor.css';
 import '@uiw/react-markdown-preview/markdown.css';
-import type { UploadFile, UploadProps } from 'antd';
+import type { UploadProps } from 'antd';
+import { LOCAL_BACKGROUND_IMAGE, EXTERNAL_BACKGROUND_FALLBACKS } from '@/shared/constants/backgrounds';
 
 const MDEditor = dynamic(() => import('@uiw/react-md-editor'), { ssr: false });
+const MUSIC_SEARCH_PAGE_SIZE = 8;
 
 interface ArticleEditorProps {
     articleId?: number;
 }
 
-// 随机图片 API 列表
-const RANDOM_IMAGE_APIS = [
-    'https://api.dujin.org/bing/1920.php',
-    'https://picsum.photos/1920/1080',
-    'https://source.unsplash.com/1920x1080/?nature,landscape',
-    'https://api.ixiaowai.cn/gqapi/gqapi.php',
-    'https://api.paugram.com/wallpaper',
-];
+interface MusicSearchResponse {
+    code: number;
+    data: any[];
+    message: string;
+    pagination?: {
+        total: number;
+        page: number;
+        pageSize: number;
+        hasMore: boolean;
+    };
+}
+
+function sleep(ms: number) {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function getErrorDetail(error: unknown, fallback: string): string {
+    if (typeof error === 'object' && error !== null) {
+        const anyErr = error as any;
+        if (anyErr.response?.data?.message) {
+            return String(anyErr.response.data.message);
+        }
+        if (anyErr.message) {
+            return String(anyErr.message);
+        }
+    }
+    return fallback;
+}
 
 export default function ArticleEditor({ articleId }: ArticleEditorProps) {
     const [form] = Form.useForm();
@@ -32,41 +57,97 @@ export default function ArticleEditor({ articleId }: ArticleEditorProps) {
     const [loading, setLoading] = useState(false);
     const [coverUrl, setCoverUrl] = useState('');
     const [coverLoading, setCoverLoading] = useState(false);
+    const [uploadingCover, setUploadingCover] = useState(false);
+    const [uploadError, setUploadError] = useState('');
+    const [lastUploadFile, setLastUploadFile] = useState<File | null>(null);
     const [previewVisible, setPreviewVisible] = useState(false);
+    const [categoryOptions, setCategoryOptions] = useState<string[]>([]);
+    const [tagOptions, setTagOptions] = useState<string[]>([]);
     // 音乐相关状态
     const [musicId, setMusicId] = useState('');
     const [musicName, setMusicName] = useState('');
     const [searchKeyword, setSearchKeyword] = useState('');
     const [searchResults, setSearchResults] = useState<any[]>([]);
+    const [searchTotal, setSearchTotal] = useState(0);
+    const [searchPage, setSearchPage] = useState(1);
     const [searchLoading, setSearchLoading] = useState(false);
+    const musicSearchCacheRef = useRef<Record<string, { items: any[]; total: number }>>({});
     const router = useRouter();
+    const user = useAuthStore(state => state.user);
+    const categorySelectOptions = useMemo(
+        () => categoryOptions.map((name) => ({ label: name, value: name })),
+        [categoryOptions]
+    );
+    const tagSelectOptions = useMemo(
+        () => tagOptions.map((name) => ({ label: name, value: name })),
+        [tagOptions]
+    );
+    const totalSearchPages = useMemo(
+        () => Math.max(1, Math.ceil(searchTotal / MUSIC_SEARCH_PAGE_SIZE)),
+        [searchTotal]
+    );
+
+    useEffect(() => {
+        setSearchPage((prev) => Math.min(prev, totalSearchPages));
+    }, [totalSearchPages]);
+
+    const refreshCategoryTagCandidates = useCallback(async () => {
+        try {
+            const [categoryList, tagList] = await Promise.all([
+                categoryApi.getList(),
+                tagApi.getList(),
+            ]);
+            const normalizedCategory = Array.from(
+                new Set((categoryList || []).map((item) => item.name).filter(Boolean))
+            );
+            const normalizedTag = Array.from(
+                new Set((tagList || []).map((item) => item.name).filter(Boolean))
+            );
+            setCategoryOptions(normalizedCategory);
+            setTagOptions(normalizedTag);
+        } catch (error) {
+            console.error('加载分类/标签候选失败:', error);
+            message.warning('分类/标签候选加载失败，当前可手动输入');
+        }
+    }, []);
+
+    useEffect(() => {
+        refreshCategoryTagCandidates();
+    }, [refreshCategoryTagCandidates]);
 
     // 获取随机封面图片
     const fetchRandomCover = useCallback(async () => {
         setCoverLoading(true);
         try {
-            // 随机选择一个 API
-            const randomApi = RANDOM_IMAGE_APIS[Math.floor(Math.random() * RANDOM_IMAGE_APIS.length)];
-            // 添加时间戳避免缓存
-            const url = `${randomApi}${randomApi.includes('?') ? '&' : '?'}t=${Date.now()}`;
+            const candidates = [
+                LOCAL_BACKGROUND_IMAGE,
+                ...EXTERNAL_BACKGROUND_FALLBACKS.map((url) =>
+                    `${url}${url.includes('?') ? '&' : '?'}t=${Date.now()}`
+                ),
+            ];
 
-            // 验证图片是否可访问
-            const img = new Image();
-            img.onload = () => {
-                setCoverUrl(url);
-                form.setFieldValue('cover', url);
-                message.success('已获取随机封面图片');
-                setCoverLoading(false);
+            const tryLoad = (index: number) => {
+                if (index >= candidates.length) {
+                    message.error('获取封面图片失败');
+                    setCoverLoading(false);
+                    return;
+                }
+
+                const target = candidates[index];
+                const img = new Image();
+                img.onload = () => {
+                    setCoverUrl(target);
+                    form.setFieldValue('cover', target);
+                    message.success(index === 0 ? '已使用本地封面图' : '已获取备用封面图');
+                    setCoverLoading(false);
+                };
+                img.onerror = () => {
+                    tryLoad(index + 1);
+                };
+                img.src = target;
             };
-            img.onerror = () => {
-                // 如果失败，使用备用 API
-                const fallbackUrl = `https://picsum.photos/1920/1080?random=${Date.now()}`;
-                setCoverUrl(fallbackUrl);
-                form.setFieldValue('cover', fallbackUrl);
-                message.success('已获取随机封面图片');
-                setCoverLoading(false);
-            };
-            img.src = url;
+
+            tryLoad(0);
         } catch (error) {
             console.error('获取随机图片失败:', error);
             message.error('获取随机图片失败');
@@ -74,31 +155,79 @@ export default function ArticleEditor({ articleId }: ArticleEditorProps) {
         }
     }, [form]);
 
+    const uploadCoverFile = useCallback(async (file: File, maxRetries = 2) => {
+        let lastError: unknown;
+
+        for (let attempt = 0; attempt <= maxRetries; attempt += 1) {
+            try {
+                const formData = new FormData();
+                formData.append('file', file);
+                await request.post('/article/upload', formData, {
+                    headers: { 'Content-Type': 'multipart/form-data' }
+                });
+                const url = `/public/uploads/${file.name}`;
+                return url;
+            } catch (error) {
+                lastError = error;
+                if (attempt < maxRetries) {
+                    await sleep((attempt + 1) * 400);
+                }
+            }
+        }
+
+        throw lastError;
+    }, []);
+
     // 文件上传处理
     const handleUpload = async (options: any) => {
         const { file, onSuccess, onError } = options;
-        const formData = new FormData();
-        formData.append('file', file);
+        const uploadFile = file as File;
+        setUploadingCover(true);
+        setUploadError('');
+        setLastUploadFile(uploadFile);
         try {
-            await request.post('/article/upload', formData, {
-                headers: { 'Content-Type': 'multipart/form-data' }
-            });
-            const url = `/public/uploads/${file.name}`;
+            const url = await uploadCoverFile(uploadFile, 2);
             setCoverUrl(url);
             form.setFieldValue('cover', url);
             onSuccess(url);
             message.success('封面图片上传成功');
             return url;
         } catch (err) {
+            const detail = getErrorDetail(err, '封面图片上传失败');
+            setUploadError(detail);
             onError(err);
-            message.error('封面图片上传失败');
+            message.error(`封面图片上传失败：${detail}`);
+        } finally {
+            setUploadingCover(false);
         }
     };
 
     // 删除封面
     const handleRemoveCover = () => {
         setCoverUrl('');
+        setUploadError('');
         form.setFieldValue('cover', '');
+    };
+
+    const handleRetryUpload = async () => {
+        if (!lastUploadFile) {
+            message.warning('没有可重试的上传文件');
+            return;
+        }
+        setUploadingCover(true);
+        setUploadError('');
+        try {
+            const url = await uploadCoverFile(lastUploadFile, 2);
+            setCoverUrl(url);
+            form.setFieldValue('cover', url);
+            message.success('封面图片重试上传成功');
+        } catch (error) {
+            const detail = getErrorDetail(error, '封面图片重试失败');
+            setUploadError(detail);
+            message.error(`封面图片重试失败：${detail}`);
+        } finally {
+            setUploadingCover(false);
+        }
     };
 
     // 处理 URL 输入变化
@@ -132,22 +261,53 @@ export default function ArticleEditor({ articleId }: ArticleEditorProps) {
     }, [articleId, form]);
 
     // 搜索音乐
-    const handleSearchMusic = async () => {
-        if (!searchKeyword.trim()) {
+    const handleSearchMusic = async (targetPage = 1) => {
+        const keyword = searchKeyword.trim();
+        if (!keyword) {
             message.warning('请输入搜索关键词');
             return;
         }
+        const page = Math.max(1, targetPage);
+        const cacheKey = `${keyword.toLowerCase()}::${page}`;
+        const cached = musicSearchCacheRef.current[cacheKey];
+        if (cached) {
+            setSearchResults(cached.items);
+            setSearchTotal(cached.total);
+            setSearchPage(page);
+            if (page === 1) {
+                message.success('已加载缓存搜索结果');
+            }
+            return;
+        }
+
+        const offset = (page - 1) * MUSIC_SEARCH_PAGE_SIZE;
         setSearchLoading(true);
         try {
-            const response = await request.get(`/music/search?keyword=${encodeURIComponent(searchKeyword)}`);
-            if (response.data?.code === 200) {
-                setSearchResults(response.data.data || []);
+            const response = await request.get<any, MusicSearchResponse>(
+                `/music/search?keyword=${encodeURIComponent(keyword)}&limit=${MUSIC_SEARCH_PAGE_SIZE}&offset=${offset}`
+            );
+            if (response.code === 200) {
+                const normalizedData = response.data || [];
+                const total = Math.max(
+                    normalizedData.length,
+                    response.pagination?.total || 0
+                );
+                musicSearchCacheRef.current[cacheKey] = {
+                    items: normalizedData,
+                    total,
+                };
+                setSearchResults(normalizedData);
+                setSearchTotal(total);
+                setSearchPage(page);
+                if (page === 1 && normalizedData.length === 0) {
+                    message.info('未检索到相关音乐');
+                }
             } else {
-                message.error('搜索失败');
+                message.error(response.message || '搜索失败');
             }
         } catch (error) {
             console.error('搜索音乐失败:', error);
-            message.error('搜索失败，请稍后重试');
+            message.error(`搜索失败：${getErrorDetail(error, '请稍后重试')}`);
         } finally {
             setSearchLoading(false);
         }
@@ -157,8 +317,6 @@ export default function ArticleEditor({ articleId }: ArticleEditorProps) {
     const handleSelectMusic = (song: any) => {
         setMusicId(song.id.toString());
         setMusicName(`${song.name} - ${song.artist}`);
-        setSearchResults([]);
-        setSearchKeyword('');
         message.success(`已选择: ${song.name}`);
     };
 
@@ -175,27 +333,39 @@ export default function ArticleEditor({ articleId }: ArticleEditorProps) {
         }
 
         setLoading(true);
-        const data = {
+        const baseData = {
             title: values.title,
             content,
             cover: values.cover || coverUrl,
-            categoryList: values.categories,
-            tagList: values.tags,
-            authorId: 1,
+            description: values.description || content.substring(0, 100),
             type: true,
             top: false,
             musicId: musicId || null,
             musicName: musicName || null,
         };
 
+        const createData = {
+            ...baseData,
+            categoryList: values.categories,
+            tagList: values.tags,
+            authorId: user?.id || 1,
+        };
+
+        const updateData = {
+            ...baseData,
+            categories: values.categories || [],
+            tags: values.tags || [],
+        };
+
         try {
             if (articleId) {
-                await articleApi.update(articleId, data);
+                await articleApi.update(articleId, updateData);
                 message.success('文章更新成功！');
             } else {
-                await articleApi.create(data);
+                await articleApi.create(createData);
                 message.success('文章发布成功！');
             }
+            await refreshCategoryTagCandidates();
             router.push('/admin/articles');
         } catch (error) {
             console.error(error);
@@ -238,13 +408,27 @@ export default function ArticleEditor({ articleId }: ArticleEditorProps) {
                         name="categories"
                         label={<span className="text-gray-700 dark:text-gray-300">分类</span>}
                     >
-                        <Select mode="tags" placeholder="选择或输入分类" className="dark:bg-gray-700" />
+                        <Select
+                            mode="tags"
+                            placeholder="选择或输入分类"
+                            className="dark:bg-gray-700"
+                            options={categorySelectOptions}
+                            optionFilterProp="label"
+                            tokenSeparators={[',']}
+                        />
                     </Form.Item>
                     <Form.Item
                         name="tags"
                         label={<span className="text-gray-700 dark:text-gray-300">标签</span>}
                     >
-                        <Select mode="tags" placeholder="选择或输入标签" className="dark:bg-gray-700" />
+                        <Select
+                            mode="tags"
+                            placeholder="选择或输入标签"
+                            className="dark:bg-gray-700"
+                            options={tagSelectOptions}
+                            optionFilterProp="label"
+                            tokenSeparators={[',']}
+                        />
                     </Form.Item>
                 </div>
 
@@ -257,7 +441,7 @@ export default function ArticleEditor({ articleId }: ArticleEditorProps) {
                         {/* 工具栏 */}
                         <div className="flex flex-wrap gap-2">
                             <Upload {...uploadProps}>
-                                <Button icon={<UploadOutlined />}>上传图片</Button>
+                                <Button icon={<UploadOutlined />} loading={uploadingCover}>上传图片</Button>
                             </Upload>
                             <Tooltip title="获取随机封面图片">
                                 <Button
@@ -300,6 +484,20 @@ export default function ArticleEditor({ articleId }: ArticleEditorProps) {
                                 className="dark:bg-gray-700 dark:text-white"
                             />
                         </Form.Item>
+
+                        {uploadError && (
+                            <Alert
+                                type="error"
+                                showIcon
+                                message="封面上传失败"
+                                description={uploadError}
+                                action={
+                                    <Button size="small" type="primary" danger onClick={handleRetryUpload} loading={uploadingCover}>
+                                        重试上传
+                                    </Button>
+                                }
+                            />
+                        )}
 
                         {/* 封面预览 */}
                         {coverUrl && (
@@ -368,12 +566,16 @@ export default function ArticleEditor({ articleId }: ArticleEditorProps) {
                                 placeholder="搜索歌曲名称或歌手..."
                                 value={searchKeyword}
                                 onChange={(e) => setSearchKeyword(e.target.value)}
-                                onPressEnter={handleSearchMusic}
+                                onPressEnter={() => {
+                                    void handleSearchMusic();
+                                }}
                                 className="dark:bg-gray-700 dark:text-white"
                             />
                             <Button
                                 type="primary"
-                                onClick={handleSearchMusic}
+                                onClick={() => {
+                                    void handleSearchMusic();
+                                }}
                                 loading={searchLoading}
                             >
                                 搜索
@@ -396,6 +598,35 @@ export default function ArticleEditor({ articleId }: ArticleEditorProps) {
                                         <Button size="small" type="link">选择</Button>
                                     </div>
                                 ))}
+                                {totalSearchPages > 1 && (
+                                    <div className="flex items-center justify-between px-3 py-2 text-xs text-gray-500 dark:text-gray-400 border-t border-gray-100 dark:border-gray-600">
+                                        <span>第 {searchPage} / {totalSearchPages} 页，共 {searchTotal} 条</span>
+                                        <div className="flex gap-2">
+                                            <Button
+                                                size="small"
+                                                loading={searchLoading}
+                                                disabled={searchPage <= 1 || searchLoading}
+                                                onClick={async (e) => {
+                                                    e.stopPropagation();
+                                                    await handleSearchMusic(searchPage - 1);
+                                                }}
+                                            >
+                                                上一页
+                                            </Button>
+                                            <Button
+                                                size="small"
+                                                loading={searchLoading}
+                                                disabled={searchPage >= totalSearchPages || searchLoading}
+                                                onClick={async (e) => {
+                                                    e.stopPropagation();
+                                                    await handleSearchMusic(searchPage + 1);
+                                                }}
+                                            >
+                                                下一页
+                                            </Button>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         )}
 

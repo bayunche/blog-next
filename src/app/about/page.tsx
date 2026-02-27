@@ -58,13 +58,13 @@ export default function AboutPage() {
                     <div className="relative flex flex-col md:flex-row items-center gap-8">
                         {/* 头像 */}
                         <div className="relative group">
-                            <div className="absolute inset-0 bg-gradient-to-br from-primary to-pink-500 rounded-full blur-xl opacity-50 group-hover:opacity-75 transition-opacity" />
+                            <div className="absolute inset-0 bg-gradient-to-br from-primary to-pink-500 rounded-full blur-xl opacity-50 group-hover:opacity-75 transition-opacity motion-transition" />
                             <div className="relative w-36 h-36 md:w-44 md:h-44 rounded-full border-4 border-white dark:border-gray-700 shadow-2xl overflow-hidden">
                                 <Image
-                                    src="https://avatars.githubusercontent.com/u/1?v=4"
+                                    src="/images/avatar.jpg"
                                     alt="头像"
                                     fill
-                                    className="object-cover group-hover:scale-110 transition-transform duration-500"
+                                    className="object-cover group-hover:scale-110 transition-transform motion-transition-slow"
                                 />
                             </div>
                         </div>
@@ -91,7 +91,7 @@ export default function AboutPage() {
                                         href={item.href}
                                         target="_blank"
                                         rel="noopener noreferrer"
-                                        className={`p-3 bg-card-border rounded-full text-foreground ${item.color} hover:text-white transition-all hover:scale-110 hover:shadow-lg`}
+                                        className={`p-3 bg-card-border rounded-full text-foreground ${item.color} hover:text-white transition-all motion-transition hover:scale-110 hover:shadow-lg`}
                                         title={item.name}
                                     >
                                         <item.icon size={18} />
@@ -112,7 +112,7 @@ export default function AboutPage() {
                         {skills.map((skill, index) => (
                             <div
                                 key={skill.name}
-                                className="flex items-center gap-3 px-5 py-3 bg-card-bg shadow-md border border-card-border hover:shadow-xl hover:-translate-y-1 transition-all cursor-default rounded-2xl"
+                                className="flex items-center gap-3 px-5 py-3 bg-card-bg shadow-md border border-card-border hover:shadow-xl hover:-translate-y-1 transition-all motion-transition cursor-default rounded-2xl"
                                 style={{ animationDelay: `${index * 0.05}s` }}
                             >
                                 <skill.icon className={`text-2xl ${skill.color}`} />
@@ -134,7 +134,7 @@ export default function AboutPage() {
                                 {/* 时间点 */}
                                 <div className="absolute -left-[25px] w-4 h-4 bg-primary rounded-full border-4 border-background" />
                                 {/* 内容 */}
-                                <div className="bg-card-bg rounded-2xl p-5 shadow-lg border border-card-border hover:shadow-xl transition-shadow">
+                                <div className="bg-card-bg rounded-2xl p-5 shadow-lg border border-card-border hover:shadow-xl transition-shadow motion-transition">
                                     <span className="text-sm text-primary font-semibold">{item.year}</span>
                                     <h3 className="text-lg font-bold mt-1">{item.title}</h3>
                                     <p className="text-text-muted text-sm mt-1">{item.desc}</p>

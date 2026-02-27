@@ -153,53 +153,75 @@ class UserController {
 
   // github 登录
   static async githubLogin(ctx, code) {
-    const result = await axios.post(GITHUB.access_token_url, {
-      client_id: GITHUB.client_id,
-      client_secret: GITHUB.client_secret,
-      code,
-    })
-
-    const access_token = decodeQuery(result.data)
-    if (access_token) {
-      // 拿到 access_token 去获取用户信息
-      // const result2 = await axios.get(`${GITHUB.fetch_user_url}?access_token=${access_token['access_token']}`)
-      const result2 = await axios.get(`${GITHUB.fetch_user_url}`, {
-        headers: { Authorization: `token ${access_token['access_token']}` },
-      })
-      const githubInfo = result2.data
-      let target = await UserController.find({ id: githubInfo.id }) // 在数据库中查找该用户是否存在
-      if (!target) {
-        target = await UserModel.create({
-          id: githubInfo.id,
-          username: githubInfo.name || githubInfo.username,
-          github: JSON.stringify(githubInfo),
-          email: githubInfo.email,
-        })
-      } else {
-        if (target.github !== JSON.stringify(githubInfo)) {
-          // github 信息发生了变动
-          // console.log(`${githubInfo.login}: github 信息发生改变， 更新 user....`)
-          const { id, login, email } = githubInfo
-          const data = {
-            username: login,
-            email,
-            github: JSON.stringify(githubInfo),
-          }
-          await UserController.updateUserById(id, data)
+    try {
+      const result = await axios.post(GITHUB.access_token_url, {
+        client_id: GITHUB.client_id,
+        client_secret: GITHUB.client_secret,
+        code,
+      }, {
+        headers: {
+          Accept: 'application/json'
         }
-      }
-      // username: user.username, role, userId: id, token
-      const token = createToken({ userId: githubInfo.id, role: target.role }) // 生成 token
+      })
 
-      ctx.body = {
-        github: githubInfo,
-        username: target.username,
-        userId: target.id,
-        role: target.role,
-        token,
+      const { access_token, error, error_description } = result.data
+
+      if (error) {
+        throw new Error(error_description || error)
       }
-    } else {
-      ctx.throw(403, 'github 授权码已失效！')
+
+      if (access_token) {
+        // 拿到 access_token 去获取用户信息
+        const result2 = await axios.get(GITHUB.fetch_user_url, {
+          headers: {
+            Authorization: `Bearer ${access_token}`,
+            Accept: 'application/json'
+          },
+        })
+        const githubInfo = result2.data
+
+        // 查找或创建用户
+        let target = await UserController.find({ id: githubInfo.id })
+
+        if (!target) {
+          // 如果没有该用户，先检查是否是大管理员（通过 admin login name 配置）
+          const isAdmin = githubInfo.login === (process.env.ADMIN_GITHUB_LOGIN_NAME || 'your_github_username_fallback')
+
+          target = await UserModel.create({
+            id: githubInfo.id,
+            username: githubInfo.login || githubInfo.name, // 优先使用 login
+            role: isAdmin ? 1 : 2, // 1: Admin, 2: User
+            github: JSON.stringify(githubInfo),
+            email: githubInfo.email,
+          })
+        } else {
+          // 更新 GitHub 信息
+          if (target.github !== JSON.stringify(githubInfo)) {
+            await UserController.updateUserById(target.id, {
+              username: githubInfo.login || target.username,
+              email: githubInfo.email,
+              github: JSON.stringify(githubInfo)
+            })
+          }
+        }
+
+        const token = createToken({ userId: target.id, role: target.role, username: target.username })
+
+        ctx.body = {
+          github: githubInfo,
+          username: target.username,
+          userId: target.id,
+          role: target.role,
+          token,
+          email: target.email
+        }
+      } else {
+        console.error('GitHub Login Failed: No access token returned', result.data)
+        ctx.throw(403, 'GitHub 授权失败：无法获取 Access Token')
+      }
+    } catch (e) {
+      console.error('GitHub Login Error:', e.message)
+      ctx.throw(500, `GitHub 登录出错: ${e.message}`)
     }
   }
 

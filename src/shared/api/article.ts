@@ -11,6 +11,12 @@ export interface Article {
     music?: any
     category?: { id: number; name: string }
     tags?: { id: number; name: string }[]
+    comments?: Array<{
+        id: number
+        content: string
+        createdAt: string
+        replies?: Array<{ id: number; content: string; createdAt: string }>
+    }>
     // Add other fields as needed based on backend response
 }
 

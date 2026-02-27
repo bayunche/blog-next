@@ -52,7 +52,22 @@ while true; do
 
     case $choice in
         1)
-            echo -e "\n${GREEN}🚀 正在构建并启动服务...${NC}"
+            echo -e "\n${CYAN}📦 正在检查依赖...${NC}"
+            if [ ! -d "node_modules" ]; then
+                echo -e "${YELLOW}Installing dependencies...${NC}"
+                npm install
+            fi
+
+            echo -e "\n${CYAN}🔨 正在本地构建 Next.js 应用...${NC}"
+            export NODE_ENV=production
+            npm run build
+            if [ $? -ne 0 ]; then
+                echo -e "${RED}构建失败！${NC}"
+                read -p "按回车键继续..."
+                continue
+            fi
+
+            echo -e "\n${GREEN}🚀 正在构建并启动 Docker 服务...${NC}"
             $DOCKER_COMPOSE up -d --build
             echo -e "\n${GREEN}✅ 服务已启动！${NC}"
             read -p "按回车键继续..."

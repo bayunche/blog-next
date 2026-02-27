@@ -35,7 +35,7 @@ export const ArticleCard = ({
             className={`
                 group relative flex flex-col overflow-hidden
                 bg-card-bg/80 backdrop-blur-sm rounded-2xl shadow-md
-                hover:shadow-2xl transition-all duration-500
+                hover:shadow-2xl transition-all motion-transition-slow
                 hover:-translate-y-2 animate-fade-in-up
                 border border-card-border/50
                 ${isReversed ? 'md:flex-row-reverse' : 'md:flex-row'}
@@ -46,20 +46,20 @@ export const ArticleCard = ({
             <div className="relative w-full md:w-1/2 h-56 md:h-[320px] overflow-hidden">
                 <Link href={`/posts/${id}`} className="block w-full h-full">
                     <Image
-                        src={cover || 'https://api.dujin.org/bing/1920.php'}
+                        src={cover || '/images/background.jpg'}
                         alt={title}
                         fill
-                        className="object-cover transition-transform duration-700 group-hover:scale-110"
+                        className="object-cover transition-transform motion-transition-slow group-hover:scale-110"
                     />
                     {/* Gradient overlay */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity motion-transition" />
                 </Link>
 
                 {/* Category badge */}
                 {category && (
                     <Link
                         href={`/categories/${encodeURIComponent(category.name)}`}
-                        className="absolute top-4 left-4 bg-primary/90 text-white text-xs font-medium px-3 py-1 rounded-full backdrop-blur-sm hover:bg-primary transition-colors"
+                        className="absolute top-4 left-4 bg-primary/90 text-white text-xs font-medium px-3 py-1 rounded-full backdrop-blur-sm hover:bg-primary transition-colors motion-transition"
                     >
                         {category.name}
                     </Link>
@@ -69,7 +69,7 @@ export const ArticleCard = ({
             {/* Content */}
             <div className="flex-1 p-6 md:p-8 flex flex-col justify-center relative">
                 {/* Decorative line */}
-                <div className={`absolute top-0 ${isReversed ? 'right-0' : 'left-0'} w-1 h-full bg-gradient-to-b from-primary via-pink-400 to-purple-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300`} />
+                <div className={`absolute top-0 ${isReversed ? 'right-0' : 'left-0'} w-1 h-full bg-gradient-to-b from-primary via-pink-400 to-purple-500 opacity-0 group-hover:opacity-100 transition-opacity motion-transition`} />
 
                 {/* Meta info */}
                 <div className="flex flex-wrap items-center gap-4 text-xs text-text-muted mb-4">
@@ -88,7 +88,7 @@ export const ArticleCard = ({
                 </div>
 
                 {/* Title */}
-                <h2 className="text-xl md:text-2xl font-bold mb-4 line-clamp-2 group-hover:text-primary transition-colors duration-300">
+                <h2 className="text-xl md:text-2xl font-bold mb-4 line-clamp-2 group-hover:text-primary transition-colors motion-transition">
                     <Link href={`/posts/${id}`}>
                         {title}
                     </Link>
@@ -106,7 +106,7 @@ export const ArticleCard = ({
                             <Link
                                 key={tag.name}
                                 href={`/tags/${encodeURIComponent(tag.name)}`}
-                                className="text-xs bg-card-border hover:bg-primary hover:text-white px-3 py-1 rounded-full transition-colors"
+                                className="text-xs bg-card-border hover:bg-primary hover:text-white px-3 py-1 rounded-full transition-colors motion-transition"
                             >
                                 #{tag.name}
                             </Link>
@@ -120,7 +120,7 @@ export const ArticleCard = ({
                     className="inline-flex items-center gap-2 text-sm text-primary font-medium group/btn mt-auto"
                 >
                     <span>阅读全文</span>
-                    <FaArrowRight className="transition-transform group-hover/btn:translate-x-1" />
+                    <FaArrowRight className="transition-transform motion-transition group-hover/btn:translate-x-1" />
                 </Link>
             </div>
         </article>

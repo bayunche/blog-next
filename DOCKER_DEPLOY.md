@@ -14,7 +14,8 @@ blog-sakurairo/
 ├── server/                   # 后端代码
 │   └── Dockerfile
 ├── Dockerfile.frontend       # 前端 Dockerfile
-├── docker-compose.yml        # Docker Compose 配置
+├── docker-compose.yml        # 完整部署（含 Nginx + Remark42）
+├── docker-compose.dev.yml    # 开发部署（不含 Nginx）
 ├── .env.docker              # 环境变量模板
 └── .dockerignore
 ```
@@ -41,21 +42,35 @@ nano .env
 ### 2. 启动服务
 
 ```bash
-# 构建并启动所有服务
-docker-compose up -d --build
+# 1a. (推荐) 使用自动脚本
+./build_docker.sh   # Linux/Mac
+./build_docker.ps1  # Windows
+
+# 1b. (手动) 完整部署（默认，含 Nginx + Remark42）
+docker compose up -d --build
+
+# 1c. (手动) 开发部署（不含 Nginx）
+docker compose -f docker-compose.dev.yml up -d --build
 
 # 查看服务状态
-docker-compose ps
+docker compose ps
 
 # 查看日志
-docker-compose logs -f
+docker compose logs -f
 ```
 
 ### 3. 访问应用
 
-- **前端**: http://localhost:3000
-- **后端 API**: http://localhost:6060
-- **Nginx 代理**: http://localhost:80
+- **完整部署（`docker-compose.yml`）**
+  - Nginx 入口: http://localhost
+  - 前端直连: http://localhost:3002
+  - 后端 API 直连: http://localhost:6062
+  - 评论系统直连: http://localhost:8080
+  - 评论系统经 Nginx: http://localhost/comments/
+- **开发部署（`docker-compose.dev.yml`）**
+  - 前端: http://localhost:3000
+  - 后端 API: http://localhost:6060
+  - 评论系统: http://localhost:8080
 
 ---
 
@@ -64,8 +79,10 @@ docker-compose logs -f
 | 服务 | 端口 | 说明 |
 |------|------|------|
 | mysql | 3306 | MySQL 8.0 数据库 |
-| server | 6060 | Node.js 后端 API |
-| web | 3000 | Next.js 前端 |
+| server | 6062 -> 6060 | Node.js 后端 API（完整部署） |
+| web | 3002 -> 3000 | Next.js 前端（完整部署） |
+| music-api | 3003 | 网易云音乐 API |
+| remark42 | 8080 | 评论系统 |
 | nginx | 80/443 | 反向代理 |
 
 ---
@@ -74,23 +91,24 @@ docker-compose logs -f
 
 ```bash
 # 停止所有服务
-docker-compose down
+docker compose down
 
 # 停止并删除数据卷（清空数据库）
-docker-compose down -v
+docker compose down -v
 
 # 重新构建单个服务
-docker-compose build web
-docker-compose build server
+docker compose build web
+docker compose build server
 
 # 查看特定服务日志
-docker-compose logs -f web
-docker-compose logs -f server
-docker-compose logs -f mysql
+docker compose logs -f web
+docker compose logs -f server
+docker compose logs -f mysql
+docker compose logs -f remark42
 
 # 进入容器调试
-docker-compose exec server sh
-docker-compose exec mysql mysql -u root -p
+docker compose exec server sh
+docker compose exec mysql mysql -u root -p
 ```
 
 ---
@@ -135,13 +153,16 @@ ADMIN_GITHUB_LOGIN_NAME=your_github_username
 
 ```bash
 # 检查所有服务状态
-docker-compose ps
+docker compose ps
 
 # 检查 Nginx 健康端点
 curl http://localhost/health
 
 # 检查后端 API
 curl http://localhost/api/article/list
+
+# 检查评论脚本
+curl -I http://localhost:8080/web/embed.js
 ```
 
 ---
@@ -152,22 +173,22 @@ curl http://localhost/api/article/list
 
 ```bash
 # 检查 MySQL 是否启动
-docker-compose logs mysql
+docker compose logs mysql
 
 # 等待 MySQL 完全启动（约 30 秒）
-docker-compose exec mysql mysql -u root -p -e "SHOW DATABASES;"
+docker compose exec mysql mysql -u root -p -e "SHOW DATABASES;"
 ```
 
 ### 前端构建失败
 
 ```bash
 # 检查构建日志
-docker-compose logs web
+docker compose logs web
 
 # 清理并重新构建
-docker-compose down
+docker compose down
 docker system prune -f
-docker-compose up -d --build
+docker compose up -d --build
 ```
 
 ### 端口冲突
@@ -199,11 +220,11 @@ netstat -tulpn | grep :3306
 ### 备份数据库
 
 ```bash
-docker-compose exec mysql mysqldump -u root -p sakurairo_blog > backup.sql
+docker compose exec mysql mysqldump -u root -p sakurairo_blog > backup.sql
 ```
 
 ### 恢复数据库
 
 ```bash
-docker-compose exec -T mysql mysql -u root -p sakurairo_blog < backup.sql
+docker compose exec -T mysql mysql -u root -p sakurairo_blog < backup.sql
 ```
