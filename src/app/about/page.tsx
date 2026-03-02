@@ -72,7 +72,7 @@ export default function AboutPage() {
                         {/* 基本信息 */}
                         <div className="text-center md:text-left">
                             <h1 className="text-3xl md:text-4xl font-bold font-serif mb-2 bg-gradient-to-r from-primary to-pink-500 bg-clip-text text-transparent">
-                                云昔
+                                八云澈
                             </h1>
                             <p className="text-lg text-text-muted mb-4 flex items-center justify-center md:justify-start gap-2">
                                 <FaMapMarkerAlt className="text-primary" />

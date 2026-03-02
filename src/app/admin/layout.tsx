@@ -1,25 +1,77 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { useAuthStore } from '@/shared/store/authStore';
-import { buildBackgroundImageValue } from '@/shared/constants/backgrounds';
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
-    const isAuthenticated = useAuthStore(state => state.isAuthenticated());
-    const isAdmin = useAuthStore(state => state.isAdmin());
+    const token = useAuthStore(state => state.token);
+    const role = useAuthStore(state => state.user?.role);
+    const [bootstrapAuth] = useState(() => {
+        if (typeof window === 'undefined') {
+            return { token: null as string | null, role: null as number | null };
+        }
+        try {
+            const raw = localStorage.getItem('auth-storage');
+            if (!raw) return { token: null as string | null, role: null as number | null };
+            const parsed = JSON.parse(raw);
+            const state = parsed?.state || parsed;
+            return {
+                token: state?.token || null,
+                role: typeof state?.user?.role === 'number' ? state.user.role : null
+            };
+        } catch {
+            return { token: null as string | null, role: null as number | null };
+        }
+    });
+    const [hydrated, setHydrated] = useState(() => {
+        const persist = useAuthStore.persist;
+        return persist ? persist.hasHydrated() : true;
+    });
     const router = useRouter();
     const pathname = usePathname();
+    const effectiveToken = token ?? bootstrapAuth.token;
+    const effectiveRole = role ?? bootstrapAuth.role;
+    const canAccessAdmin = !!effectiveToken && effectiveRole === 1;
 
     useEffect(() => {
-        if (!isAuthenticated || !isAdmin) {
-            router.push('/login');
-        }
-    }, [isAuthenticated, isAdmin, router]);
+        const persist = useAuthStore.persist;
+        if (!persist || persist.hasHydrated()) return;
+        const unsub = persist.onFinishHydration(() => {
+            setHydrated(true);
+        });
+        return () => {
+            unsub();
+        };
+    }, []);
 
-    if (!isAuthenticated || !isAdmin) {
-        return null; // Or loading spinner
+    useEffect(() => {
+        if (hydrated && !canAccessAdmin) {
+            router.replace('/login');
+        }
+    }, [hydrated, canAccessAdmin, router]);
+
+    useEffect(() => {
+        const handleUnauthorized = () => {
+            router.replace('/login');
+        };
+        window.addEventListener('auth:unauthorized', handleUnauthorized);
+        return () => {
+            window.removeEventListener('auth:unauthorized', handleUnauthorized);
+        };
+    }, [router]);
+
+    if (!canAccessAdmin && hydrated) {
+        return null;
+    }
+
+    if (!canAccessAdmin) {
+        return (
+            <div className="min-h-screen flex items-center justify-center bg-slate-100 dark:bg-slate-950 text-slate-500">
+                正在验证登录状态...
+            </div>
+        );
     }
 
     const navItems = [
@@ -30,17 +82,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     ];
 
     return (
-        <div className="flex min-h-screen relative overflow-hidden font-sans text-gray-800">
-            {/* Background Image */}
-            <div
-                className="absolute inset-0 bg-cover bg-center z-0"
-                style={{ backgroundImage: buildBackgroundImageValue() }}
-            />
-            <div className="absolute inset-0 bg-white/60 dark:bg-gray-900/60 backdrop-blur-sm z-0" />
+        <div className="flex min-h-screen font-sans text-gray-800 bg-slate-100 dark:bg-slate-950">
 
             {/* Admin Sidebar */}
-            <aside className="w-64 bg-white/70 dark:bg-gray-800/70 backdrop-blur-md shadow-xl z-10 border-r border-white/20">
-                <div className="p-6 border-b border-gray-200/50">
+            <aside className="w-64 bg-white/95 dark:bg-slate-900/95 shadow-xl border-r border-slate-200 dark:border-slate-800">
+                <div className="p-6 border-b border-slate-200 dark:border-slate-800">
                     <h1 className="text-2xl font-bold bg-gradient-to-r from-pink-500 to-purple-500 bg-clip-text text-transparent">
                         Sakurairo Admin
                     </h1>
@@ -52,17 +98,17 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                             href={item.href}
                             className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all motion-transition ${pathname === item.href
                                     ? 'bg-gradient-to-r from-pink-500 to-purple-500 text-white shadow-lg shadow-pink-500/30'
-                                    : 'hover:bg-white/50 dark:hover:bg-gray-700/50 hover:scale-105'
+                                    : 'hover:bg-slate-100 dark:hover:bg-slate-800/80'
                                 }`}
                         >
                             <span>{item.icon}</span>
                             <span>{item.label}</span>
                         </Link>
                     ))}
-                    <div className="pt-8 mt-4 border-t border-gray-200/50">
+                    <div className="pt-8 mt-4 border-t border-slate-200 dark:border-slate-800">
                         <Link
                             href="/"
-                            className="flex items-center gap-3 px-4 py-3 text-gray-600 hover:text-pink-500 transition-colors motion-transition"
+                            className="flex items-center gap-3 px-4 py-3 text-slate-600 dark:text-slate-300 hover:text-pink-500 transition-colors motion-transition"
                         >
                             <span>🏠</span>
                             <span>返回前台</span>
@@ -72,7 +118,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             </aside>
 
             {/* Admin Content */}
-            <main className="flex-1 p-8 overflow-auto z-10 relative">
+            <main className="flex-1 p-6 lg:p-8 overflow-auto">
                 {children}
             </main>
         </div>

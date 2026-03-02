@@ -32,9 +32,8 @@ request.interceptors.response.use(
         if (error.response?.status === 401) {
             // Token expired or invalid
             useAuthStore.getState().logout()
-            // Optional: redirect to login
             if (typeof window !== 'undefined') {
-                window.location.href = '/login'
+                window.dispatchEvent(new CustomEvent('auth:unauthorized'))
             }
         }
         return Promise.reject(error)

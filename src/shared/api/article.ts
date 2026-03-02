@@ -8,8 +8,9 @@ export interface Article {
     updatedAt: string
     viewCount: number
     cover?: string
-    music?: any
+    music?: unknown
     category?: { id: number; name: string }
+    categories?: { id: number; name: string }[]
     tags?: { id: number; name: string }[]
     comments?: Array<{
         id: number
@@ -26,6 +27,11 @@ export interface ArticleListParams {
     keyword?: string
     tagId?: number
     categoryId?: number
+    tag?: string
+    category?: string
+    preview?: number
+    order?: string
+    type?: boolean
 }
 
 export interface ArticleListResponse {
@@ -62,27 +68,27 @@ export interface ArchiveYear {
 
 export const articleApi = {
     getList: (params: ArticleListParams) => {
-        return request.get<any, ArticleListResponse>('/article/list', { params })
+        return request.get<unknown, ArticleListResponse>('/article/list', { params })
     },
 
     getDetail: (id: number | string) => {
-        return request.get<any, Article>(`/article/${id}`)
+        return request.get<unknown, Article>(`/article/${id}`)
     },
 
     create: (data: Partial<Article>) => {
-        return request.post<any, Article>('/article', data)
+        return request.post<unknown, Article>('/article', data)
     },
 
     update: (id: number | string, data: Partial<Article>) => {
-        return request.put<any, Article>(`/article/${id}`, data)
+        return request.put<unknown, Article>(`/article/${id}`, data)
     },
 
     delete: (id: number | string) => {
-        return request.delete<any, void>(`/article/${id}`)
+        return request.delete<unknown, void>(`/article/${id}`)
     },
 
     getArchives: () => {
-        return request.get<any, ArchiveYear[]>('/article/archives')
+        return request.get<unknown, ArchiveYear[]>('/article/archives')
     },
 }
 

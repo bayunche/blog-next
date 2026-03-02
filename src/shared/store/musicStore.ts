@@ -98,6 +98,12 @@ export const useMusicStore = create<MusicState>()(
                 repeat: state.repeat,
                 shuffle: state.shuffle,
             }),
+            onRehydrateStorage: () => (state) => {
+                if (!state) return;
+                // 防御旧版本 localStorage 中遗留的 playing/minimized 字段，避免进站自动播放
+                state.setPlaying(false);
+                state.setMinimized(true);
+            },
         }
     )
 );

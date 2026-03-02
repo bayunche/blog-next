@@ -2,7 +2,8 @@ const Joi = require('joi')
 const axios = require('axios')
 const PSW = require('../utils/password')
 const DOMParser = require('dom-parser')
-const { GITHUB } = require('../config')
+const appConfig = require('../config')
+const { GITHUB } = appConfig
 var fs = require('fs')
 const { decodeQuery } = require('../utils')
 const { comparePassword, encrypt } = require('../utils/bcrypt')
@@ -17,7 +18,11 @@ const DomParser = require('dom-parser')
  * @param {String} username - github 登录名
  */
 async function getGithubInfo(username) {
-  const result = await axios.get(`${GITHUB.fetch_user}/${username}`)
+  const base = String(GITHUB.fetch_user || GITHUB.fetch_user_url || 'https://api.github.com/user').trim()
+  const userApiBase = /\/users\/?$/i.test(base)
+    ? base.replace(/\/$/, '')
+    : base.replace(/\/user\/?$/i, '/users')
+  const result = await axios.get(`${userApiBase}/${encodeURIComponent(username)}`)
   return result && result.data
 }
 
@@ -57,6 +62,45 @@ async function getCommitCount(time) {
     data: result,
   }
   return finalResult
+}
+
+const isPlaceholderValue = (value = '') => {
+  const normalized = String(value).trim().toLowerCase()
+  if (!normalized) return true
+  if (/^\$\{.+\}$/.test(normalized)) return true
+  return normalized.includes('your_') || normalized.includes('iv1.your')
+}
+
+const resolveGithubRedirectUri = (ctx) => {
+  const configured = String(GITHUB.redirect_uri || '').trim()
+  if (configured && !isPlaceholderValue(configured)) {
+    return configured
+  }
+
+  const origin = String(ctx.get('origin') || '').trim()
+  if (origin) {
+    return `${origin.replace(/\/$/, '')}/api/conn/github/callback`
+  }
+
+  return ''
+}
+
+const resolveGithubEmail = async (accessToken, fallbackEmail = '') => {
+  if (fallbackEmail) return fallbackEmail
+  try {
+    const { data } = await axios.get(GITHUB.fetch_user_emails_url, {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        Accept: 'application/json'
+      }
+    })
+    const list = Array.isArray(data) ? data : []
+    const primary = list.find(item => item && item.primary && item.verified) || list.find(item => item && item.verified)
+    return primary?.email || ''
+  } catch (error) {
+    console.warn('读取 GitHub 用户邮箱失败:', error.message)
+    return ''
+  }
 }
 
 class UserController {
@@ -116,15 +160,28 @@ class UserController {
     }
   }
 
+  // 获取给前端使用的 GitHub OAuth 配置（运行时，避免镜像构建时配置漂移）
+  static async getGithubOAuthConfig(ctx) {
+    const rawClientId = String(GITHUB.client_id || '').trim()
+    const clientId = isPlaceholderValue(rawClientId) ? '' : rawClientId
+    const redirectUri = resolveGithubRedirectUri(ctx)
+    ctx.body = {
+      enabled: !!clientId,
+      clientId,
+      redirectUri,
+    }
+  }
+
   // 站内用户登录
   // 使用
   static async defaultLogin(ctx) {
     const validator = ctx.validate(ctx.request.body, {
       account: Joi.string().required(),
-      password: Joi.string(),
+      password: Joi.string().required(),
     })
     if (validator) {
-      const { account, password } = ctx.request.body
+      const { account: rawAccount, password } = ctx.request.body
+      const account = rawAccount.trim()
 
       const user = await UserModel.findOne({
         where: {
@@ -137,7 +194,30 @@ class UserController {
         // ctx.client(403, '用户不存在')
         ctx.throw(403, '用户不存在')
       } else {
-        const isMatch = await comparePassword(PSW.default.decrypt(password), user.password)
+        if (!user.password) {
+          if (user.github) {
+            ctx.throw(403, '该账号仅支持 GitHub 登录')
+          }
+          ctx.throw(403, '账号未设置密码')
+        }
+
+        let plainPassword = ''
+        const trimmedPassword = password.trim()
+        try {
+          plainPassword = PSW.default.decrypt(trimmedPassword)
+        } catch (error) {
+          plainPassword = ''
+        }
+
+        if (!plainPassword) {
+          plainPassword = trimmedPassword
+        }
+
+        if (!plainPassword) {
+          ctx.throw(403, '密码格式错误')
+        }
+
+        const isMatch = await comparePassword(plainPassword, user.password)
         if (!isMatch) {
           // ctx.client(403, '密码不正确')
           ctx.throw(403, '密码不正确')
@@ -154,10 +234,23 @@ class UserController {
   // github 登录
   static async githubLogin(ctx, code) {
     try {
+      const clientId = String(GITHUB.client_id || '').trim()
+      const clientSecret = String(GITHUB.client_secret || '').trim()
+      if (isPlaceholderValue(clientId) || isPlaceholderValue(clientSecret)) {
+        ctx.throw(500, 'GitHub OAuth 未配置，请检查 GITHUB_CLIENT_ID / GITHUB_CLIENT_SECRET')
+      }
+
+      const requestedRedirectUri = String(ctx.request.body?.redirectUri || ctx.query?.redirectUri || '').trim()
+      const redirectUri =
+        requestedRedirectUri && !isPlaceholderValue(requestedRedirectUri)
+          ? requestedRedirectUri
+          : resolveGithubRedirectUri(ctx)
+
       const result = await axios.post(GITHUB.access_token_url, {
-        client_id: GITHUB.client_id,
-        client_secret: GITHUB.client_secret,
+        client_id: clientId,
+        client_secret: clientSecret,
         code,
+        ...(redirectUri ? { redirect_uri: redirectUri } : {})
       }, {
         headers: {
           Accept: 'application/json'
@@ -179,29 +272,35 @@ class UserController {
           },
         })
         const githubInfo = result2.data
+        const email = await resolveGithubEmail(access_token, githubInfo.email || '')
+        const adminLoginName = String(appConfig.ADMIN_GITHUB_LOGIN_NAME || '').trim().toLowerCase()
+        const loginName = String(githubInfo.login || '').trim().toLowerCase()
+        const isAdmin = !!adminLoginName && adminLoginName === loginName
 
         // 查找或创建用户
         let target = await UserController.find({ id: githubInfo.id })
 
         if (!target) {
-          // 如果没有该用户，先检查是否是大管理员（通过 admin login name 配置）
-          const isAdmin = githubInfo.login === (process.env.ADMIN_GITHUB_LOGIN_NAME || 'your_github_username_fallback')
-
           target = await UserModel.create({
             id: githubInfo.id,
             username: githubInfo.login || githubInfo.name, // 优先使用 login
             role: isAdmin ? 1 : 2, // 1: Admin, 2: User
             github: JSON.stringify(githubInfo),
-            email: githubInfo.email,
+            email,
           })
         } else {
           // 更新 GitHub 信息
           if (target.github !== JSON.stringify(githubInfo)) {
             await UserController.updateUserById(target.id, {
               username: githubInfo.login || target.username,
-              email: githubInfo.email,
+              email: email || target.email,
               github: JSON.stringify(githubInfo)
             })
+          }
+          // 已存在用户命中管理员配置时，自动提升为管理员，避免早期登录生成普通用户后无法进入后台
+          if (isAdmin && target.role !== 1) {
+            await UserController.updateUserById(target.id, { role: 1 })
+            target.role = 1
           }
         }
 
@@ -213,15 +312,20 @@ class UserController {
           userId: target.id,
           role: target.role,
           token,
-          email: target.email
+          email: email || target.email
         }
       } else {
         console.error('GitHub Login Failed: No access token returned', result.data)
         ctx.throw(403, 'GitHub 授权失败：无法获取 Access Token')
       }
     } catch (e) {
-      console.error('GitHub Login Error:', e.message)
-      ctx.throw(500, `GitHub 登录出错: ${e.message}`)
+      const details =
+        e?.response?.data?.error_description ||
+        e?.response?.data?.error ||
+        e?.message ||
+        'Unknown Error'
+      console.error('GitHub Login Error:', details)
+      ctx.throw(500, `GitHub 登录出错: ${details}`)
     }
   }
 
@@ -246,8 +350,23 @@ class UserController {
         if (user && !user.github) {
           ctx.throw(403, '用户名已被占用')
         } else {
-          const decryptPassword = PSW.default.decrypt(password)
-          const saltPassword = await encrypt(decryptPassword)
+          let plainPassword = ''
+          const trimmedPassword = String(password || '').trim()
+          try {
+            plainPassword = PSW.default.decrypt(trimmedPassword)
+          } catch (error) {
+            plainPassword = ''
+          }
+
+          if (!plainPassword) {
+            plainPassword = trimmedPassword
+          }
+
+          if (!plainPassword) {
+            ctx.throw(403, '密码格式错误')
+          }
+
+          const saltPassword = await encrypt(plainPassword)
           await UserModel.create({ username, password: saltPassword, email })
           // ctx.client(200, '注册成功')
           ctx.status = 204
@@ -350,12 +469,17 @@ class UserController {
    */
   static async initGithubUser(githubLoginName) {
     try {
+      if (isPlaceholderValue(githubLoginName)) return
       const github = await getGithubInfo(githubLoginName)
       const temp = await UserController.find({ id: github.id })
       if (!temp) {
         UserController.createGithubUser(github, 1)
       }
     } catch (error) {
+      if (error?.response?.status === 404) {
+        console.warn(`skip github admin bootstrap: user "${githubLoginName}" not found`)
+        return
+      }
       console.trace('create github user error ==============>', error.message)
     }
   }

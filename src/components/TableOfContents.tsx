@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { FaList, FaTimes } from 'react-icons/fa';
 import { clsx } from 'clsx';
+import { createHeadingIdResolver } from '@/shared/utils/headingId';
 
 interface TocItem {
     id: string;
@@ -19,15 +20,14 @@ interface TableOfContentsProps {
 const extractHeadingsFromMarkdown = (content: string): TocItem[] => {
     const headingRegex = /^(#{1,4})\s+(.+)$/gm;
     const items: TocItem[] = [];
+    const resolveHeadingId = createHeadingIdResolver();
     let match;
-    let index = 0;
 
     while ((match = headingRegex.exec(content)) !== null) {
         const level = match[1].length;
-        const text = match[2].trim();
-        const id = `heading-${index}`;
+        const text = match[2].replace(/\s+#+\s*$/, '').trim();
+        const id = resolveHeadingId(text);
         items.push({ id, text, level });
-        index++;
     }
 
     return items;
@@ -38,12 +38,9 @@ export const TableOfContents = ({ content, contentSelector = '#article-content' 
     const [activeId, setActiveId] = useState<string>('');
     const [isOpen, setIsOpen] = useState(false);
     const [isMobile, setIsMobile] = useState(false);
-    const [mounted, setMounted] = useState(false);
 
     // 提取标题
     useEffect(() => {
-        setMounted(true);
-
         // 如果提供了 content，从 Markdown 提取标题
         if (content) {
             const items = extractHeadingsFromMarkdown(content);

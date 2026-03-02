@@ -19,22 +19,11 @@ export const ArticleMusic = ({ musicId, musicName }: ArticleMusicProps) => {
         try {
             message.loading({ content: '正在加载音乐...', key: 'music_loading' });
 
-            let playableUrl = proxyUrl;
-            try {
-                const response = await fetch(`/api/music/url/${musicId}`);
-                const data = await response.json();
-                if (data.code === 200 && data.data?.url) {
-                    playableUrl = data.data.url;
-                }
-            } catch (error) {
-                console.warn('预检音乐链接失败，回退到代理地址:', error);
-            }
-
             const track: Track = {
                 id: musicId,
                 name: musicName.split(' - ')[0] || musicName,
                 artist: musicName.split(' - ')[1] || '未知艺术家',
-                url: playableUrl,
+                url: proxyUrl,
                 // 封面尝试使用网易云默认接口，或者留空由播放器处理
                 cover: 'https://p1.music.126.net/6y-UleORiau0SRBCYvvl9g==/109951164390552913.jpg',
             };

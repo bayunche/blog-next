@@ -16,7 +16,11 @@ blog-sakurairo/
 ├── Dockerfile.frontend       # 前端 Dockerfile
 ├── docker-compose.yml        # 完整部署（含 Nginx + Remark42）
 ├── docker-compose.dev.yml    # 开发部署（不含 Nginx）
-├── .env.docker              # 环境变量模板
+├── docker-compose.prod.yml   # 生产部署覆盖层（prod 凭据注入）
+├── .env.docker               # 开发环境变量模板
+├── .env.prod.template        # 生产环境变量模板
+├── build_docker.sh           # 开发/默认部署脚本（Linux/Mac）
+├── build_docker_prod.sh      # 生产部署脚本（Linux/Mac）
 └── .dockerignore
 ```
 
@@ -27,7 +31,7 @@ blog-sakurairo/
 ### 1. 准备环境变量
 
 ```bash
-# 复制环境变量模板
+# 开发环境：复制环境变量模板
 cp .env.docker .env
 
 # 编辑配置（必须修改敏感信息）
@@ -51,6 +55,14 @@ docker compose up -d --build
 
 # 1c. (手动) 开发部署（不含 Nginx）
 docker compose -f docker-compose.dev.yml up -d --build
+
+# 1d. (推荐) 生产部署脚本
+./build_docker_prod.sh      # Linux/Mac
+./build_docker_prod.ps1     # Windows
+
+# 1e. (手动) 生产部署（使用 prod 覆盖层 + prod 环境文件）
+cp .env.prod.template .env.prod
+docker compose --env-file .env.prod -f docker-compose.yml -f docker-compose.prod.yml up -d --build
 
 # 查看服务状态
 docker compose ps
@@ -127,7 +139,7 @@ cp your_key.pem docker/nginx/ssl/key.pem
 
 ### 2. 使用外部数据库
 
-如果使用云数据库（如 RDS），修改 `.env`：
+如果使用云数据库（如 RDS），修改 `.env.prod`：
 
 ```env
 MYSQL_HOST=your-rds-endpoint.com
@@ -139,12 +151,32 @@ MYSQL_PASSWORD=your_password
 
 然后在 `docker-compose.yml` 中注释掉 `mysql` 服务。
 
-### 3. 配置 GitHub OAuth
+### 3. 准备生产环境变量（推荐）
+
+```bash
+cp .env.prod.template .env.prod
+nano .env.prod
+```
+
+### 4. 配置 GitHub OAuth（生产凭据）
 
 ```env
-GITHUB_CLIENT_ID=your_client_id
-GITHUB_CLIENT_SECRET=your_client_secret
-ADMIN_GITHUB_LOGIN_NAME=your_github_username
+GITHUB_CLIENT_ID_PROD=your_prod_client_id
+GITHUB_CLIENT_SECRET_PROD=your_prod_client_secret
+ADMIN_GITHUB_LOGIN_NAME_PROD=your_admin_github_username
+GITHUB_REDIRECT_URI_PROD=https://your-domain.com/api/conn/github/callback
+NEXT_PUBLIC_GITHUB_CLIENT_ID_PROD=your_prod_client_id
+NEXT_PUBLIC_GITHUB_REDIRECT_URI_PROD=https://your-domain.com/api/conn/github/callback
+```
+
+### 5. 启动生产部署
+
+```bash
+# 方式 A：脚本
+./build_docker_prod.sh
+
+# 方式 B：手动
+docker compose --env-file .env.prod -f docker-compose.yml -f docker-compose.prod.yml up -d --build
 ```
 
 ---

@@ -8,11 +8,10 @@ const { readConfig, writeConfig, maskCookie } = require('../utils/musicConfig')
 
 // 统一响应格式
 const responseHandler = (ctx, data, code = 200, message = 'success') => {
-  ctx.body = {
-    code,
-    data,
-    message
-  }
+  const isPlainObject = data && typeof data === 'object' && !Array.isArray(data)
+  ctx.body = isPlainObject
+    ? { code, data, message, ...data }
+    : { code, data, message }
 }
 
 const normalizeCookie = (value) => {

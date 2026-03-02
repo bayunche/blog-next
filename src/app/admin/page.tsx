@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import QRCode from 'qrcode';
 import { useAuthStore } from '@/shared/store/authStore';
 import request from '@/shared/api/request';
 import type { AxiosError } from 'axios';
@@ -34,6 +35,12 @@ interface MusicQrCheckResult {
     stateMessage?: string;
 }
 
+interface ApiEnvelope<T> {
+    code?: number;
+    data?: T;
+    message?: string;
+}
+
 function formatCount(n: number) {
     if (n >= 10000) return `${(n / 10000).toFixed(1)}w`;
     if (n >= 1000) return `${(n / 1000).toFixed(1)}k`;
@@ -51,6 +58,18 @@ function getRequestErrorMessage(error: unknown) {
     const axiosError = error as AxiosError<{ message?: string }>;
     const responseMessage = axiosError?.response?.data?.message;
     return responseMessage || (axiosError as Error)?.message || '未知错误';
+}
+
+function unwrapApiData<T>(payload: T | ApiEnvelope<T>): T {
+    if (
+        payload &&
+        typeof payload === 'object' &&
+        Object.prototype.hasOwnProperty.call(payload, 'data') &&
+        Object.prototype.hasOwnProperty.call(payload, 'code')
+    ) {
+        return (payload as ApiEnvelope<T>).data as T;
+    }
+    return payload as T;
 }
 
 export default function AdminDashboard() {
@@ -77,13 +96,16 @@ export default function AdminDashboard() {
     const [qrKey, setQrKey] = useState('');
     const [qrImage, setQrImage] = useState('');
     const [qrUrl, setQrUrl] = useState('');
+    const [qrFallbackImage, setQrFallbackImage] = useState('');
     const [qrState, setQrState] = useState('');
     const [startingQr, setStartingQr] = useState(false);
+    const [generatingFallback, setGeneratingFallback] = useState(false);
 
     const loadMusicStatus = useCallback(async () => {
-        const data = await request.get<unknown, MusicAdminStatus>('/music/admin/status');
+        const payload = await request.get<unknown, MusicAdminStatus | ApiEnvelope<MusicAdminStatus>>('/music/admin/status');
+        const data = unwrapApiData(payload);
         setMusicStatus(data);
-        setPlaylistIdInput(String(data.defaultPlaylistId || ''));
+        setPlaylistIdInput(String(data?.defaultPlaylistId || ''));
     }, []);
 
     useEffect(() => {
@@ -93,7 +115,7 @@ export default function AdminDashboard() {
             try {
                 const [summary, music] = await Promise.all([
                     request.get<unknown, DashboardStats>('/monitor/summary'),
-                    request.get<unknown, MusicAdminStatus>('/music/admin/status')
+                    request.get<unknown, MusicAdminStatus | ApiEnvelope<MusicAdminStatus>>('/music/admin/status')
                 ]);
 
                 if (active) {
@@ -105,8 +127,9 @@ export default function AdminDashboard() {
                         });
                     }
                     if (music) {
-                        setMusicStatus(music);
-                        setPlaylistIdInput(String(music.defaultPlaylistId || ''));
+                        const nextMusic = unwrapApiData(music);
+                        setMusicStatus(nextMusic);
+                        setPlaylistIdInput(String(nextMusic?.defaultPlaylistId || ''));
                     }
                 }
             } catch (error) {
@@ -176,18 +199,79 @@ export default function AdminDashboard() {
         setStartingQr(true);
         setQrState('');
         setStatusMessage('');
+        setQrFallbackImage('');
         try {
-            const result = await request.post<unknown, MusicQrStartResult>('/music/admin/qr/start');
-            setQrKey(result.key);
-            setQrImage(result.qrimg);
-            setQrUrl(result.qrurl || '');
-            setQrState('二维码已生成，请用网易云音乐 App 扫码并确认。');
+            const payload = await request.post<unknown, MusicQrStartResult | ApiEnvelope<MusicQrStartResult>>('/music/admin/qr/start');
+            const result = unwrapApiData(payload);
+            const key = result?.key || '';
+            const image = result?.qrimg || '';
+            const url = result?.qrurl || '';
+
+            if (!key) {
+                setQrKey('');
+                setQrImage('');
+                setQrUrl(url);
+                setQrState('二维码生成失败：接口未返回 key。');
+                return;
+            }
+
+            setQrKey(key);
+            setQrImage(image);
+            setQrUrl(url);
+            setQrState(image
+                ? '二维码已生成，请用网易云音乐 App 扫码并确认。'
+                : '接口未返回图片，正在本地生成二维码...');
         } catch (error: unknown) {
             setQrState(`二维码生成失败：${getRequestErrorMessage(error)}`);
         } finally {
             setStartingQr(false);
         }
     };
+
+    useEffect(() => {
+        let cancelled = false;
+
+        const generateFallbackQr = async () => {
+            if (qrImage || !qrUrl) {
+                setQrFallbackImage('');
+                setGeneratingFallback(false);
+                return;
+            }
+
+            setGeneratingFallback(true);
+            try {
+                const dataUrl = await QRCode.toDataURL(qrUrl, {
+                    width: 320,
+                    margin: 1,
+                    errorCorrectionLevel: 'M'
+                });
+
+                if (!cancelled) {
+                    setQrFallbackImage(dataUrl);
+                    setQrState(prev => (
+                        prev.includes('正在本地生成二维码')
+                            ? '已使用登录链接生成本地二维码，请扫码确认。'
+                            : prev
+                    ));
+                }
+            } catch (error) {
+                if (!cancelled) {
+                    setQrFallbackImage('');
+                    setQrState(`本地二维码生成失败：${(error as Error).message || '未知错误'}`);
+                }
+            } finally {
+                if (!cancelled) {
+                    setGeneratingFallback(false);
+                }
+            }
+        };
+
+        generateFallbackQr();
+
+        return () => {
+            cancelled = true;
+        };
+    }, [qrImage, qrUrl]);
 
     useEffect(() => {
         if (!qrKey) return;
@@ -198,9 +282,10 @@ export default function AdminDashboard() {
             if (pending || cancelled) return;
             pending = true;
             try {
-                const res = await request.get<unknown, MusicQrCheckResult>('/music/admin/qr/check', {
+                const payload = await request.get<unknown, MusicQrCheckResult | ApiEnvelope<MusicQrCheckResult>>('/music/admin/qr/check', {
                     params: { key: qrKey }
                 });
+                const res = unwrapApiData(payload);
                 const code = Number(res.stateCode || 0);
                 if (code === 801) {
                     setQrState('等待扫码...');
@@ -209,10 +294,16 @@ export default function AdminDashboard() {
                 } else if (code === 803) {
                     setQrState('扫码登录成功，Cookie 已自动写入。');
                     setQrKey('');
+                    setQrImage('');
+                    setQrUrl('');
+                    setQrFallbackImage('');
                     await loadMusicStatus();
                 } else if (code === 800) {
                     setQrState('二维码已过期，请重新生成。');
                     setQrKey('');
+                    setQrImage('');
+                    setQrUrl('');
+                    setQrFallbackImage('');
                 } else {
                     setQrState(res.stateMessage || '等待扫码...');
                 }
@@ -231,40 +322,42 @@ export default function AdminDashboard() {
         };
     }, [qrKey, loadMusicStatus]);
 
+    const displayQrImage = qrImage || qrFallbackImage;
+
     return (
         <div className="space-y-6 animate-fade-in-up">
             <h2 className="text-2xl font-bold">欢迎回来，{user?.username}</h2>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="bg-white/70 dark:bg-gray-800/70 backdrop-blur-md p-6 rounded-2xl shadow-lg border border-white/20 hover:scale-105 transition-transform text-gray-800 dark:text-gray-100">
-                    <h3 className="text-gray-500 dark:text-gray-400 text-sm font-medium">文章总数</h3>
+                <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-lg border border-slate-200 dark:border-slate-700 transition-transform text-slate-800 dark:text-slate-100">
+                    <h3 className="text-slate-500 dark:text-slate-400 text-sm font-medium">文章总数</h3>
                     <p className="text-3xl font-bold mt-2 bg-gradient-to-r from-pink-500 to-pink-400 bg-clip-text text-transparent">
                         {loading ? '...' : formatCount(stats.articleCount)}
                     </p>
                 </div>
-                <div className="bg-white/70 dark:bg-gray-800/70 backdrop-blur-md p-6 rounded-2xl shadow-lg border border-white/20 hover:scale-105 transition-transform text-gray-800 dark:text-gray-100">
-                    <h3 className="text-gray-500 dark:text-gray-400 text-sm font-medium">评论总数</h3>
+                <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-lg border border-slate-200 dark:border-slate-700 transition-transform text-slate-800 dark:text-slate-100">
+                    <h3 className="text-slate-500 dark:text-slate-400 text-sm font-medium">评论总数</h3>
                     <p className="text-3xl font-bold mt-2 bg-gradient-to-r from-purple-500 to-purple-400 bg-clip-text text-transparent">
                         {loading ? '...' : formatCount(stats.commentCount)}
                     </p>
                 </div>
-                <div className="bg-white/70 dark:bg-gray-800/70 backdrop-blur-md p-6 rounded-2xl shadow-lg border border-white/20 hover:scale-105 transition-transform text-gray-800 dark:text-gray-100">
-                    <h3 className="text-gray-500 dark:text-gray-400 text-sm font-medium">访问总量</h3>
+                <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-lg border border-slate-200 dark:border-slate-700 transition-transform text-slate-800 dark:text-slate-100">
+                    <h3 className="text-slate-500 dark:text-slate-400 text-sm font-medium">访问总量</h3>
                     <p className="text-3xl font-bold mt-2 bg-gradient-to-r from-blue-500 to-blue-400 bg-clip-text text-transparent">
                         {loading ? '...' : formatCount(stats.viewCount)}
                     </p>
                 </div>
             </div>
 
-            <div className="bg-white/70 dark:bg-gray-800/70 backdrop-blur-md p-6 rounded-2xl shadow-lg border border-white/20 text-gray-800 dark:text-gray-100 space-y-5">
+            <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-lg border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 space-y-5">
                 <div className="flex items-center justify-between flex-wrap gap-2">
                     <h3 className="text-lg font-semibold">网易云播放配置（管理员）</h3>
-                    <span className={`text-xs px-2 py-1 rounded-full ${musicStatus.loggedIn ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
+                    <span className={`text-xs px-2 py-1 rounded-full ${musicStatus.loggedIn ? 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300' : 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-300'}`}>
                         {musicLoading ? '状态加载中...' : musicStatus.loggedIn ? '已登录（可用于版权歌曲）' : '未登录（仅匿名可播歌曲）'}
                     </span>
                 </div>
 
-                <div className="text-sm text-gray-600 dark:text-gray-300 space-y-1">
+                <div className="text-sm text-slate-600 dark:text-slate-300 space-y-1">
                     <p>当前 Cookie：{musicStatus.hasCookie ? musicStatus.cookieMasked || '已设置' : '未设置'}</p>
                     <p>网易云昵称：{musicStatus.profile?.nickname || '-'}</p>
                     <p>默认歌单 ID：{musicStatus.defaultPlaylistId || '-'}</p>
@@ -279,7 +372,7 @@ export default function AdminDashboard() {
                             value={cookieInput}
                             onChange={(e) => setCookieInput(e.target.value)}
                             placeholder="粘贴完整 Cookie（至少包含 MUSIC_U）"
-                            className="w-full min-h-[120px] px-3 py-2 rounded-lg bg-white/70 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-pink-400 text-sm"
+                            className="w-full min-h-[120px] px-3 py-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-pink-400 text-sm"
                         />
                         <div className="flex gap-2">
                             <button
@@ -292,7 +385,7 @@ export default function AdminDashboard() {
                             <button
                                 onClick={clearCookie}
                                 disabled={savingConfig}
-                                className="px-4 py-2 rounded-lg bg-gray-200 text-gray-700 text-sm hover:bg-gray-300 disabled:opacity-50"
+                                className="px-4 py-2 rounded-lg bg-slate-200 text-slate-700 text-sm hover:bg-slate-300 dark:bg-slate-700 dark:text-slate-200 disabled:opacity-50"
                             >
                                 清空 Cookie
                             </button>
@@ -305,7 +398,7 @@ export default function AdminDashboard() {
                             value={playlistIdInput}
                             onChange={(e) => setPlaylistIdInput(e.target.value)}
                             placeholder="例如：3778678"
-                            className="w-full px-3 py-2 rounded-lg bg-white/70 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-purple-400 text-sm"
+                            className="w-full px-3 py-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-purple-400 text-sm"
                         />
                         <button
                             onClick={saveDefaultPlaylist}
@@ -314,13 +407,13 @@ export default function AdminDashboard() {
                         >
                             保存默认歌单
                         </button>
-                        <p className="text-xs text-gray-500">
+                        <p className="text-xs text-slate-500">
                             说明：播放器首次加载时，会自动读取该歌单作为默认列表。
                         </p>
                     </div>
                 </div>
 
-                <div className="border-t border-gray-200/70 dark:border-gray-700/70 pt-4 space-y-3">
+                <div className="border-t border-slate-200 dark:border-slate-700 pt-4 space-y-3">
                     <div className="flex items-center gap-2 flex-wrap">
                         <button
                             onClick={startQrLogin}
@@ -341,16 +434,26 @@ export default function AdminDashboard() {
                         ) : null}
                     </div>
 
-                    {qrImage ? (
-                        <div className="w-48 h-48 bg-white rounded-xl border border-gray-200 p-2">
-                            <img src={qrImage} alt="网易云扫码登录二维码" className="w-full h-full object-contain" />
+                    {displayQrImage ? (
+                        <div className="w-48 h-48 bg-white rounded-xl border border-slate-200 dark:border-slate-700 p-2">
+                            <img src={displayQrImage} alt="网易云扫码登录二维码" className="w-full h-full object-contain" />
                         </div>
                     ) : null}
 
-                    {qrState ? <p className="text-sm text-gray-600 dark:text-gray-300">{qrState}</p> : null}
+                    {!displayQrImage && generatingFallback ? (
+                        <p className="text-xs text-slate-500">正在根据登录链接生成二维码...</p>
+                    ) : null}
+
+                    {qrUrl ? (
+                        <p className="text-xs text-slate-500 break-all">
+                            登录链接：{qrUrl}
+                        </p>
+                    ) : null}
+
+                    {qrState ? <p className="text-sm text-slate-600 dark:text-slate-300">{qrState}</p> : null}
                 </div>
 
-                {statusMessage ? <p className="text-sm text-gray-700 dark:text-gray-200">{statusMessage}</p> : null}
+                {statusMessage ? <p className="text-sm text-slate-700 dark:text-slate-200">{statusMessage}</p> : null}
             </div>
         </div>
     );

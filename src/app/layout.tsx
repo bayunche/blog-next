@@ -1,16 +1,9 @@
 import type { Metadata } from "next";
 import { Inter, Noto_Serif_SC } from "next/font/google";
 import "./globals.css";
-import { Navbar } from "@/shared/components/Navbar";
-import { Background } from "@/shared/components/Background";
-import { Footer } from "@/shared/components/Footer";
 import QueryProvider from "@/shared/providers/QueryProvider";
 import { ThemeProvider } from "@/shared/providers/ThemeProvider";
-import { SakuraParticles } from "@/components/SakuraParticles";
-import { FloatingToolbar } from "@/components/FloatingToolbar";
-import { LoadingScreen } from "@/components/LoadingScreen";
-import { Live2DWidget } from "@/components/Live2DWidget";
-import { MusicPlayer } from "@/components/MusicPlayer";
+import { AppChrome } from "@/shared/components/AppChrome";
 
 // 正文字体 - Inter
 const inter = Inter({
@@ -26,9 +19,9 @@ const notoSerifSC = Noto_Serif_SC({
 });
 
 export const metadata: Metadata = {
-  title: "樱落繁星 | Sakura Stars",
+  title: "落樱轻声 | Sakura Whispers",
   description: "记录生活的美好瞬间，分享技术与思考",
-  keywords: ["博客", "樱落繁星", "Sakurairo", "React", "Next.js"],
+  keywords: ["博客", "落樱轻声", "Sakura Whispers", "Sakurairo", "React", "Next.js"],
 };
 
 export default function RootLayout({
@@ -41,24 +34,7 @@ export default function RootLayout({
       <body className={`${inter.variable} ${notoSerifSC.variable} font-sans bg-background text-foreground transition-colors duration-300`}>
         <ThemeProvider>
           <QueryProvider>
-            {/* 页面加载动画 */}
-            <LoadingScreen />
-
-            {/* 背景层 */}
-            <Background />
-            <SakuraParticles count={25} />
-
-            {/* 主内容区 */}
-            <Navbar />
-            <main className="min-h-screen">
-              {children}
-            </main>
-            <Footer />
-
-            {/* 悬浮组件 */}
-            <FloatingToolbar />
-            <Live2DWidget />
-            <MusicPlayer />
+            <AppChrome>{children}</AppChrome>
           </QueryProvider>
         </ThemeProvider>
       </body>

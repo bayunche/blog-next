@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import {
     FaPlay, FaPause, FaStepForward, FaStepBackward,
     FaVolumeUp, FaVolumeMute, FaList, FaRandom, FaRedo,
-    FaMusic, FaCloudDownloadAlt, FaSearch,
+    FaMusic,
     FaCompactDisc, FaTimes
 } from 'react-icons/fa';
 import { clsx } from 'clsx';
@@ -50,7 +50,8 @@ const fallbackPlaylist = [
     },
 ];
 
-type ViewMode = 'player' | 'playlist' | 'lyrics' | 'import';
+type ViewMode = 'player' | 'playlist' | 'lyrics';
+type PlaylistSource = 'default' | 'fallback';
 type PlaylistTrack = {
     id: string | number;
     name: string;
@@ -74,6 +75,15 @@ const mapPlaylistTracks = (tracks: PlaylistTrack[]): Track[] => {
 };
 
 const fallbackIdSet = new Set(fallbackPlaylist.map(track => track.id));
+
+const formatSourceLabel = (source: PlaylistSource) => {
+    switch (source) {
+        case 'default':
+            return '来源：管理端默认';
+        case 'fallback':
+            return '来源：兜底歌单';
+    }
+};
 
 export const MusicPlayer = () => {
     const audioRef = useRef<HTMLAudioElement>(null);
@@ -112,10 +122,8 @@ export const MusicPlayer = () => {
     const [currentLyricIndex, setCurrentLyricIndex] = useState(-1);
     const [loadingLyrics, setLoadingLyrics] = useState(false);
 
-    // 歌单导入相关
-    const [playlistId, setPlaylistId] = useState('');
-    const [importing, setImporting] = useState(false);
-    const [importError, setImportError] = useState('');
+    const [playlistSource, setPlaylistSource] = useState<PlaylistSource>('default');
+    const [playlistSourceId, setPlaylistSourceId] = useState('');
 
     const currentTrack = playlist[currentIndex];
     const getProxyUrl = useCallback((songId: string) => `/api/music/proxy/${songId}`, []);
@@ -139,42 +147,6 @@ export const MusicPlayer = () => {
             setLoadingLyrics(false);
         }
     }, []);
-
-    // 导入歌单
-    const importPlaylist = async () => {
-        if (!playlistId.trim()) {
-            setImportError('请输入歌单 ID');
-            return;
-        }
-
-        setImporting(true);
-        setImportError('');
-
-        try {
-            const response = await fetch(`/api/music/playlist/${playlistId.trim()}`);
-            const data = await response.json();
-
-            if (data.code === 200 && data.data?.tracks?.length > 0) {
-                const newTracks: Track[] = data.data.tracks.map((track: PlaylistTrack) => ({
-                    id: track.id.toString(),
-                    name: track.name,
-                    artist: track.artist || (track.ar || []).map((a) => a.name).join('/') || '未知艺术家',
-                    url: '',
-                    cover: track.cover || track.al?.picUrl || '',
-                }));
-                setPlaylist(newTracks);
-                setViewMode('playlist');
-                setPlaylistId('');
-                playTrack(0, newTracks);
-            } else {
-                setImportError(data.message || '导入失败，请检查歌单 ID');
-            }
-        } catch {
-            setImportError('网络错误，请稍后重试');
-        } finally {
-            setImporting(false);
-        }
-    };
 
     // 播放指定曲目
     const playTrack = (index: number, tracks = playlist) => {
@@ -240,33 +212,44 @@ export const MusicPlayer = () => {
         return `${minutes}:${seconds.toString().padStart(2, '0')}`;
     };
 
-    // 初始化加载后台配置的默认歌单（如果 store 中为空）
+    // 初始化加载后台配置的默认歌单（覆盖前端缓存，确保与管理端配置一致）
     useEffect(() => {
         let active = true;
         if (hasTriedInitialDefault.current) return;
         hasTriedInitialDefault.current = true;
 
         const loadDefaultPlaylist = async () => {
-            const shouldLoadConfiguredDefault =
-                playlist.length === 0 ||
-                playlist.every((track) => fallbackIdSet.has(String(track.id)));
-            if (!shouldLoadConfiguredDefault) return;
-
             try {
                 const response = await fetch('/api/music/playlist/default');
                 const data = await response.json();
+                const payload = data.data || data;
 
-                if (active && data.code === 200 && data.data?.tracks?.length > 0) {
-                    const tracks = mapPlaylistTracks(data.data.tracks as PlaylistTrack[]);
+                if (active && data.code === 200 && payload?.tracks?.length > 0) {
+                    const tracks = mapPlaylistTracks(payload.tracks as PlaylistTrack[]);
                     setPlaylist(tracks);
+                    setPlaylistSource('default');
+                    setPlaylistSourceId(String(payload.configuredPlaylistId || payload.id || ''));
+                    if (tracks[currentIndex]) {
+                        const proxyUrl = getProxyUrl(tracks[currentIndex].id);
+                        if (tracks[currentIndex].url !== proxyUrl) {
+                            updateTrackUrl(tracks[currentIndex].id, proxyUrl);
+                        }
+                    }
                     return;
                 }
             } catch (error) {
                 console.warn('加载默认歌单失败，使用兜底歌单:', error);
             }
 
-            if (active) {
+            // 当默认歌单接口失败时，仅在当前无有效歌单时启用兜底列表，避免覆盖用户已有列表
+            const shouldFallback =
+                playlist.length === 0 ||
+                playlist.every((track) => fallbackIdSet.has(String(track.id)));
+
+            if (active && shouldFallback) {
                 setPlaylist(fallbackPlaylist as Track[]);
+                setPlaylistSource('fallback');
+                setPlaylistSourceId('3778678');
             }
         };
 
@@ -274,7 +257,7 @@ export const MusicPlayer = () => {
         return () => {
             active = false;
         };
-    }, [playlist, setPlaylist]);
+    }, [playlist, setPlaylist, currentIndex, getProxyUrl, updateTrackUrl]);
 
     // 当歌曲变化时获取歌词
     useEffect(() => {
@@ -371,71 +354,29 @@ export const MusicPlayer = () => {
         }
     }, [currentTrack, currentIndex, playing, updateTrackUrl, setPlaying, getProxyUrl]);
 
+    // 始终渲染 audio 元素以保持播放状态，再根据 minimized 显示不同 UI
+    const audioElement = (
+        <audio ref={audioRef} src={currentTrack?.url} preload="auto" />
+    );
+
     // 迷你模式
     if (minimized) {
         return (
-            <button
-                onClick={() => setMinimized(false)}
-                className="fixed right-20 bottom-4 z-40 p-4 bg-gradient-to-br from-pink-400 via-purple-400 to-indigo-400 text-white rounded-full shadow-xl hover:scale-110 hover:shadow-pink-300/50 transition-all motion-transition animate-pulse-slow font-sans"
-                title="打开音乐播放器"
-            >
-                <FaMusic size={20} />
-                {playing && (
-                    <span className="absolute -top-1 -right-1 w-3 h-3 bg-green-400 rounded-full animate-ping" />
-                )}
-            </button>
-        );
-    }
-
-    // 渲染导入歌单视图
-    const renderImportView = () => (
-        <div className="p-4 space-y-4 font-sans">
-            <div className="flex items-center justify-between">
-                <h3 className="text-sm font-bold flex items-center gap-2">
-                    <FaCloudDownloadAlt className="text-purple-400" />
-                    导入网易云歌单
-                </h3>
+            <>
+                {audioElement}
                 <button
-                    onClick={() => setViewMode('player')}
-                    className="text-text-muted hover:text-foreground"
+                    onClick={() => setMinimized(false)}
+                    className="fixed right-20 bottom-4 z-40 p-4 bg-gradient-to-br from-pink-400 via-purple-400 to-indigo-400 text-white rounded-full shadow-xl hover:scale-110 hover:shadow-pink-300/50 transition-all motion-transition animate-pulse-slow font-sans"
+                    title="打开音乐播放器"
                 >
-                    <FaTimes size={14} />
-                </button>
-            </div>
-            <div className="space-y-2">
-                <input
-                    type="text"
-                    value={playlistId}
-                    onChange={(e) => setPlaylistId(e.target.value)}
-                    placeholder="输入网易云歌单 ID"
-                    className="w-full px-3 py-2 rounded-lg bg-white/50 dark:bg-gray-800/50 border border-pink-200 dark:border-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-400 text-sm"
-                />
-                <p className="text-xs text-text-muted">
-                    💡 在网易云音乐分享歌单，链接中 id= 后的数字即为歌单 ID
-                </p>
-                {importError && (
-                    <p className="text-xs text-red-500">{importError}</p>
-                )}
-                <button
-                    onClick={importPlaylist}
-                    disabled={importing}
-                    className="w-full py-2 bg-gradient-to-r from-pink-400 to-purple-400 text-white rounded-lg text-sm font-medium hover:opacity-90 disabled:opacity-50 transition-opacity motion-transition flex items-center justify-center gap-2"
-                >
-                    {importing ? (
-                        <>
-                            <FaCompactDisc className="animate-spin" />
-                            导入中...
-                        </>
-                    ) : (
-                        <>
-                            <FaSearch />
-                            导入歌单
-                        </>
+                    <FaMusic size={20} />
+                    {playing && (
+                        <span className="absolute -top-1 -right-1 w-3 h-3 bg-green-400 rounded-full animate-ping" />
                     )}
                 </button>
-            </div>
-        </div>
-    );
+            </>
+        );
+    }
 
     // 渲染歌词视图
     const renderLyricsView = () => (
@@ -488,13 +429,7 @@ export const MusicPlayer = () => {
                 <span className="text-xs font-medium text-text-muted">
                     播放列表 ({playlist.length} 首)
                 </span>
-                <button
-                    onClick={() => setViewMode('import')}
-                    className="text-purple-400 hover:text-purple-500 text-xs flex items-center gap-1"
-                >
-                    <FaCloudDownloadAlt size={12} />
-                    导入
-                </button>
+                <span className="text-[11px] text-text-muted">歌单由后台管理配置</span>
             </div>
             {playlist.map((track, index) => (
                 <button
@@ -534,9 +469,9 @@ export const MusicPlayer = () => {
     );
 
     return (
+        <>
+        {audioElement}
         <div className="fixed right-4 bottom-4 z-40 w-80 bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 overflow-hidden text-gray-900 dark:text-gray-100 font-sans">
-            {/* 隐藏的 audio 元素 */}
-            <audio ref={audioRef} src={currentTrack?.url} preload="auto" />
 
             {/* 头部 */}
             <div className="relative h-28 overflow-hidden bg-gradient-to-br from-purple-500 to-pink-500">
@@ -564,10 +499,13 @@ export const MusicPlayer = () => {
                     <p className="text-xs text-white/70 mt-1 drop-shadow">
                         {currentTrack?.artist}
                     </p>
+                    <p className="mt-1 text-[11px] text-white/75 truncate">
+                        {formatSourceLabel(playlistSource)}{playlistSourceId ? `（ID: ${playlistSourceId}）` : ''}
+                    </p>
                     <button
                         onClick={() => setViewMode(viewMode === 'lyrics' ? 'player' : 'lyrics')}
                         className={clsx(
-                            "mt-2 text-xs px-2 py-0.5 rounded-full transition-colors motion-transition",
+                            "mt-1 text-xs px-2 py-0.5 rounded-full transition-colors motion-transition",
                             viewMode === 'lyrics'
                                 ? "bg-purple-500 text-white"
                                 : "bg-white/20 text-white/80 hover:bg-white/30"
@@ -590,8 +528,6 @@ export const MusicPlayer = () => {
 
             {viewMode === 'lyrics' ? (
                 renderLyricsView()
-            ) : viewMode === 'import' ? (
-                renderImportView()
             ) : viewMode === 'playlist' ? (
                 renderPlaylistView()
             ) : (
@@ -691,5 +627,6 @@ export const MusicPlayer = () => {
                 </>
             )}
         </div>
+        </>
     );
 };

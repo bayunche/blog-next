@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import Image from 'next/image';
-import { FaCalendar, FaFolder, FaFire, FaComment, FaArrowRight } from 'react-icons/fa';
+import { FaCalendar, FaFire, FaComment, FaArrowRight } from 'react-icons/fa';
 import dayjs from 'dayjs';
 
 interface ArticleCardProps {
@@ -59,6 +59,7 @@ export const ArticleCard = ({
                 {category && (
                     <Link
                         href={`/categories/${encodeURIComponent(category.name)}`}
+                        prefetch={false}
                         className="absolute top-4 left-4 bg-primary/90 text-white text-xs font-medium px-3 py-1 rounded-full backdrop-blur-sm hover:bg-primary transition-colors motion-transition"
                     >
                         {category.name}
@@ -106,6 +107,7 @@ export const ArticleCard = ({
                             <Link
                                 key={tag.name}
                                 href={`/tags/${encodeURIComponent(tag.name)}`}
+                                prefetch={false}
                                 className="text-xs bg-card-border hover:bg-primary hover:text-white px-3 py-1 rounded-full transition-colors motion-transition"
                             >
                                 #{tag.name}

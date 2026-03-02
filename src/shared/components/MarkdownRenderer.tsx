@@ -1,14 +1,43 @@
 'use client';
 
+import { ReactNode } from 'react';
 import React_Markdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { MarkdownCodeBlock } from '@/components/CodeBlock';
+import { createHeadingIdResolver } from '@/shared/utils/headingId';
 
 interface MarkdownRendererProps {
     content: string;
 }
 
 export const MarkdownRenderer = ({ content }: MarkdownRendererProps) => {
+    const resolveHeadingId = createHeadingIdResolver();
+
+    const getTextContent = (node: ReactNode): string => {
+        if (typeof node === 'string' || typeof node === 'number') {
+            return String(node);
+        }
+        if (Array.isArray(node)) {
+            return node.map(getTextContent).join('');
+        }
+        if (node && typeof node === 'object' && 'props' in node) {
+            return getTextContent((node as { props?: { children?: ReactNode } }).props?.children || '');
+        }
+        return '';
+    };
+
+    const renderHeading =
+        (Tag: 'h1' | 'h2' | 'h3' | 'h4') =>
+            ({ children, ...props }: { children?: ReactNode }) => {
+                const id = resolveHeadingId(getTextContent(children || ''));
+                const HeadingTag = Tag;
+                return (
+                    <HeadingTag id={id} className="scroll-mt-24" {...props}>
+                        {children}
+                    </HeadingTag>
+                );
+            };
+
     return (
         <article className="prose prose-lg md:prose-xl max-w-none dark:prose-invert font-serif prose-headings:font-sans prose-a:text-primary hover:prose-a:text-primary/80">
             <React_Markdown
@@ -48,27 +77,10 @@ export const MarkdownRenderer = ({ content }: MarkdownRendererProps) => {
                     blockquote: ({ node, ...props }) => (
                         <blockquote {...props} className="border-l-4 border-primary bg-gray-50/50 dark:bg-gray-800/50 p-4 rounded-r-lg italic" />
                     ),
-                    // 标题添加锚点
-                    h1: ({ node, children, ...props }) => (
-                        <h1 id={String(children).toLowerCase().replace(/\s+/g, '-')} className="scroll-mt-24" {...props}>
-                            {children}
-                        </h1>
-                    ),
-                    h2: ({ node, children, ...props }) => (
-                        <h2 id={String(children).toLowerCase().replace(/\s+/g, '-')} className="scroll-mt-24" {...props}>
-                            {children}
-                        </h2>
-                    ),
-                    h3: ({ node, children, ...props }) => (
-                        <h3 id={String(children).toLowerCase().replace(/\s+/g, '-')} className="scroll-mt-24" {...props}>
-                            {children}
-                        </h3>
-                    ),
-                    h4: ({ node, children, ...props }) => (
-                        <h4 id={String(children).toLowerCase().replace(/\s+/g, '-')} className="scroll-mt-24" {...props}>
-                            {children}
-                        </h4>
-                    ),
+                    h1: renderHeading('h1'),
+                    h2: renderHeading('h2'),
+                    h3: renderHeading('h3'),
+                    h4: renderHeading('h4'),
                     // 链接新窗口打开外部链接
                     a: ({ node, href, children, ...props }) => {
                         const isExternal = href?.startsWith('http');

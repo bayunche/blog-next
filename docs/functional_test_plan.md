@@ -1,10 +1,13 @@
 # 功能测试方案 (Functional Test Plan)
 
-> 最近一次执行：2026-02-27（本日复测，含播放链路专项）  
+> 最近一次执行：2026-02-28（GitHub 登录链路 + 播放器行为 + 生产导出数据导入复测）  
 > 执行环境：Docker Compose（mysql/server/web/nginx/remark42/music-api）  
-> 执行方式：容器内自动化接口/页面连通测试 + 关键前端逻辑代码核验  
-> 结果：核心可执行项全部通过（29/29），P1 专项增强校验通过（5/5）
+> 执行方式：容器内自动化接口/页面连通测试 + Playwright 浏览器自动化 + 关键前端逻辑代码核验  
+> 结果：核心可执行项全部通过（35/35），P1 专项增强校验通过（8/8）
 > 附加冒烟：`npm run test:music:smoke` 通过（默认歌单抽样 8 首，代理播放可用 8/8）
+> P0 热修补充（2026-02-27）：单击路由跳转压测 8 轮通过，`removeChild` 运行时异常 0 次。
+> P0+ 热修补充（2026-02-28）：Live2D iframe 隔离 + 模型切换修复 + Remark42 401 静默，浏览器控制台 0 条致命错误。
+> 本次补充（2026-02-28）：`server/test.sql` 已导入；因原 SQL 尾部 `ADD COLUMN IF NOT EXISTS` 多列语法在当前实例报错，已改为逐列补齐 `article` 扩展字段（`cover/description/likeCount/musicId/musicName`）。
 
 ## 1. 核心系统 (Core System)
 - [x] **Docker 容器**: 检查 `blog-web` 和 `blog-server` 是否正常运行。
@@ -17,9 +20,9 @@
     - [x] 社交图标悬停效果正常（样式代码核验通过）。
     - [x] Hitokoto (一言) 正常显示（逻辑代码核验通过）。
 - [x] **Live2D 看板娘**:
-    - [x] 默认模型 (Terisa) 正常加载（模型路径与初始化逻辑核验通过）。
-    - [x] 点击“切换模型”可切换至 Miku 等其他模型（`switchModel` 逻辑核验通过）。
-    - [x] 消息气泡正常弹出（状态逻辑核验通过）。
+    - [x] 已改为 iframe 隔离架构（第三方脚本运行在独立文档，不再直接改写主页面 DOM）。
+    - [x] 模型切换按钮可用（自动化验证：模型索引从 `0` 变更为 `1`）。
+    - [x] 开启状态下多轮路由切换无 `removeChild` 崩溃。
 
 ## 3. 博客功能 (Blog Features)
 - [x] **文章列表**: 首页文章列表加载正常，日期格式正确。
@@ -64,3 +67,17 @@
 - [x] `PUT /music/admin/config`：可更新默认歌单 ID；`/music/playlist/default` 返回配置歌单（当前验证 id=`3778678`）。
 - [x] `POST /music/admin/qr/start`：可返回二维码 `key` 与 `qrimg`（供后台扫码登录流程使用）。
 - [x] `npm run test:music:smoke`：默认歌单前 8 首歌曲通过 `/music/url` + `/music/proxy` 自动化播放链路检查（8/8 可播）。
+
+## 7. 路由稳定性专项 (P0 Hotfix)
+- [x] 复现并定位：`Cannot read properties of null (reading 'removeChild')` 可在高频切页下复现。
+- [x] 修复验证：`/ -> /posts -> /posts/[id] -> /about -> /` 循环 8 轮，无 `removeChild` 致命错误。
+- [x] 登录态处理验证：401 不再直接 `window.location.href` 打断路由，改为事件驱动处理。
+- [x] 评论静默验证：Remark42 经前端代理后，未登录探测 401 不再污染控制台；其它异常仍保留上报。
+
+## 8. 本次专项补测 (2026-02-28)
+- [x] GitHub 登录回调兼容：新增 `/api/conn/github/callback`，返回相对重定向 `/login?code=...&state=...`（避免容器内绝对地址泄漏为 `0.0.0.0:3000`）。
+- [x] GitHub 未配置行为：`POST /login` 传入 `code` 时返回明确错误文案（`GitHub OAuth 未配置...`），不再出现不清晰的 GitHub 404。
+- [x] 播放器自动播放防御：模拟旧 localStorage 中 `playing=true`，进站后自动重置为 `playing=false` 且播放器最小化，`audio` 实例数 `0`。
+- [x] 文章音乐联动：为文章 `id=106` 绑定 `musicId` 后，点击“背景音乐”触发右下角全局播放器播放，页面仅 1 个 `audio` 元素，无重复播放。
+- [x] 前台播放器禁用手动导入：播放面板不再出现“导入歌单 ID”按钮与输入框；来源显示“管理端默认（ID: ...）”。
+- [x] 数据导入后展示校验：`/article/list` 数量 13、`/article/106` 详情正常、`/discuss?articleId=93` 评论数 2、`/api/article/archives` 年份分组正常。

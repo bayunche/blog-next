@@ -51,6 +51,10 @@ export const Navbar = () => {
         { name: '关于/About', path: '/about' },
     ];
 
+    if (pathname?.startsWith('/admin')) {
+        return null;
+    }
+
     return (
         <>
             <nav
@@ -77,7 +81,7 @@ export const Navbar = () => {
                                 'text-xl font-bold font-serif transition-colors motion-transition',
                                 scrolled ? 'text-foreground' : 'text-white drop-shadow-lg'
                             )}>
-                                樱落繁星
+                                落樱轻声
                             </span>
                         </Link>
 

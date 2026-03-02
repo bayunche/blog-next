@@ -1,34 +1,75 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { usePathname } from 'next/navigation';
 import { useTheme } from '@/shared/providers/ThemeProvider';
 
-// Remark42 configuration type
 declare global {
     interface Window {
-        remark_config: any;
-        REMARK42: any;
+        remark_config?: Record<string, unknown>;
+        REMARK42?: {
+            createInstance?: (config: Record<string, unknown>) => void;
+            changeTheme?: (theme: string) => void;
+            destroy?: () => void;
+        };
     }
 }
 
+const REMARK_SCRIPT_ID = 'remark42-embed-script';
+
+function ensureRemarkScript(
+    src: string,
+    onReady: () => void,
+    onError: () => void
+) {
+    const existing = document.getElementById(REMARK_SCRIPT_ID) as HTMLScriptElement | null;
+    if (existing) {
+        if (existing.dataset.loaded === 'true') {
+            onReady();
+            return;
+        }
+        const handleLoad = () => onReady();
+        const handleError = () => onError();
+        existing.addEventListener('load', handleLoad, { once: true });
+        existing.addEventListener('error', handleError, { once: true });
+        return;
+    }
+
+    const script = document.createElement('script');
+    script.id = REMARK_SCRIPT_ID;
+    script.src = src;
+    script.defer = true;
+    script.dataset.loaded = 'false';
+    script.onload = () => {
+        script.dataset.loaded = 'true';
+        onReady();
+    };
+    script.onerror = () => {
+        onError();
+    };
+    document.head.appendChild(script);
+}
+
 export default function Comments() {
-    const [mounted, setMounted] = useState(false);
     const [loadError, setLoadError] = useState(false);
     const { theme } = useTheme();
+    const pathname = usePathname();
+    const containerRef = useRef<HTMLDivElement | null>(null);
 
     useEffect(() => {
-        setMounted(true);
-    }, []);
-
-    useEffect(() => {
-        if (!mounted) return;
-
-        const remarkUrl = process.env.NEXT_PUBLIC_REMARK42_URL || 'http://localhost:8080';
+        const useProxy = process.env.NEXT_PUBLIC_REMARK42_USE_PROXY !== 'false';
+        const directHost = (process.env.NEXT_PUBLIC_REMARK42_URL || 'http://localhost:8080').replace(/\/+$/, '');
+        const host = useProxy
+            ? `${window.location.origin}/remark42-proxy`
+            : directHost;
         const siteId = process.env.NEXT_PUBLIC_REMARK42_SITE_ID || 'sakurairo';
+        const container = containerRef.current;
+        if (!container) return;
 
-        // Configure Remark42
+        let cancelled = false;
+
         window.remark_config = {
-            host: remarkUrl,
+            host,
             site_id: siteId,
             components: ['embed'],
             theme: theme === 'dark' ? 'dark' : 'light',
@@ -36,45 +77,40 @@ export default function Comments() {
             show_email_subscription: false,
         };
 
-        // Load script
-        const script = document.createElement('script');
-        script.src = `${remarkUrl}/web/embed.js`;
-        script.defer = true;
-        script.onerror = () => {
+        // Third-party scripts may mutate this container. Reset it explicitly
+        // to keep React ownership stable before each route-level initialization.
+        container.innerHTML = '';
+
+        const init = () => {
+            if (cancelled) return;
+            try {
+                if (window.REMARK42?.createInstance) {
+                    window.REMARK42.createInstance(window.remark_config || {});
+                    setLoadError(false);
+                    return;
+                }
+            } catch (error) {
+                console.error('Remark42 init failed:', error);
+            }
             setLoadError(true);
         };
-        script.onload = () => {
-            // Initialize if already loaded
-            if (window.REMARK42) {
-                window.REMARK42.createInstance(window.remark_config);
-                setLoadError(false);
-            } else {
-                setLoadError(true);
-            }
-        };
 
-        // If script already exists, just re-init
-        const existingScript = document.querySelector(`script[src="${script.src}"]`);
-        if (existingScript) {
-            if (window.REMARK42) {
-                window.REMARK42.changeTheme(window.remark_config.theme);
-                setLoadError(false);
-            } else {
+        ensureRemarkScript(`${host}/web/embed.js`, init, () => {
+            if (!cancelled) {
                 setLoadError(true);
             }
-        } else {
-            document.head.appendChild(script);
-        }
+        });
 
         return () => {
-            // Cleanup if needed
-            if (existingScript) {
-                // We typically don't remove the script to avoid reloading it constantly
+            cancelled = true;
+            try {
+                window.REMARK42?.destroy?.();
+            } catch {
+                // noop
             }
+            container.innerHTML = '';
         };
-    }, [mounted, theme]);
-
-    if (!mounted) return null;
+    }, [pathname, theme]);
 
     return (
         <div className="w-full mt-10 animate-fade-in-up">
@@ -86,7 +122,12 @@ export default function Comments() {
                     评论服务暂时不可用，请稍后重试。
                 </div>
             )}
-            <div id="remark42" className="min-h-[200px]"></div>
+            <div
+                ref={containerRef}
+                id="remark42"
+                className="min-h-[200px]"
+                data-path={pathname || '/'}
+            />
         </div>
     );
 }
