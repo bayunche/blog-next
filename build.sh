@@ -281,10 +281,8 @@ $SAVE    && echo -e "  ${BOLD}导出文件:${NC}  ${SAVE_DIR}/sakurairo-${TAG}.t
 $PUSH    && echo -e "  ${BOLD}Registry:${NC}  $PUSH_REGISTRY"
 $NO_START || echo -e "  ${BOLD}服务地址:${NC}"
 if ! $NO_START; then
-    echo -e "    前端 (Next.js): ${CYAN}http://localhost:3002${NC}"
-    echo -e "    后端 (API)    : ${CYAN}http://localhost:6062${NC}"
-    echo -e "    音乐 API      : ${CYAN}http://localhost:3003${NC}"
-    echo -e "    Nginx         : ${CYAN}http://localhost:80${NC}"
+    echo -e "    统一入口      : ${CYAN}http://localhost${NC}"
+    echo -e "    (前端/API/评论均通过 Nginx 80 端口转发)"
 fi
 echo
 echo -e "  ${BOLD}常用命令:${NC}"

@@ -47,12 +47,10 @@ services:
       GITHUB_CLIENT_ID: ${GITHUB_CLIENT_ID:-}
       GITHUB_CLIENT_SECRET: ${GITHUB_CLIENT_SECRET:-}
       ADMIN_GITHUB_LOGIN_NAME: ${ADMIN_GITHUB_LOGIN_NAME:-}
-      GITHUB_REDIRECT_URI: ${NEXT_PUBLIC_GITHUB_REDIRECT_URI:-}
+      GITHUB_REDIRECT_URI: ${NEXT_PUBLIC_GITHUB_REDIRECT_URI:-http://localhost/api/conn/github/callback}
       IMAGE_BED_TYPE: ${IMAGE_BED_TYPE:-chevereto}
       CHEVERETO_URL: ${CHEVERETO_URL:-}
       CHEVERETO_API_KEY: ${CHEVERETO_API_KEY:-}
-    ports:
-      - "6062:6060"
     volumes:
       - ./server/data:/app/data
     depends_on:
@@ -72,11 +70,11 @@ services:
         API_URL: http://server:6060
         INTERNAL_API_URL: http://server:6060
         INTERNAL_REMARK42_URL: http://remark42:8080
-        NEXT_PUBLIC_REMARK42_URL: ${NEXT_PUBLIC_REMARK42_URL:-http://localhost:8080}
+        NEXT_PUBLIC_REMARK42_URL: ${NEXT_PUBLIC_REMARK42_URL:-http://localhost/comments}
         NEXT_PUBLIC_REMARK42_USE_PROXY: ${NEXT_PUBLIC_REMARK42_USE_PROXY:-true}
         NEXT_PUBLIC_REMARK42_SITE_ID: ${NEXT_PUBLIC_REMARK42_SITE_ID:-sakurairo}
         NEXT_PUBLIC_GITHUB_CLIENT_ID: ${NEXT_PUBLIC_GITHUB_CLIENT_ID:-}
-        NEXT_PUBLIC_GITHUB_REDIRECT_URI: ${NEXT_PUBLIC_GITHUB_REDIRECT_URI:-}
+        NEXT_PUBLIC_GITHUB_REDIRECT_URI: ${NEXT_PUBLIC_GITHUB_REDIRECT_URI:-http://localhost/api/conn/github/callback}
         CHEVERETO_URL: ${CHEVERETO_URL:-}
     container_name: sakurairo-web
     restart: unless-stopped
@@ -86,14 +84,12 @@ services:
       API_URL: http://server:6060
       INTERNAL_API_URL: http://server:6060
       INTERNAL_REMARK42_URL: http://remark42:8080
-      NEXT_PUBLIC_REMARK42_URL: ${NEXT_PUBLIC_REMARK42_URL:-http://localhost:8080}
+      NEXT_PUBLIC_REMARK42_URL: ${NEXT_PUBLIC_REMARK42_URL:-http://localhost/comments}
       NEXT_PUBLIC_REMARK42_USE_PROXY: ${NEXT_PUBLIC_REMARK42_USE_PROXY:-true}
       NEXT_PUBLIC_REMARK42_SITE_ID: ${NEXT_PUBLIC_REMARK42_SITE_ID:-sakurairo}
       NEXT_PUBLIC_GITHUB_CLIENT_ID: ${NEXT_PUBLIC_GITHUB_CLIENT_ID:-}
-      NEXT_PUBLIC_GITHUB_REDIRECT_URI: ${NEXT_PUBLIC_GITHUB_REDIRECT_URI:-}
+      NEXT_PUBLIC_GITHUB_REDIRECT_URI: ${NEXT_PUBLIC_GITHUB_REDIRECT_URI:-http://localhost/api/conn/github/callback}
       CHEVERETO_URL: ${CHEVERETO_URL:-}
-    ports:
-      - "3002:3000"
     depends_on:
       - server
     networks:
@@ -106,8 +102,6 @@ services:
     restart: unless-stopped
     environment:
       NODE_ENV: production
-    ports:
-      - "3003:3000"
     networks:
       - sakurairo-network
 
@@ -126,6 +120,7 @@ services:
     depends_on:
       - web
       - server
+      - remark42
     networks:
       - sakurairo-network
 
@@ -135,14 +130,12 @@ services:
     container_name: sakurairo-remark42
     restart: unless-stopped
     environment:
-      - REMARK_URL=${REMARK42_URL:-http://localhost:8080}
+      - REMARK_URL=${REMARK42_URL:-http://localhost/comments}
       - SECRET=${REMARK42_SECRET:-secret}
       - SITE=${REMARK42_SITE_ID:-sakurairo}
       - AUTH_GITHUB_CID=${REMARK42_GITHUB_CLIENT_ID:-}
       - AUTH_GITHUB_CSEC=${REMARK42_GITHUB_CLIENT_SECRET:-}
-      - ORIGIN=${REMARK42_ORIGIN_PROD:-http://localhost:3002}
-    ports:
-      - "8080:8080"
+      - ORIGIN=${REMARK42_ORIGIN_PROD:-http://localhost}
     volumes:
       - ./docker/remark42:/srv/var
     networks:

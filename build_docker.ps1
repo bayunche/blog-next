@@ -48,7 +48,7 @@ while ($true) {
 
             Write-Host "`n🚀 正在构建并启动 Docker 服务..." -ForegroundColor Green
             docker-compose up -d --build
-            if ($?) { Write-Host "`n✅ 服务已启动！访问 http://localhost (Nginx) 或 http://localhost:3002 (前端直连)" -ForegroundColor Green }
+            if ($?) { Write-Host "`n✅ 服务已启动！统一入口: http://localhost (Nginx 80 转发)" -ForegroundColor Green }
             Pause
         }
         "2" {

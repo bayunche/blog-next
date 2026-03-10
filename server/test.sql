@@ -1492,8 +1492,10 @@ delimiter ;
 
 SET FOREIGN_KEY_CHECKS = 1;
 
--- 添加封面、描述和点赞数字段
-ALTER TABLE `article` 
-  ADD COLUMN IF NOT EXISTS `cover` varchar(500) DEFAULT NULL COMMENT '封面图片URL' AFTER `content`,
-  ADD COLUMN IF NOT EXISTS `description` varchar(500) DEFAULT NULL COMMENT '文章描述' AFTER `cover`,
-  ADD COLUMN IF NOT EXISTS `likeCount` int DEFAULT '0' COMMENT '点赞数' AFTER `viewCount`;
+-- Add article extension columns to align newer app schema
+ALTER TABLE `article`
+  ADD COLUMN `cover` varchar(500) DEFAULT NULL COMMENT 'cover image url' AFTER `content`,
+  ADD COLUMN `description` varchar(500) DEFAULT NULL COMMENT 'article description' AFTER `cover`,
+  ADD COLUMN `likeCount` int DEFAULT '0' COMMENT 'like count' AFTER `viewCount`,
+  ADD COLUMN `musicId` varchar(50) DEFAULT NULL COMMENT 'background music id' AFTER `top`,
+  ADD COLUMN `musicName` varchar(255) DEFAULT NULL COMMENT 'background music name' AFTER `musicId`;
