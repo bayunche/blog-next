@@ -9,7 +9,7 @@ import { message } from 'antd';
 import { authApi, type GithubOAuthConfigResponse } from '@/shared/api/auth';
 import { encryptPassword } from '@/shared/utils/password';
 import type { User } from '@/shared/types/user';
-import { buildBackgroundImageValue } from '@/shared/constants/backgrounds';
+import { LOCAL_BACKGROUND_IMAGE, getRandomBackgroundSource } from '@/shared/constants/backgrounds';
 
 const GITHUB_CLIENT_ID = process.env.NEXT_PUBLIC_GITHUB_CLIENT_ID || '';
 const GITHUB_REDIRECT_URI = process.env.NEXT_PUBLIC_GITHUB_REDIRECT_URI || '';
@@ -55,6 +55,7 @@ const extractApiErrorMessage = (error: unknown, fallback: string) => {
 function LoginContent() {
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
+    const [backgroundImage, setBackgroundImage] = useState(LOCAL_BACKGROUND_IMAGE);
     const [githubConfig, setGithubConfig] = useState<GithubOAuthConfigResponse>({
         enabled: !isPlaceholderValue(GITHUB_CLIENT_ID),
         clientId: GITHUB_CLIENT_ID.trim(),
@@ -74,6 +75,13 @@ function LoginContent() {
             router.replace('/admin');
         }
     }, [token, role, router]);
+
+    useEffect(() => {
+        const frame = window.requestAnimationFrame(() => {
+            setBackgroundImage(getRandomBackgroundSource());
+        });
+        return () => window.cancelAnimationFrame(frame);
+    }, []);
 
     useEffect(() => {
         let cancelled = false;
@@ -220,7 +228,7 @@ function LoginContent() {
             {/* Background */}
             <div
                 className="absolute inset-0 bg-cover bg-center z-0 blur-sm"
-                style={{ backgroundImage: buildBackgroundImageValue() }}
+                style={{ backgroundImage: `url("${backgroundImage}")` }}
             />
             <div className="absolute inset-0 bg-white/40 z-10" />
 

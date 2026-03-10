@@ -36,7 +36,7 @@ export const Sidebar = () => {
     };
 
     return (
-        <aside className="w-full md:w-80 space-y-8">
+        <aside className="w-80 space-y-8">
             {/* Author Card */}
             <div className="bg-card-bg rounded-xl shadow-sm p-6 text-center animate-fade-in-up transition-colors">
                 <div className="w-24 h-24 mx-auto rounded-full overflow-hidden mb-4 border-2 border-primary/20 relative">

@@ -79,11 +79,11 @@ export const ArticleCard = ({
                         {dayjs(createdAt).format('YYYY年M月D日')}
                     </span>
                     <span className="flex items-center gap-1.5">
-                        <FaFire className="text-orange-500" />
+                        <FaFire className="text-primary" />
                         {viewCount} 热度
                     </span>
                     <span className="flex items-center gap-1.5">
-                        <FaComment className="text-blue-500" />
+                        <FaComment className="text-text-muted" />
                         {commentCount} 评论
                     </span>
                 </div>

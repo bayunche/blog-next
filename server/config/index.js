@@ -75,8 +75,8 @@ const config = {
   IMAGE_BED: {
     type: process.env.IMAGE_BED_TYPE || 'chevereto', // 图床类型
     chevereto: {
-      url: process.env.CHEVERETO_URL || 'https://your-image-bed.com', // Chevereto 图床地址
-      apiKey: process.env.CHEVERETO_API_KEY || 'chv_bPwj_eec3a36e7656692b6d806898473764553cc51c01ce1a8be22b54a51f786e6c9b87103d48044a7f07e58d7f7ef51a81e0daff963fa1e0361073357e29917b8d30',
+      url: process.env.CHEVERETO_URL || '', // Chevereto 图床地址
+      apiKey: process.env.CHEVERETO_API_KEY || '',
       uploadEndpoint: '/api/1/upload' // API 端点
     }
   }

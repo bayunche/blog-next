@@ -24,6 +24,10 @@ Object.keys(context).forEach(key => {
 // moddlewares
 const authHandler = require('./middlewares/authHandler')
 const path = require('path')
+const fs = require('fs')
+const { uploadPath } = require('./utils/file')
+
+const PUBLIC_UPLOAD_PREFIX = '/public/uploads/'
 
 app
   .use(cors())
@@ -42,6 +46,29 @@ app
       postFormat: (e, { stack, ...rest }) => (process.env.NODE_ENV !== 'development' ? rest : { stack, ...rest })
     })
   )
+  .use(async (ctx, next) => {
+    if ((ctx.method !== 'GET' && ctx.method !== 'HEAD') || !ctx.path.startsWith(PUBLIC_UPLOAD_PREFIX)) {
+      await next()
+      return
+    }
+
+    const rawRelativePath = decodeURIComponent(ctx.path.slice(PUBLIC_UPLOAD_PREFIX.length))
+    const safeRelativePath = rawRelativePath.replace(/\\/g, '/')
+    const resolvedUploadRoot = path.resolve(uploadPath)
+    const targetPath = path.resolve(uploadPath, safeRelativePath)
+
+    if (!targetPath.startsWith(resolvedUploadRoot)) {
+      ctx.status = 400
+      return
+    }
+    if (!fs.existsSync(targetPath) || !fs.statSync(targetPath).isFile()) {
+      await next()
+      return
+    }
+
+    ctx.type = path.extname(targetPath)
+    ctx.body = fs.createReadStream(targetPath)
+  })
   .use(authHandler)
   .use(logger())
 

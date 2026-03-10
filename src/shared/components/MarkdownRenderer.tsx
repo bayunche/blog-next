@@ -28,7 +28,7 @@ export const MarkdownRenderer = ({ content }: MarkdownRendererProps) => {
 
     const renderHeading =
         (Tag: 'h1' | 'h2' | 'h3' | 'h4') =>
-            ({ children, ...props }: { children?: ReactNode }) => {
+            function HeadingRenderer({ children, ...props }: { children?: ReactNode }) {
                 const id = resolveHeadingId(getTextContent(children || ''));
                 const HeadingTag = Tag;
                 return (
@@ -44,9 +44,9 @@ export const MarkdownRenderer = ({ content }: MarkdownRendererProps) => {
                 remarkPlugins={[remarkGfm]}
                 components={{
                     // Mac 风格代码块
-                    code: ({ node, className, children, ...props }) => {
-                        const match = /language-(\w+)/.exec(className || '');
-                        const isInline = !match && !className;
+                    code: ({ className, children, ...props }) => {
+                        const rawCode = String(children || '');
+                        const isInline = !className && !rawCode.includes('\n');
 
                         // 内联代码
                         if (isInline) {
@@ -63,18 +63,18 @@ export const MarkdownRenderer = ({ content }: MarkdownRendererProps) => {
                         // 代码块 - 使用 Mac 风格组件
                         return (
                             <MarkdownCodeBlock className={className}>
-                                {String(children).replace(/\n$/, '')}
+                                {rawCode.replace(/\n$/, '')}
                             </MarkdownCodeBlock>
                         );
                     },
                     // 图片优化
-                    img: ({ node, ...props }) => (
+                    img: ({ alt, ...props }) => (
                         <span className="block my-8 text-center">
-                            <img {...props} className="rounded-lg shadow-lg max-h-[500px] mx-auto transition-transform hover:scale-[1.02]" />
+                            <img alt={alt || ''} {...props} className="rounded-lg shadow-lg max-h-[500px] mx-auto transition-transform hover:scale-[1.02]" />
                         </span>
                     ),
                     // 引用块样式
-                    blockquote: ({ node, ...props }) => (
+                    blockquote: ({ ...props }) => (
                         <blockquote {...props} className="border-l-4 border-primary bg-gray-50/50 dark:bg-gray-800/50 p-4 rounded-r-lg italic" />
                     ),
                     h1: renderHeading('h1'),
@@ -82,7 +82,7 @@ export const MarkdownRenderer = ({ content }: MarkdownRendererProps) => {
                     h3: renderHeading('h3'),
                     h4: renderHeading('h4'),
                     // 链接新窗口打开外部链接
-                    a: ({ node, href, children, ...props }) => {
+                    a: ({ href, children, ...props }) => {
                         const isExternal = href?.startsWith('http');
                         return (
                             <a
@@ -97,15 +97,15 @@ export const MarkdownRenderer = ({ content }: MarkdownRendererProps) => {
                         );
                     },
                     // 表格样式
-                    table: ({ node, ...props }) => (
+                    table: ({ ...props }) => (
                         <div className="overflow-x-auto my-6">
                             <table className="min-w-full border-collapse" {...props} />
                         </div>
                     ),
-                    th: ({ node, ...props }) => (
+                    th: ({ ...props }) => (
                         <th className="border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 px-4 py-2 text-left font-semibold" {...props} />
                     ),
-                    td: ({ node, ...props }) => (
+                    td: ({ ...props }) => (
                         <td className="border border-gray-200 dark:border-gray-700 px-4 py-2" {...props} />
                     ),
                 }}

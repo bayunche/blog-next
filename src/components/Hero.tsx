@@ -1,31 +1,57 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
-import { FaGithub, FaTwitter, FaChevronDown, FaTelegram, FaRss } from 'react-icons/fa';
+import { useEffect, useState, useRef, useCallback } from 'react';
+import { FaGithub, FaTwitter, FaChevronDown, FaTelegram, FaRss, FaSyncAlt } from 'react-icons/fa';
 import { SiBilibili } from 'react-icons/si';
 import Image from 'next/image';
 import { MOTION, clamp, getScrollProgress } from '@/shared/constants/motion';
+import { LOCAL_BACKGROUND_IMAGE, getPageScopedBackgroundSource } from '@/shared/constants/backgrounds';
 
-// 一言 API 或静态格言
-const HITOKOTO_LIST = [
-    "太阳出来了，雾就会散的。",
-    "生命璀璨如歌，愿你不虚此行。",
-    "信じてること自体が希望なんだ。",
-    "Life is a journey, not a destination.",
-    "春风得意马蹄疾，一日看尽长安花。",
-];
+interface HitokotoResponse {
+    hitokoto: string;
+    from: string;
+    from_who: string | null;
+}
+
+// 兜底文案，API 失败时使用
+const FALLBACK = { hitokoto: '落花有意，流水无情。', from: '民间谚语', from_who: null };
+
+async function fetchHitokoto(): Promise<HitokotoResponse> {
+    const res = await fetch('https://v1.hitokoto.cn/?encode=json&c=a&c=c&c=d', {
+        cache: 'no-store',
+    });
+    if (!res.ok) throw new Error('hitokoto fetch failed');
+    return res.json();
+}
 
 export const Hero = () => {
-    const [hitokoto, setHitokoto] = useState('');
-    const [mounted, setMounted] = useState(false);
+    const [hitokoto, setHitokoto] = useState<HitokotoResponse | null>(null);
+    const [loading, setLoading] = useState(false);
     const [scrollY, setScrollY] = useState(0);
+    const [backgroundImage, setBackgroundImage] = useState(LOCAL_BACKGROUND_IMAGE);
     const heroRef = useRef<HTMLElement>(null);
 
+    const loadHitokoto = useCallback(async () => {
+        setLoading(true);
+        try {
+            const data = await fetchHitokoto();
+            setHitokoto(data);
+        } catch {
+            setHitokoto(FALLBACK);
+        } finally {
+            setLoading(false);
+        }
+    }, []);
+
     useEffect(() => {
-        setMounted(true);
-        // 随机选择一句格言
-        const randomIndex = Math.floor(Math.random() * HITOKOTO_LIST.length);
-        setHitokoto(HITOKOTO_LIST[randomIndex]);
+        const frame = window.requestAnimationFrame(() => {
+            setBackgroundImage(getPageScopedBackgroundSource());
+        });
+        return () => window.cancelAnimationFrame(frame);
+    }, []);
+
+    useEffect(() => {
+        loadHitokoto();
 
         // 视差滚动监听
         const handleScroll = () => {
@@ -38,7 +64,7 @@ export const Hero = () => {
         };
         window.addEventListener('scroll', handleScroll, { passive: true });
         return () => window.removeEventListener('scroll', handleScroll);
-    }, []);
+    }, [loadHitokoto]);
 
     const scrollToContent = () => {
         window.scrollTo({
@@ -81,7 +107,7 @@ export const Hero = () => {
                 <div
                     className="absolute inset-0 bg-cover bg-center bg-no-repeat"
                     style={{
-                        backgroundImage: 'url(/images/background.jpg)',
+                        backgroundImage: `url("${backgroundImage}")`,
                         opacity: 0.3,
                     }}
                 />
@@ -102,7 +128,7 @@ export const Hero = () => {
                 {/* Avatar with glow effect */}
                 <div className="relative inline-block">
                     <div className="absolute inset-0 bg-primary/30 rounded-full blur-xl animate-pulse"></div>
-                    <div className="relative w-28 h-28 md:w-32 md:h-32 rounded-full border-4 border-white/50 overflow-hidden mx-auto shadow-2xl animate-glow hover:rotate-[360deg] motion-transition-slow">
+                    <div className="relative w-28 h-28 md:w-32 md:h-32 rounded-full border-4 border-white/50 overflow-hidden mx-auto shadow-2xl animate-glow hover:scale-110 hover:ring-4 hover:ring-white/60 motion-transition-slow">
                         <Image
                             src="/images/avatar.jpg"
                             alt="Avatar"
@@ -115,15 +141,34 @@ export const Hero = () => {
 
                 {/* Site Title */}
                 <h1 className="text-3xl md:text-4xl font-bold tracking-wider drop-shadow-lg">
-                    云昔 Blog
+                    落樱轻声
                 </h1>
+                <p className="text-sm md:text-base text-white/70 tracking-widest font-light animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
+                    Sakura Whispers
+                </p>
 
                 {/* Glassmorphism Hitokoto Box */}
-                <div className="relative mx-4">
-                    <div className="bg-white/20 backdrop-blur-xl rounded-2xl px-8 py-4 border border-white/30 shadow-xl hover:bg-white/25 motion-transition">
-                        <p className="text-lg md:text-xl font-medium" suppressHydrationWarning>
-                            {mounted ? hitokoto : '...'}
-                        </p>
+                <div className="relative mx-4 max-w-lg">
+                    <div className="bg-white/20 backdrop-blur-xl rounded-2xl px-6 py-4 border border-white/30 shadow-xl hover:bg-white/25 motion-transition flex items-stretch gap-4">
+                        <div className="w-1 self-stretch bg-white/60 rounded-full flex-shrink-0" />
+                        <div className="flex-1 text-left space-y-1">
+                            <p className={`text-base md:text-lg font-medium leading-relaxed motion-transition ${loading ? 'opacity-40' : 'opacity-100'}`}>
+                                {hitokoto ? hitokoto.hitokoto : '…'}
+                            </p>
+                            {hitokoto && (
+                                <p className="text-xs text-white/60">
+                                    —— {hitokoto.from_who ? `${hitokoto.from_who}《${hitokoto.from}》` : `《${hitokoto.from}》`}
+                                </p>
+                            )}
+                        </div>
+                        <button
+                            onClick={loadHitokoto}
+                            disabled={loading}
+                            aria-label="换一句"
+                            className="self-start mt-0.5 text-white/50 hover:text-white motion-transition disabled:cursor-not-allowed flex-shrink-0"
+                        >
+                            <FaSyncAlt size={13} className={loading ? 'animate-spin' : ''} />
+                        </button>
                     </div>
                 </div>
 
@@ -141,7 +186,7 @@ export const Hero = () => {
                         >
                             <item.icon size={20} className="motion-transition group-hover:scale-110" />
                             {/* Tooltip */}
-                            <span className="absolute -bottom-8 left-1/2 -translate-x-1/2 text-xs bg-black/70 px-2 py-1 rounded opacity-0 group-hover:opacity-100 motion-transition whitespace-nowrap">
+                            <span className="absolute -top-9 left-1/2 -translate-x-1/2 text-xs bg-black/70 px-2 py-1 rounded opacity-0 group-hover:opacity-100 motion-transition whitespace-nowrap">
                                 {item.label}
                             </span>
                         </a>

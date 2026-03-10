@@ -1,7 +1,9 @@
+import Link from "next/link";
 import { Hero } from "@/components/Hero";
 import { ArticleCard } from "@/features/article/components/ArticleCard";
 import { Sidebar } from "@/components/Sidebar";
 import { articleApi, Article } from "@/shared/api/article";
+import { stripMarkdown } from "@/shared/utils/stripMarkdown";
 
 // 标记这个页面为动态渲染，避免构建时请求 API
 export const dynamic = 'force-dynamic';
@@ -27,7 +29,7 @@ export default async function Home() {
       <div className="container mx-auto px-4 py-16 max-w-5xl space-y-12">
         <h2 className="text-center text-3xl font-bold font-serif mb-12 flex items-center justify-center gap-4">
           <span className="w-12 h-1 bg-primary/20 rounded-full"></span>
-          <span>Latest Posts</span>
+          <span>最新文章</span>
           <span className="w-12 h-1 bg-primary/20 rounded-full"></span>
         </h2>
 
@@ -39,7 +41,7 @@ export default async function Home() {
                 key={post.id}
                 id={post.id}
                 title={post.title}
-                summary={post.content.substring(0, 150) + "..."} // Simple summary from content
+                summary={stripMarkdown(post.content).substring(0, 150) + "..."}
                 cover={post.cover}
                 createdAt={post.createdAt}
                 category={post.category || { name: 'Uncategorized' }}
@@ -48,14 +50,19 @@ export default async function Home() {
               />
             ))}
             <div className="text-center mt-12">
-              <button className="px-8 py-3 bg-white border border-gray-200 rounded-full hover:bg-primary hover:text-white hover:border-primary transition-all shadow-sm">
-                View All Posts
-              </button>
+              <Link
+                href="/posts"
+                className="inline-block px-8 py-3 bg-primary/10 hover:bg-primary text-primary hover:text-white border border-primary/30 hover:border-primary rounded-full transition-all motion-transition shadow-sm"
+              >
+                查看全部文章
+              </Link>
             </div>
           </div>
 
-          {/* Sidebar */}
-          <Sidebar />
+          {/* Sidebar - hidden on mobile */}
+          <div className="hidden md:block">
+            <Sidebar />
+          </div>
         </div>
       </div>
     </>

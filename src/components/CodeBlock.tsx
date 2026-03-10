@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, useCallback } from 'react';
-import { FaCopy, FaCheck, FaExpand, FaCompress } from 'react-icons/fa';
+import { useState, useCallback, useMemo } from 'react';
+import { FaCopy, FaCheck, FaExpand, FaCompress, FaAlignLeft } from 'react-icons/fa';
 import { clsx } from 'clsx';
+import hljs from 'highlight.js';
 
 interface CodeBlockProps {
     code: string;
@@ -19,6 +20,7 @@ export const CodeBlock = ({
 }: CodeBlockProps) => {
     const [copied, setCopied] = useState(false);
     const [fullscreen, setFullscreen] = useState(false);
+    const [wrapLines, setWrapLines] = useState(false);
 
     // 复制代码
     const copyToClipboard = useCallback(async () => {
@@ -36,8 +38,56 @@ export const CodeBlock = ({
         setFullscreen(!fullscreen);
     };
 
+    // 切换自动换行
+    const toggleWrap = () => {
+        setWrapLines(!wrapLines);
+    };
+
+    const normalizedLanguage = useMemo(
+        () => (language || 'plaintext').toLowerCase().replace(/^language-/, '').trim(),
+        [language]
+    );
+
+    const escapeHtml = (value: string) =>
+        value
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+
+    const { highlightedCode, detectedLanguage } = useMemo(() => {
+        const normalizedCode = code.replace(/\r\n/g, '\n');
+        try {
+            if (
+                normalizedLanguage &&
+                normalizedLanguage !== 'plaintext' &&
+                hljs.getLanguage(normalizedLanguage)
+            ) {
+                return {
+                    highlightedCode: hljs.highlight(normalizedCode, {
+                        language: normalizedLanguage,
+                        ignoreIllegals: true,
+                    }).value,
+                    detectedLanguage: normalizedLanguage,
+                };
+            }
+            const autoResult = hljs.highlightAuto(normalizedCode);
+            return {
+                highlightedCode: autoResult.value,
+                detectedLanguage: autoResult.language || 'plaintext',
+            };
+        } catch {
+            return {
+                highlightedCode: escapeHtml(normalizedCode),
+                detectedLanguage: normalizedLanguage || 'plaintext',
+            };
+        }
+    }, [code, normalizedLanguage]);
+
     // 处理代码行
-    const lines = code.split('\n');
+    const lines = useMemo(() => highlightedCode.split('\n'), [highlightedCode]);
+    const displayLanguage = normalizedLanguage === 'plaintext' ? detectedLanguage : normalizedLanguage;
 
     // 语言显示名称映射
     const languageNames: Record<string, string> = {
@@ -57,6 +107,11 @@ export const CodeBlock = ({
         sql: 'SQL',
         bash: 'Bash',
         shell: 'Shell',
+        sh: 'Shell',
+        tsx: 'TSX',
+        jsx: 'JSX',
+        csharp: 'C#',
+        php: 'PHP',
         markdown: 'Markdown',
         plaintext: 'Plain Text',
     };
@@ -64,12 +119,12 @@ export const CodeBlock = ({
     return (
         <div
             className={clsx(
-                'group relative rounded-xl overflow-hidden my-6 shadow-lg',
-                fullscreen && 'fixed inset-4 z-50 my-0'
+                'code-block group relative rounded-2xl overflow-hidden my-6 border border-slate-700/70 shadow-xl bg-[#0d1117]',
+                fullscreen && 'fixed inset-4 z-[80] my-0'
             )}
         >
             {/* Mac 风格标题栏 */}
-            <div className="flex items-center justify-between px-4 py-2.5 bg-gray-800 dark:bg-gray-900">
+            <div className="sticky top-0 z-10 flex items-center justify-between px-4 py-2.5 bg-[#111827] border-b border-slate-700/70">
                 {/* 三个小圆点 */}
                 <div className="flex items-center gap-2">
                     <div className="flex gap-1.5">
@@ -87,7 +142,7 @@ export const CodeBlock = ({
                     </div>
                     {/* 文件名 */}
                     {filename && (
-                        <span className="ml-4 text-xs text-gray-400 font-mono">
+                        <span className="ml-4 text-xs text-slate-300/90 font-mono truncate max-w-[36vw]">
                             {filename}
                         </span>
                     )}
@@ -96,13 +151,24 @@ export const CodeBlock = ({
                 {/* 右侧工具栏 */}
                 <div className="flex items-center gap-2">
                     {/* 语言标签 */}
-                    <span className="text-xs text-gray-500 font-mono">
-                        {languageNames[language] || language}
+                    <span className="text-[11px] px-2 py-0.5 rounded-md border border-slate-600/70 text-slate-300 font-mono uppercase tracking-wide">
+                        {languageNames[displayLanguage] || displayLanguage}
                     </span>
+                    {/* 自动换行 */}
+                    <button
+                        onClick={toggleWrap}
+                        className={clsx(
+                            'p-1.5 transition-colors',
+                            wrapLines ? 'text-primary' : 'text-slate-400 hover:text-white'
+                        )}
+                        title={wrapLines ? '关闭自动换行' : '开启自动换行'}
+                    >
+                        <FaAlignLeft size={12} />
+                    </button>
                     {/* 全屏按钮 */}
                     <button
                         onClick={toggleFullscreen}
-                        className="p-1.5 text-gray-500 hover:text-white transition-colors"
+                        className="p-1.5 text-slate-400 hover:text-white transition-colors"
                         title={fullscreen ? '退出全屏' : '全屏'}
                     >
                         {fullscreen ? <FaCompress size={12} /> : <FaExpand size={12} />}
@@ -123,29 +189,42 @@ export const CodeBlock = ({
 
             {/* 代码区域 */}
             <div className={clsx(
-                'overflow-auto bg-gray-900 dark:bg-gray-950',
-                fullscreen ? 'h-[calc(100%-40px)]' : 'max-h-[500px]'
+                'overflow-auto bg-[#0d1117]',
+                fullscreen ? 'h-[calc(100%-44px)]' : 'max-h-[560px]'
             )}>
-                <pre className="p-4 text-sm font-mono leading-relaxed">
-                    <code className={`language-${language}`}>
+                <pre
+                    className={clsx(
+                        'm-0 py-4 text-[13px] font-mono leading-6',
+                        wrapLines ? 'whitespace-pre-wrap break-words' : 'whitespace-pre'
+                    )}
+                >
+                    <code className={`hljs language-${displayLanguage} bg-transparent`}>
                         {lines.map((line, index) => (
-                            <div
+                            <span
                                 key={index}
-                                className="flex hover:bg-white/5 -mx-4 px-4"
+                                className="grid grid-cols-[auto_minmax(0,1fr)] hover:bg-white/5 transition-colors"
                             >
                                 {showLineNumbers && (
-                                    <span className="select-none text-gray-600 w-8 text-right mr-4 flex-shrink-0">
+                                    <span className="select-none text-slate-500 min-w-[3.5rem] px-3 text-right border-r border-slate-800/80">
                                         {index + 1}
                                     </span>
                                 )}
-                                <span className="text-gray-300 whitespace-pre">
-                                    {line || ' '}
-                                </span>
-                            </div>
+                                <span
+                                    className={clsx(
+                                        'px-4',
+                                        wrapLines ? 'break-words' : 'overflow-visible'
+                                    )}
+                                    dangerouslySetInnerHTML={{ __html: line || '&nbsp;' }}
+                                />
+                            </span>
                         ))}
                     </code>
                 </pre>
             </div>
+
+            {/* 顶部/底部渐变，增强层次 */}
+            <div className="pointer-events-none absolute inset-x-0 top-[44px] h-6 bg-gradient-to-b from-[#0d1117] to-transparent" />
+            <div className="pointer-events-none absolute inset-x-0 bottom-0 h-8 bg-gradient-to-t from-[#0d1117] to-transparent" />
 
             {/* 全屏时的背景遮罩 */}
             {fullscreen && (
@@ -167,11 +246,12 @@ export const MarkdownCodeBlock = ({
     className?: string;
 }) => {
     // 从 className 中提取语言
-    const language = className?.replace('language-', '') || 'plaintext';
+    const languageMatch = /language-([\w#+-]+)/.exec(className || '');
+    const language = languageMatch?.[1] || 'plaintext';
 
     return (
         <CodeBlock
-            code={children.trim()}
+            code={children.replace(/\n$/, '')}
             language={language}
         />
     );

@@ -62,7 +62,7 @@ export const Navbar = () => {
                     'fixed top-0 left-0 right-0 z-50 transition-all motion-transition-slow',
                     scrolled
                         ? 'bg-white/90 dark:bg-gray-900/90 backdrop-blur-xl shadow-lg border-b border-gray-200/20 dark:border-gray-700/20'
-                        : 'bg-transparent'
+                        : 'bg-gradient-to-b from-black/20 to-transparent'
                 )}
             >
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -79,7 +79,7 @@ export const Navbar = () => {
                             </div>
                             <span className={clsx(
                                 'text-xl font-bold font-serif transition-colors motion-transition',
-                                scrolled ? 'text-foreground' : 'text-white drop-shadow-lg'
+                                scrolled ? 'text-foreground' : 'text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]'
                             )}>
                                 落樱轻声
                             </span>

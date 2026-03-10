@@ -2,9 +2,11 @@
 
 import { useEffect, useState } from 'react';
 import { MOTION, getScrollProgress } from '@/shared/constants/motion';
+import { LOCAL_BACKGROUND_IMAGE, getPageScopedBackgroundSource } from '@/shared/constants/backgrounds';
 
 export const Background = () => {
     const [progress, setProgress] = useState(0);
+    const [backgroundImage, setBackgroundImage] = useState(LOCAL_BACKGROUND_IMAGE);
 
     useEffect(() => {
         const handleScroll = () => {
@@ -20,6 +22,13 @@ export const Background = () => {
         window.addEventListener('scroll', handleScroll, { passive: true });
         handleScroll(); // Initial check
         return () => window.removeEventListener('scroll', handleScroll);
+    }, []);
+
+    useEffect(() => {
+        const frame = window.requestAnimationFrame(() => {
+            setBackgroundImage(getPageScopedBackgroundSource());
+        });
+        return () => window.cancelAnimationFrame(frame);
     }, []);
 
     // 动态计算样式
@@ -44,7 +53,7 @@ export const Background = () => {
             <div
                 className="absolute inset-0 bg-cover bg-center transition-transform motion-transition-micro will-change-transform"
                 style={{
-                    backgroundImage: 'url("/images/background.jpg")',
+                    backgroundImage: `url("${backgroundImage}")`,
                     ...bgStyle
                 }}
             />

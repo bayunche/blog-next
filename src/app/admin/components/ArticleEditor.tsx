@@ -34,6 +34,22 @@ interface MusicSearchResponse {
     };
 }
 
+interface ImageBedUploadResponse {
+    code: number;
+    message: string;
+    data?: {
+        url?: string;
+        displayUrl?: string;
+        thumb?: string;
+        medium?: string;
+    };
+}
+
+interface CoverUploadResult {
+    url: string;
+    source: 'image-bed' | 'local';
+}
+
 function sleep(ms: number) {
     return new Promise((resolve) => setTimeout(resolve, ms));
 }
@@ -49,6 +65,11 @@ function getErrorDetail(error: unknown, fallback: string): string {
         }
     }
     return fallback;
+}
+
+function getImageBedUrl(payload: ImageBedUploadResponse | undefined): string | null {
+    if (!payload?.data) return null;
+    return payload.data.displayUrl || payload.data.url || payload.data.medium || payload.data.thumb || null;
 }
 
 export default function ArticleEditor({ articleId }: ArticleEditorProps) {
@@ -125,20 +146,25 @@ export default function ArticleEditor({ articleId }: ArticleEditorProps) {
                     `${url}${url.includes('?') ? '&' : '?'}t=${Date.now()}`
                 ),
             ];
+            const shuffledCandidates = [...candidates];
+            for (let i = shuffledCandidates.length - 1; i > 0; i -= 1) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [shuffledCandidates[i], shuffledCandidates[j]] = [shuffledCandidates[j], shuffledCandidates[i]];
+            }
 
             const tryLoad = (index: number) => {
-                if (index >= candidates.length) {
+                if (index >= shuffledCandidates.length) {
                     message.error('获取封面图片失败');
                     setCoverLoading(false);
                     return;
                 }
 
-                const target = candidates[index];
+                const target = shuffledCandidates[index];
                 const img = new Image();
                 img.onload = () => {
                     setCoverUrl(target);
                     form.setFieldValue('cover', target);
-                    message.success(index === 0 ? '已使用本地封面图' : '已获取备用封面图');
+                    message.success(target === LOCAL_BACKGROUND_IMAGE ? '已随机到本地封面图' : '已随机获取封面图');
                     setCoverLoading(false);
                 };
                 img.onerror = () => {
@@ -155,7 +181,23 @@ export default function ArticleEditor({ articleId }: ArticleEditorProps) {
         }
     }, [form]);
 
-    const uploadCoverFile = useCallback(async (file: File, maxRetries = 2) => {
+    const uploadCoverFile = useCallback(async (file: File, maxRetries = 2): Promise<CoverUploadResult> => {
+        let imageBedError: unknown;
+        try {
+            const imageBedFormData = new FormData();
+            imageBedFormData.append('file', file);
+            const imageBedRes = await request.post<any, ImageBedUploadResponse>('/upload/image', imageBedFormData, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            });
+            const imageUrl = getImageBedUrl(imageBedRes);
+            if (imageUrl) {
+                return { url: imageUrl, source: 'image-bed' };
+            }
+            throw new Error('图床未返回可用图片地址');
+        } catch (error) {
+            imageBedError = error;
+        }
+
         let lastError: unknown;
 
         for (let attempt = 0; attempt <= maxRetries; attempt += 1) {
@@ -165,8 +207,8 @@ export default function ArticleEditor({ articleId }: ArticleEditorProps) {
                 await request.post('/article/upload', formData, {
                     headers: { 'Content-Type': 'multipart/form-data' }
                 });
-                const url = `/public/uploads/${file.name}`;
-                return url;
+                const url = `/public/uploads/${encodeURIComponent(file.name)}`;
+                return { url, source: 'local' };
             } catch (error) {
                 lastError = error;
                 if (attempt < maxRetries) {
@@ -175,7 +217,9 @@ export default function ArticleEditor({ articleId }: ArticleEditorProps) {
             }
         }
 
-        throw lastError;
+        const imageBedDetail = getErrorDetail(imageBedError, '图床上传失败');
+        const localDetail = getErrorDetail(lastError, '本地上传失败');
+        throw new Error(`${imageBedDetail}；${localDetail}`);
     }, []);
 
     // 文件上传处理
@@ -186,11 +230,11 @@ export default function ArticleEditor({ articleId }: ArticleEditorProps) {
         setUploadError('');
         setLastUploadFile(uploadFile);
         try {
-            const url = await uploadCoverFile(uploadFile, 2);
+            const { url, source } = await uploadCoverFile(uploadFile, 2);
             setCoverUrl(url);
             form.setFieldValue('cover', url);
             onSuccess(url);
-            message.success('封面图片上传成功');
+            message.success(source === 'image-bed' ? '封面图片已上传到图床' : '图床不可用，已回退本地上传');
             return url;
         } catch (err) {
             const detail = getErrorDetail(err, '封面图片上传失败');
@@ -217,10 +261,10 @@ export default function ArticleEditor({ articleId }: ArticleEditorProps) {
         setUploadingCover(true);
         setUploadError('');
         try {
-            const url = await uploadCoverFile(lastUploadFile, 2);
+            const { url, source } = await uploadCoverFile(lastUploadFile, 2);
             setCoverUrl(url);
             form.setFieldValue('cover', url);
-            message.success('封面图片重试上传成功');
+            message.success(source === 'image-bed' ? '封面图片已上传到图床' : '图床不可用，已回退本地上传');
         } catch (error) {
             const detail = getErrorDetail(error, '封面图片重试失败');
             setUploadError(detail);
