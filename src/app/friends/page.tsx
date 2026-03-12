@@ -1,128 +1,112 @@
-'use client';
-
 import Image from 'next/image';
-import Head from 'next/head';
-
-// 友链数据类型
-interface FriendLink {
-    name: string;
-    url: string;
-    avatar: string;
-    description: string;
-}
-
-// 示例友链数据（后续可从 API 获取）
-const friendLinks: FriendLink[] = [
-    {
-        name: 'Fuukei',
-        url: 'https://docs.fuukei.org',
-        avatar: 'https://docs.fuukei.org/logo.png',
-        description: 'Sakurairo 主题官方文档',
-    },
-    {
-        name: '明日が来ると',
-        url: 'https://kiseki.blog',
-        avatar: 'https://kiseki.blog/avatar.jpg',
-        description: '信じてること自体が希望なんだ',
-    },
-    {
-        name: 'Mashiro',
-        url: 'https://2heng.xin',
-        avatar: 'https://2heng.xin/avatar.jpg',
-        description: 'Sakura Theme 主题作者',
-    },
-];
-
-// 随机颜色（用于头像备用背景）
-const colors = [
-    'bg-pink-500',
-    'bg-purple-500',
-    'bg-blue-500',
-    'bg-cyan-500',
-    'bg-teal-500',
-    'bg-green-500',
-    'bg-orange-500',
-];
+import { friendAvatarColors, friendLinkGroups } from '@/shared/constants/friends';
+import { siteProfile } from '@/shared/constants/siteProfile';
 
 export default function FriendsPage() {
     return (
-        <div className="min-h-screen">
-            {/* 页面头部 */}
-            <div className="relative h-[40vh] flex items-center justify-center overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-b from-primary/20 to-transparent" />
-                <div className="relative z-10 text-center">
-                    <h1 className="text-5xl font-bold font-serif mb-4">友情链接</h1>
-                    <p className="text-lg text-text-muted">
-                        在这里遇见更多有趣的人 ✨
+        <div className="min-h-screen pt-20">
+            <div className="bg-gradient-to-br from-primary/10 via-pink-100/20 to-purple-100/10 py-16 dark:from-primary/5 dark:via-purple-900/10 dark:to-transparent">
+                <div className="mx-auto max-w-6xl space-y-4 px-4 text-center">
+                    <p className="text-sm font-medium uppercase tracking-[0.28em] text-primary/80">
+                        Around The Web
+                    </p>
+                    <h1 className="text-4xl font-bold font-serif">友情链接</h1>
+                    <p className="mx-auto max-w-3xl text-sm leading-7 text-text-muted">
+                        这里放的是我愿意长期回访的站点。有的是技术博客，有的是阅读、生活和写作记录；它们让我觉得，互联网依然保留着认真表达的温度。
                     </p>
                 </div>
             </div>
 
-            {/* 友链卡片网格 */}
-            <div className="max-w-6xl mx-auto px-6 py-12">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {friendLinks.map((friend, index) => (
-                        <a
-                            key={friend.name}
-                            href={friend.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="group block p-6 bg-card-bg rounded-2xl border border-card-border hover:border-primary/30 hover:shadow-lg transition-all duration-300 hover:-translate-y-1"
-                        >
-                            <div className="flex items-center gap-4 mb-4">
-                                {/* 头像 */}
-                                <div className={`relative w-16 h-16 rounded-full overflow-hidden ${colors[index % colors.length]} flex items-center justify-center text-white text-2xl font-bold shrink-0`}>
-                                    {friend.avatar ? (
-                                        <Image
-                                            src={friend.avatar}
-                                            alt={friend.name}
-                                            fill
-                                            className="object-cover"
-                                            onError={(e) => {
-                                                (e.target as HTMLImageElement).style.display = 'none';
-                                            }}
-                                        />
-                                    ) : null}
-                                    <span className="z-0">{friend.name.charAt(0)}</span>
-                                </div>
-
-                                {/* 名称 */}
-                                <div>
-                                    <h3 className="text-lg font-bold group-hover:text-primary transition-colors">
-                                        {friend.name}
-                                    </h3>
-                                    <p className="text-sm text-text-muted truncate max-w-[180px]">
-                                        {friend.url.replace(/^https?:\/\//, '')}
-                                    </p>
-                                </div>
-                            </div>
-
-                            {/* 描述 */}
-                            <p className="text-sm text-text-muted line-clamp-2">
-                                {friend.description}
-                            </p>
-
-                            {/* 悬停指示器 */}
-                            <div className="mt-4 flex items-center text-sm text-primary opacity-0 group-hover:opacity-100 transition-opacity">
-                                <span>访问 →</span>
-                            </div>
-                        </a>
-                    ))}
-                </div>
-
-                {/* 申请友链提示 */}
-                <div className="mt-16 text-center p-8 bg-card-bg/50 rounded-2xl border border-card-border">
-                    <h2 className="text-2xl font-bold mb-4">🤝 想和我交换友链？</h2>
-                    <p className="text-text-muted mb-6 max-w-lg mx-auto">
-                        欢迎各位博主申请友链！请在下方评论区留下你的博客信息，格式如下：
-                    </p>
-                    <div className="bg-background/50 rounded-lg p-4 text-left max-w-md mx-auto text-sm font-mono">
-                        <p>名称：你的博客名称</p>
-                        <p>链接：https://你的博客地址</p>
-                        <p>头像：头像图片链接</p>
-                        <p>描述：一句话介绍</p>
+            <div className="mx-auto max-w-6xl space-y-10 px-4 py-12">
+                <section className="grid gap-6 lg:grid-cols-[1.1fr_1fr]">
+                    <div className="rounded-[2rem] border border-card-border bg-card-bg/85 p-8 shadow-sm backdrop-blur-sm">
+                        <h2 className="text-2xl font-bold font-serif">本站友链信息</h2>
+                        <p className="mt-4 text-sm leading-8 text-text-muted">
+                            {siteProfile.friendExchange.summary}
+                        </p>
+                        <div className="mt-6 space-y-3 text-sm text-text-muted">
+                            <p><span className="font-medium text-foreground">博客名：</span>{siteProfile.siteName}</p>
+                            <p><span className="font-medium text-foreground">定位：</span>{siteProfile.tagline}</p>
+                            <p><span className="font-medium text-foreground">作者：</span>{siteProfile.author.name}</p>
+                            <p><span className="font-medium text-foreground">链接：</span>/</p>
+                        </div>
+                        <p className="mt-5 text-sm leading-7 text-text-muted">
+                            如果你也在认真更新自己的站点，不管主要写技术、读书还是生活记录，都欢迎来交换友链。
+                        </p>
                     </div>
-                </div>
+
+                    <div className="rounded-[2rem] border border-card-border bg-card-bg/85 p-8 shadow-sm backdrop-blur-sm">
+                        <h2 className="text-2xl font-bold font-serif">申请友链条件</h2>
+                        <p className="mt-4 text-sm leading-7 text-text-muted">
+                            不要求风格一致，只希望彼此都在持续写作，也愿意让自己的站点保留一点真实和温度。
+                        </p>
+                        <ul className="mt-4 space-y-3 text-sm leading-7 text-text-muted">
+                            {siteProfile.friendExchange.requirements.map((item) => (
+                                <li key={item}>- {item}</li>
+                            ))}
+                        </ul>
+
+                        <div className="mt-6 rounded-2xl bg-background/50 p-4 text-left font-mono text-sm text-text-muted">
+                            {siteProfile.friendExchange.applicationTemplate.map((line) => (
+                                <p key={line}>{line}</p>
+                            ))}
+                        </div>
+                    </div>
+                </section>
+
+                {friendLinkGroups.map((group) => (
+                    <section key={group.title} className="space-y-5">
+                        <div>
+                            <h2 className="text-2xl font-bold font-serif">{group.title}</h2>
+                            <p className="mt-2 text-sm leading-7 text-text-muted">
+                                {group.description}
+                            </p>
+                        </div>
+
+                        <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+                            {group.links.map((friend, index) => (
+                                <a
+                                    key={friend.name}
+                                    href={friend.url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="group block rounded-3xl border border-card-border bg-card-bg/85 p-6 shadow-sm transition-all motion-transition hover:-translate-y-1 hover:border-primary/30 hover:shadow-lg"
+                                >
+                                    <div className="mb-4 flex items-center gap-4">
+                                        <div className={`relative flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-full ${friendAvatarColors[index % friendAvatarColors.length]} text-2xl font-bold text-white`}>
+                                            {friend.avatar ? (
+                                                <Image
+                                                    src={friend.avatar}
+                                                    alt={friend.name}
+                                                    fill
+                                                    className="object-cover"
+                                                />
+                                            ) : null}
+                                            <span className="z-0">{friend.name.charAt(0)}</span>
+                                        </div>
+
+                                        <div>
+                                            <h3 className="text-lg font-bold transition-colors group-hover:text-primary">
+                                                {friend.name}
+                                            </h3>
+                                            <p className="max-w-[180px] truncate text-sm text-text-muted">
+                                                {friend.url.replace(/^https?:\/\//, '')}
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    <p className="line-clamp-2 text-sm leading-7 text-text-muted">
+                                        {friend.description}
+                                    </p>
+
+                                    <div className="mt-4 text-sm text-primary opacity-0 transition-opacity group-hover:opacity-100">
+                                        去逛逛 →
+                                    </div>
+                                </a>
+                            ))}
+                        </div>
+                    </section>
+                ))}
             </div>
         </div>
     );

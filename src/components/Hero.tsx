@@ -1,11 +1,12 @@
 'use client';
 
-import { useEffect, useState, useRef, useCallback } from 'react';
-import { FaGithub, FaTwitter, FaChevronDown, FaTelegram, FaRss, FaSyncAlt } from 'react-icons/fa';
-import { SiBilibili } from 'react-icons/si';
 import Image from 'next/image';
+import Link from 'next/link';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { FaChevronDown, FaCodeBranch, FaGithub, FaSyncAlt } from 'react-icons/fa';
 import { MOTION, clamp, getScrollProgress } from '@/shared/constants/motion';
 import { LOCAL_BACKGROUND_IMAGE, getPageScopedBackgroundSource } from '@/shared/constants/backgrounds';
+import { siteProfile } from '@/shared/constants/siteProfile';
 
 interface HitokotoResponse {
     hitokoto: string;
@@ -13,31 +14,44 @@ interface HitokotoResponse {
     from_who: string | null;
 }
 
-// 兜底文案，API 失败时使用
-const FALLBACK = { hitokoto: '落花有意，流水无情。', from: '民间谚语', from_who: null };
+const FALLBACK = {
+    hitokoto: '愿每一篇认真写下来的文章，都能帮后来者少走一点弯路。',
+    from: '落樱轻声',
+    from_who: null,
+};
+
+const socialIconMap = {
+    github: FaGithub,
+    repo: FaCodeBranch,
+};
 
 async function fetchHitokoto(): Promise<HitokotoResponse> {
     const res = await fetch('https://v1.hitokoto.cn/?encode=json&c=a&c=c&c=d', {
         cache: 'no-store',
     });
-    if (!res.ok) throw new Error('hitokoto fetch failed');
+
+    if (!res.ok) {
+        throw new Error('hitokoto fetch failed');
+    }
+
     return res.json();
 }
 
-export const Hero = () => {
-    const [hitokoto, setHitokoto] = useState<HitokotoResponse | null>(null);
+export function Hero() {
+    const [quote, setQuote] = useState<HitokotoResponse | null>(null);
     const [loading, setLoading] = useState(false);
     const [scrollY, setScrollY] = useState(0);
     const [backgroundImage, setBackgroundImage] = useState(LOCAL_BACKGROUND_IMAGE);
     const heroRef = useRef<HTMLElement>(null);
 
-    const loadHitokoto = useCallback(async () => {
+    const loadQuote = useCallback(async () => {
         setLoading(true);
+
         try {
             const data = await fetchHitokoto();
-            setHitokoto(data);
+            setQuote(data);
         } catch {
-            setHitokoto(FALLBACK);
+            setQuote(FALLBACK);
         } finally {
             setLoading(false);
         }
@@ -47,181 +61,221 @@ export const Hero = () => {
         const frame = window.requestAnimationFrame(() => {
             setBackgroundImage(getPageScopedBackgroundSource());
         });
+
         return () => window.cancelAnimationFrame(frame);
     }, []);
 
     useEffect(() => {
-        loadHitokoto();
+        loadQuote();
 
-        // 视差滚动监听
         const handleScroll = () => {
-            if (heroRef.current) {
-                const rect = heroRef.current.getBoundingClientRect();
-                if (rect.bottom > 0) {
-                    setScrollY(window.scrollY);
-                }
+            if (!heroRef.current) {
+                return;
+            }
+
+            const rect = heroRef.current.getBoundingClientRect();
+            if (rect.bottom > 0) {
+                setScrollY(window.scrollY);
             }
         };
+
         window.addEventListener('scroll', handleScroll, { passive: true });
         return () => window.removeEventListener('scroll', handleScroll);
-    }, [loadHitokoto]);
+    }, [loadQuote]);
 
-    const scrollToContent = () => {
-        window.scrollTo({
-            top: window.innerHeight,
-            behavior: 'smooth',
-        });
-    };
-
-    // 社交链接配置
-    const socialLinks = [
-        { icon: FaGithub, href: 'https://github.com', label: 'GitHub', color: 'hover:bg-gray-700' },
-        { icon: FaTelegram, href: 'https://t.me', label: 'Telegram', color: 'hover:bg-blue-500' },
-        { icon: SiBilibili, href: 'https://bilibili.com', label: 'Bilibili', color: 'hover:bg-pink-500' },
-        { icon: FaTwitter, href: 'https://twitter.com', label: 'Twitter', color: 'hover:bg-sky-500' },
-        { icon: FaRss, href: '/rss', label: 'RSS', color: 'hover:bg-orange-500' },
-    ];
-
-    // 视差偏移计算 - 优化版：背景固定，内容上移，整体渐隐
     const heroHeight = typeof window !== 'undefined' ? window.innerHeight : 1000;
-    // 背景固定，不移动，但渐隐
     const backgroundProgress = getScrollProgress(scrollY, heroHeight, MOTION.hero.backgroundFadeRatio);
-    const backgroundOpacity = clamp(1 - backgroundProgress, 0, 1);
-    // 内容区域向上移动并渐隐
     const contentProgress = getScrollProgress(scrollY, heroHeight, MOTION.hero.contentFadeRatio);
-    const contentOffset = scrollY * MOTION.hero.contentOffsetFactor;
+    const backgroundOpacity = clamp(1 - backgroundProgress, 0, 1);
     const contentOpacity = clamp(1 - contentProgress, 0, 1);
+    const contentOffset = scrollY * MOTION.hero.contentOffsetFactor;
     const contentScale = Math.max(MOTION.hero.contentScaleMin, 1 - scrollY / MOTION.hero.contentScaleDivisor);
+
+    const socialLinks = useMemo(
+        () => siteProfile.socialLinks.map((link) => ({ ...link, Icon: socialIconMap[link.platform] })),
+        []
+    );
 
     return (
         <section
             ref={heroRef}
-            className="relative h-screen flex flex-col justify-center items-center text-center text-white overflow-hidden"
+            className="relative flex min-h-screen items-center overflow-hidden text-white"
         >
-            {/* Background - 固定位置，向下滚动渐隐 */}
             <div
-                className="absolute inset-0 bg-gradient-to-br from-pink-400 via-purple-400 to-blue-500 dark:from-gray-900 dark:via-purple-900 dark:to-gray-800 transition-opacity motion-transition-micro"
+                className="absolute inset-0 transition-opacity motion-transition-micro"
                 style={{ opacity: backgroundOpacity }}
             >
-                {/* 背景图片层 - 可选 */}
+                <div className="absolute inset-0 bg-gradient-to-br from-pink-400 via-purple-500 to-sky-500 dark:from-gray-950 dark:via-purple-950 dark:to-slate-900" />
                 <div
                     className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-                    style={{
-                        backgroundImage: `url("${backgroundImage}")`,
-                        opacity: 0.3,
-                    }}
+                    style={{ backgroundImage: `url(\"${backgroundImage}\")`, opacity: 0.28 }}
                 />
-                {/* Decorative gradient overlays */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent" />
-                <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-white/10 via-transparent to-transparent" />
+                <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/30 to-background/95" />
+                <div className="absolute inset-x-0 top-0 h-40 bg-gradient-to-b from-black/35 to-transparent" />
             </div>
 
-            {/* Content with parallax - 向上移动并渐隐 */}
             <div
-                className="z-10 space-y-6 animate-fade-in-up"
+                className="relative z-10 mx-auto flex w-full max-w-7xl flex-col gap-10 px-4 py-24 lg:flex-row lg:items-center lg:justify-between"
                 style={{
-                    transform: `translateY(${-contentOffset}px) scale(${contentScale})`,
                     opacity: contentOpacity,
-                    transition: `opacity ${MOTION.durationMs.micro}ms ${MOTION.easing.decelerate}`,
+                    transform: `translate3d(0, ${-contentOffset}px, 0) scale(${contentScale})`,
                 }}
             >
-                {/* Avatar with glow effect */}
-                <div className="relative inline-block">
-                    <div className="absolute inset-0 bg-primary/30 rounded-full blur-xl animate-pulse"></div>
-                    <div className="relative w-28 h-28 md:w-32 md:h-32 rounded-full border-4 border-white/50 overflow-hidden mx-auto shadow-2xl animate-glow hover:scale-110 hover:ring-4 hover:ring-white/60 motion-transition-slow">
-                        <Image
-                            src="/images/avatar.jpg"
-                            alt="Avatar"
-                            fill
-                            className="object-cover"
-                            priority
-                        />
+                <div className="max-w-3xl space-y-7">
+                    <div className="inline-flex items-center rounded-full border border-white/15 bg-white/10 px-4 py-2 text-sm backdrop-blur-md">
+                        个人博客 · 也写技术，也写生活
                     </div>
-                </div>
 
-                {/* Site Title */}
-                <h1 className="text-3xl md:text-4xl font-bold tracking-wider drop-shadow-lg">
-                    落樱轻声
-                </h1>
-                <p className="text-sm md:text-base text-white/70 tracking-widest font-light animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
-                    Sakura Whispers
-                </p>
-
-                {/* Glassmorphism Hitokoto Box */}
-                <div className="relative mx-4 max-w-lg">
-                    <div className="bg-white/20 backdrop-blur-xl rounded-2xl px-6 py-4 border border-white/30 shadow-xl hover:bg-white/25 motion-transition flex items-stretch gap-4">
-                        <div className="w-1 self-stretch bg-white/60 rounded-full flex-shrink-0" />
-                        <div className="flex-1 text-left space-y-1">
-                            <p className={`text-base md:text-lg font-medium leading-relaxed motion-transition ${loading ? 'opacity-40' : 'opacity-100'}`}>
-                                {hitokoto ? hitokoto.hitokoto : '…'}
+                    <div className="space-y-5">
+                        <div className="space-y-3">
+                            <p className="text-sm uppercase tracking-[0.38em] text-white/75">
+                                {siteProfile.siteNameEn}
                             </p>
-                            {hitokoto && (
-                                <p className="text-xs text-white/60">
-                                    —— {hitokoto.from_who ? `${hitokoto.from_who}《${hitokoto.from}》` : `《${hitokoto.from}》`}
-                                </p>
-                            )}
+                            <h1 className="text-4xl font-bold font-serif leading-tight md:text-6xl">
+                                {siteProfile.siteName}
+                            </h1>
                         </div>
-                        <button
-                            onClick={loadHitokoto}
-                            disabled={loading}
-                            aria-label="换一句"
-                            className="self-start mt-0.5 text-white/50 hover:text-white motion-transition disabled:cursor-not-allowed flex-shrink-0"
-                        >
-                            <FaSyncAlt size={13} className={loading ? 'animate-spin' : ''} />
-                        </button>
+
+                        <p className="max-w-2xl text-lg leading-8 text-white/90 md:text-2xl md:leading-10">
+                            {siteProfile.tagline}
+                        </p>
+                        <p className="max-w-2xl text-sm leading-8 text-white/70 md:text-base">
+                            {siteProfile.description}
+                        </p>
+                    </div>
+
+                    <div className="flex flex-wrap gap-3">
+                        {siteProfile.heroBadges.map((badge) => (
+                            <span
+                                key={badge}
+                                className="rounded-full border border-white/15 bg-white/10 px-4 py-2 text-sm backdrop-blur-md"
+                            >
+                                {badge}
+                            </span>
+                        ))}
+                    </div>
+
+                    <div className="flex flex-wrap gap-3">
+                        {siteProfile.homeCtas.map((cta) => {
+                            const baseClass = [
+                                'inline-flex items-center justify-center rounded-full px-5 py-3 text-sm font-medium transition-all motion-transition',
+                                cta.style === 'primary'
+                                    ? 'bg-white text-slate-900 hover:bg-white/90'
+                                    : cta.style === 'secondary'
+                                        ? 'border border-white/30 bg-white/10 text-white backdrop-blur-md hover:bg-white/20'
+                                        : 'text-white/80 hover:text-white',
+                            ].join(' ');
+
+                            if (cta.href.startsWith('#')) {
+                                return (
+                                    <a key={cta.label} href={cta.href} className={baseClass}>
+                                        {cta.label}
+                                    </a>
+                                );
+                            }
+
+                            return (
+                                <Link key={cta.label} href={cta.href} className={baseClass}>
+                                    {cta.label}
+                                </Link>
+                            );
+                        })}
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-3 pt-2">
+                        {socialLinks.map(({ href, label, Icon }) => (
+                            <a
+                                key={label}
+                                href={href}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                aria-label={label}
+                                className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-4 py-2 text-sm text-white/85 backdrop-blur-md transition-all motion-transition hover:-translate-y-0.5 hover:bg-white/20"
+                            >
+                                <Icon size={15} />
+                                <span>{label}</span>
+                            </a>
+                        ))}
                     </div>
                 </div>
 
-                {/* Social Links */}
-                <div className="flex justify-center gap-4 mt-6">
-                    {socialLinks.map((item, i) => (
-                        <a
-                            key={i}
-                            href={item.href}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            aria-label={item.label}
-                            className={`group relative p-3 bg-white/20 ${item.color} rounded-full backdrop-blur-md motion-transition hover:-translate-y-2 hover:shadow-xl`}
-                            style={{ animationDelay: `${i * 0.1}s` }}
-                        >
-                            <item.icon size={20} className="motion-transition group-hover:scale-110" />
-                            {/* Tooltip */}
-                            <span className="absolute -top-9 left-1/2 -translate-x-1/2 text-xs bg-black/70 px-2 py-1 rounded opacity-0 group-hover:opacity-100 motion-transition whitespace-nowrap">
-                                {item.label}
-                            </span>
-                        </a>
-                    ))}
+                <div className="w-full max-w-md space-y-6 lg:ml-6">
+                    <div className="rounded-[2rem] border border-white/15 bg-white/10 p-6 backdrop-blur-xl shadow-2xl">
+                        <div className="flex items-center gap-4">
+                            <div className="relative h-20 w-20 overflow-hidden rounded-2xl border border-white/20">
+                                <Image
+                                    src={siteProfile.author.avatar}
+                                    alt={siteProfile.author.shortName}
+                                    fill
+                                    priority
+                                    className="object-cover"
+                                />
+                            </div>
+                            <div>
+                                <p className="text-sm text-white/65">{siteProfile.author.role}</p>
+                                <h2 className="mt-1 text-2xl font-bold font-serif">
+                                    {siteProfile.author.shortName}
+                                </h2>
+                                <p className="mt-2 text-sm text-white/70">
+                                    {siteProfile.author.location}
+                                </p>
+                            </div>
+                        </div>
+
+                        <div className="mt-6 grid gap-3 sm:grid-cols-3">
+                            {siteProfile.currentMoments.map((item) => (
+                                <div
+                                    key={item.title}
+                                    className="rounded-2xl border border-white/10 bg-black/15 p-4"
+                                >
+                                    <h3 className="text-sm font-semibold text-white">
+                                        {item.title}
+                                    </h3>
+                                    <p className="mt-2 text-xs leading-6 text-white/70">
+                                        {item.description}
+                                    </p>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                    <div className="rounded-[2rem] border border-white/15 bg-white/10 p-6 backdrop-blur-xl shadow-xl">
+                        <div className="flex items-start justify-between gap-4">
+                            <div className="space-y-2 text-left">
+                                <p className="text-sm uppercase tracking-[0.28em] text-white/65">
+                                    此刻想记住的一句话
+                                </p>
+                                <p className={`text-base leading-8 transition-opacity ${loading ? 'opacity-45' : 'opacity-100'}`}>
+                                    {quote ? quote.hitokoto : '...'}
+                                </p>
+                                {quote ? (
+                                    <p className="text-xs text-white/60">
+                                        —— {quote.from_who ? `${quote.from_who}《${quote.from}》` : `《${quote.from}》`}
+                                    </p>
+                                ) : null}
+                            </div>
+
+                            <button
+                                onClick={loadQuote}
+                                disabled={loading}
+                                aria-label="换一句"
+                                className="rounded-full border border-white/15 bg-black/15 p-2 text-white/70 transition-colors hover:text-white disabled:cursor-not-allowed"
+                            >
+                                <FaSyncAlt size={14} className={loading ? 'animate-spin' : ''} />
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            {/* Wave Effect at bottom - matching Sakurairo style */}
-            <div className="absolute bottom-0 left-0 w-full overflow-hidden leading-[0]">
-                <svg
-                    className="relative block w-[calc(100%+1.3px)] h-[120px]"
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 1200 120"
-                    preserveAspectRatio="none"
-                >
-                    <path
-                        d="M321.39,56.44c58-10.79,114.16-30.13,172-41.86,82.39-16.72,168.19-17.73,250.45-.39C823.78,31,906.67,72,985.66,92.83c70.05,18.48,146.53,26.09,214.34,3V0H0V27.35A600.21,600.21,0,0,0,321.39,56.44Z"
-                        className="fill-white/40"
-                    />
-                    <path
-                        d="M985.66,92.83C906.67,72,823.78,31,743.84,14.19c-82.26-17.34-168.06-16.33-250.45.39-57.84,11.73-114,31.07-172,41.86A600.21,600.21,0,0,1,0,27.35V120H1200V95.8C1132.19,118.92,1055.71,111.31,985.66,92.83Z"
-                        className="fill-background"
-                    />
-                </svg>
-            </div>
-
-            {/* Scroll Down Indicator */}
-            <button
-                onClick={scrollToContent}
-                className="absolute bottom-16 z-20 animate-bounce cursor-pointer p-2 text-white/80 hover:text-white motion-transition"
-                aria-label="Scroll down"
+            <a
+                href="#featured"
+                className="absolute bottom-12 left-1/2 z-20 -translate-x-1/2 animate-bounce p-2 text-white/80 transition-colors hover:text-white"
+                aria-label="向下滚动"
                 style={{ opacity: contentOpacity }}
             >
-                <FaChevronDown size={32} />
-            </button>
+                <FaChevronDown size={28} />
+            </a>
         </section>
     );
-};
+}

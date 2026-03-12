@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { FaSearch, FaTimes } from 'react-icons/fa';
 import Link from 'next/link';
 import { articleApi, Article } from '@/shared/api/article';
+import { getArticleExcerpt } from '@/shared/utils/getArticleExcerpt';
 
 interface SearchModalProps {
     isOpen: boolean;
@@ -134,7 +135,7 @@ export const SearchModal = ({ isOpen, onClose }: SearchModalProps) => {
                                             {article.title}
                                         </h4>
                                         <p className="text-sm text-text-muted line-clamp-2">
-                                            {article.content.substring(0, 100)}...
+                                            {getArticleExcerpt(article.content, 100)}
                                         </p>
                                     </Link>
                                 </li>

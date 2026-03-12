@@ -1,128 +1,152 @@
-import Link from 'next/link';
 import Image from 'next/image';
-import { FaCalendar, FaFire, FaComment, FaArrowRight } from 'react-icons/fa';
+import Link from 'next/link';
 import dayjs from 'dayjs';
+import { FaArrowRight, FaCalendar, FaClock, FaComment, FaFire } from 'react-icons/fa';
+import {
+    estimateReadingMinutes,
+    getDisplayCategoryName,
+    shouldShowCommentCount,
+} from '@/shared/utils/articleDisplay';
+
+type CardVariant = 'default' | 'featured';
 
 interface ArticleCardProps {
     id: number;
     title: string;
     summary: string;
+    content?: string;
     cover?: string;
     createdAt: string;
     category?: { name: string } | null;
     tags?: { name: string }[];
-    index: number;
+    index?: number;
     viewCount?: number;
     commentCount?: number;
+    readingMinutes?: number;
+    variant?: CardVariant;
+    featured?: boolean;
+    articleType?: string;
+    hideZeroComment?: boolean;
 }
 
 export const ArticleCard = ({
     id,
     title,
     summary,
+    content = '',
     cover,
     createdAt,
     category,
     tags = [],
-    index,
+    index = 0,
     viewCount = 0,
-    commentCount = 0
+    commentCount = 0,
+    readingMinutes,
+    variant = 'default',
+    featured = false,
+    articleType,
+    hideZeroComment = true,
 }: ArticleCardProps) => {
-    const isReversed = index % 2 === 1;
+    const isFeatured = featured || variant === 'featured';
+    const isReversed = !isFeatured && index % 2 === 1;
+    const displayCategoryName = getDisplayCategoryName(category);
+    const visibleReadingMinutes = readingMinutes ?? estimateReadingMinutes(content || summary);
+    const showCommentCount = hideZeroComment ? shouldShowCommentCount(commentCount) : true;
+    const rawCategoryName = category?.name || displayCategoryName;
 
     return (
         <article
-            className={`
-                group relative flex flex-col overflow-hidden
-                bg-card-bg/80 backdrop-blur-sm rounded-2xl shadow-md
-                hover:shadow-2xl transition-all motion-transition-slow
-                hover:-translate-y-2 animate-fade-in-up
-                border border-card-border/50
-                ${isReversed ? 'md:flex-row-reverse' : 'md:flex-row'}
-            `}
-            style={{ animationDelay: `${index * 100}ms` }}
+            className={[
+                'group relative overflow-hidden rounded-3xl border border-card-border/70 bg-card-bg/85 backdrop-blur-sm shadow-md transition-all motion-transition-slow hover:-translate-y-1 hover:shadow-2xl',
+                isFeatured ? 'grid gap-0 lg:grid-cols-[1.15fr_1fr]' : `flex flex-col ${isReversed ? 'md:flex-row-reverse' : 'md:flex-row'}`,
+            ].join(' ')}
+            style={{ animationDelay: `${index * 80}ms` }}
         >
-            {/* Thumbnail with overlay */}
-            <div className="relative w-full md:w-1/2 h-56 md:h-[320px] overflow-hidden">
-                <Link href={`/posts/${id}`} className="block w-full h-full">
+            <div className={isFeatured ? 'relative min-h-[280px] lg:min-h-[360px]' : 'relative h-56 w-full overflow-hidden md:h-[320px] md:w-1/2'}>
+                <Link href={`/posts/${id}`} className="block h-full w-full">
                     <Image
                         src={cover || '/images/background.jpg'}
                         alt={title}
                         fill
-                        className="object-cover transition-transform motion-transition-slow group-hover:scale-110"
+                        className="object-cover transition-transform motion-transition-slow group-hover:scale-105"
                     />
-                    {/* Gradient overlay */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity motion-transition" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-black/10 to-transparent" />
                 </Link>
 
-                {/* Category badge */}
-                {category && (
+                <div className="absolute left-4 top-4 flex flex-wrap gap-2">
                     <Link
-                        href={`/categories/${encodeURIComponent(category.name)}`}
+                        href={`/categories/${encodeURIComponent(rawCategoryName)}`}
                         prefetch={false}
-                        className="absolute top-4 left-4 bg-primary/90 text-white text-xs font-medium px-3 py-1 rounded-full backdrop-blur-sm hover:bg-primary transition-colors motion-transition"
+                        className="rounded-full bg-primary/90 px-3 py-1 text-xs font-medium text-white backdrop-blur-sm transition-colors hover:bg-primary"
                     >
-                        {category.name}
+                        {displayCategoryName}
                     </Link>
-                )}
+                    {articleType ? (
+                        <span className="rounded-full bg-black/45 px-3 py-1 text-xs font-medium text-white backdrop-blur-sm">
+                            {articleType}
+                        </span>
+                    ) : null}
+                    {isFeatured ? (
+                        <span className="rounded-full bg-amber-400/90 px-3 py-1 text-xs font-semibold text-slate-900 shadow-sm">
+                            推荐阅读
+                        </span>
+                    ) : null}
+                </div>
             </div>
 
-            {/* Content */}
-            <div className="flex-1 p-6 md:p-8 flex flex-col justify-center relative">
-                {/* Decorative line */}
-                <div className={`absolute top-0 ${isReversed ? 'right-0' : 'left-0'} w-1 h-full bg-gradient-to-b from-primary via-pink-400 to-purple-500 opacity-0 group-hover:opacity-100 transition-opacity motion-transition`} />
+            <div className="relative flex flex-1 flex-col justify-center p-6 md:p-8">
+                <div className={`absolute top-0 ${isReversed ? 'right-0' : 'left-0'} h-full w-1 bg-gradient-to-b from-primary via-pink-400 to-purple-500 opacity-0 transition-opacity motion-transition group-hover:opacity-100`} />
 
-                {/* Meta info */}
-                <div className="flex flex-wrap items-center gap-4 text-xs text-text-muted mb-4">
-                    <span className="flex items-center gap-1.5">
+                <div className="mb-4 flex flex-wrap items-center gap-4 text-xs text-text-muted">
+                    <span className="inline-flex items-center gap-1.5">
                         <FaCalendar className="text-primary" />
                         {dayjs(createdAt).format('YYYY年M月D日')}
                     </span>
-                    <span className="flex items-center gap-1.5">
+                    <span className="inline-flex items-center gap-1.5">
+                        <FaClock className="text-primary" />
+                        {visibleReadingMinutes} 分钟
+                    </span>
+                    <span className="inline-flex items-center gap-1.5">
                         <FaFire className="text-primary" />
                         {viewCount} 热度
                     </span>
-                    <span className="flex items-center gap-1.5">
-                        <FaComment className="text-text-muted" />
-                        {commentCount} 评论
-                    </span>
+                    {showCommentCount ? (
+                        <span className="inline-flex items-center gap-1.5">
+                            <FaComment className="text-text-muted" />
+                            {commentCount} 评论
+                        </span>
+                    ) : null}
                 </div>
 
-                {/* Title */}
-                <h2 className="text-xl md:text-2xl font-bold mb-4 line-clamp-2 group-hover:text-primary transition-colors motion-transition">
-                    <Link href={`/posts/${id}`}>
-                        {title}
-                    </Link>
+                <h2 className={`mb-4 font-bold transition-colors motion-transition group-hover:text-primary ${isFeatured ? 'text-2xl md:text-3xl' : 'text-xl md:text-2xl'}`}>
+                    <Link href={`/posts/${id}`}>{title}</Link>
                 </h2>
 
-                {/* Summary */}
-                <p className="text-text-muted text-sm leading-relaxed line-clamp-3 mb-6">
+                <p className={`mb-6 text-sm leading-relaxed text-text-muted ${isFeatured ? 'line-clamp-4' : 'line-clamp-3'}`}>
                     {summary}
                 </p>
 
-                {/* Tags */}
-                {tags.length > 0 && (
-                    <div className="flex flex-wrap gap-2 mb-4">
-                        {tags.slice(0, 3).map(tag => (
+                {tags.length > 0 ? (
+                    <div className="mb-5 flex flex-wrap gap-2">
+                        {tags.slice(0, isFeatured ? 4 : 3).map((tag) => (
                             <Link
                                 key={tag.name}
                                 href={`/tags/${encodeURIComponent(tag.name)}`}
                                 prefetch={false}
-                                className="text-xs bg-card-border hover:bg-primary hover:text-white px-3 py-1 rounded-full transition-colors motion-transition"
+                                className="rounded-full bg-card-border px-3 py-1 text-xs text-text-muted transition-colors motion-transition hover:bg-primary hover:text-white"
                             >
                                 #{tag.name}
                             </Link>
                         ))}
                     </div>
-                )}
+                ) : null}
 
-                {/* Read more button */}
                 <Link
                     href={`/posts/${id}`}
-                    className="inline-flex items-center gap-2 text-sm text-primary font-medium group/btn mt-auto"
+                    className="mt-auto inline-flex items-center gap-2 text-sm font-medium text-primary"
                 >
                     <span>阅读全文</span>
-                    <FaArrowRight className="transition-transform motion-transition group-hover/btn:translate-x-1" />
+                    <FaArrowRight className="transition-transform motion-transition group-hover:translate-x-1" />
                 </Link>
             </div>
         </article>

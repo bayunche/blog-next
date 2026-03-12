@@ -1,93 +1,129 @@
 'use client';
 
-import { FaTags, FaFolderOpen, FaFire, FaClock, FaHeart } from 'react-icons/fa';
-import Link from 'next/link';
 import Image from 'next/image';
+import Link from 'next/link';
+import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { FaClock, FaFire, FaFolderOpen, FaGithub, FaHeart, FaTags } from 'react-icons/fa';
 import { articleApi } from '@/shared/api/article';
-import { categoryApi, Category } from '@/shared/api/category';
-import { tagApi, Tag } from '@/shared/api/tag';
+import { Category, categoryApi } from '@/shared/api/category';
+import { Tag, tagApi } from '@/shared/api/tag';
+import { getDisplayCategoryName } from '@/shared/utils/articleDisplay';
+import { siteProfile } from '@/shared/constants/siteProfile';
 
-export const Sidebar = () => {
-    // 获取最新文章
+export function Sidebar() {
     const { data: recentPosts, isLoading: postsLoading } = useQuery({
-        queryKey: ['articles', 'recent'],
-        queryFn: () => articleApi.getList({ page: 1, pageSize: 5 }),
+        queryKey: ['articles', 'recent-sidebar'],
+        queryFn: () => articleApi.getList({ page: 1, pageSize: 5, preview: 1 }),
     });
 
-    // 获取分类
     const { data: categories, isLoading: catsLoading } = useQuery({
-        queryKey: ['categories'],
+        queryKey: ['categories', 'sidebar'],
         queryFn: () => categoryApi.getList(),
     });
 
-    // 获取标签
     const { data: tags, isLoading: tagsLoading } = useQuery({
-        queryKey: ['tags'],
+        queryKey: ['tags', 'sidebar'],
         queryFn: () => tagApi.getList(),
     });
 
-    // 格式化日期 - 使用固定格式避免 hydration 不匹配
+    const visibleCategories = useMemo(() => {
+        const grouped = new Map<string, number>();
+
+        for (const item of categories || []) {
+            const displayName = getDisplayCategoryName(item.name);
+            grouped.set(displayName, (grouped.get(displayName) || 0) + item.count);
+        }
+
+        return [...grouped.entries()]
+            .filter(([name]) => name !== '未分类')
+            .sort((a, b) => b[1] - a[1])
+            .slice(0, 6)
+            .map(([name, count]) => ({ name, count } satisfies Category));
+    }, [categories]);
+
+    const visibleTags = useMemo(
+        () => [...(tags || [])].sort((a, b) => b.count - a.count).slice(0, 12),
+        [tags]
+    );
+
     const formatDate = (dateStr: string) => {
         const date = new Date(dateStr);
-        const month = date.getMonth() + 1;
-        const day = date.getDate();
-        return `${month}月${day}日`;
+        return `${date.getMonth() + 1}月${date.getDate()}日`;
     };
 
     return (
-        <aside className="w-80 space-y-8">
-            {/* Author Card */}
-            <div className="bg-card-bg rounded-xl shadow-sm p-6 text-center animate-fade-in-up transition-colors">
-                <div className="w-24 h-24 mx-auto rounded-full overflow-hidden mb-4 border-2 border-primary/20 relative">
+        <aside className="w-80 space-y-6">
+            <div className="rounded-3xl border border-card-border/80 bg-card-bg/80 p-6 text-center shadow-sm backdrop-blur-sm">
+                <div className="relative mx-auto mb-4 h-24 w-24 overflow-hidden rounded-full border-2 border-primary/20">
                     <Image
-                        src="/images/avatar.jpg"
-                        alt="Author"
+                        src={siteProfile.author.avatar}
+                        alt={siteProfile.author.shortName}
                         fill
-                        className="object-cover transition-transform hover:rotate-[360deg] duration-700"
+                        className="object-cover transition-transform duration-700 hover:scale-105"
                     />
                 </div>
-                <h3 className="text-xl font-bold mb-2">Sakurairo Blog</h3>
-                <p className="text-text-muted text-sm mb-6">在这里记录生活、编程与一切美好。</p>
-                <div className="flex justify-center gap-8 text-sm">
-                    <div className="text-center">
-                        <div className="text-2xl font-bold text-primary">{recentPosts?.count || 0}</div>
-                        <div className="text-text-muted text-xs">文章</div>
-                    </div>
-                    <div className="text-center">
-                        <div className="text-2xl font-bold text-pink-500">{categories?.length || 0}</div>
-                        <div className="text-text-muted text-xs">分类</div>
-                    </div>
-                    <div className="text-center">
-                        <div className="text-2xl font-bold text-green-500">{tags?.length || 0}</div>
-                        <div className="text-text-muted text-xs">标签</div>
-                    </div>
+                <h3 className="text-xl font-bold font-serif">{siteProfile.author.shortName}</h3>
+                <p className="mt-2 text-sm text-text-muted">{siteProfile.author.role}</p>
+                <p className="mt-4 text-sm leading-7 text-text-muted">
+                    这里会写代码，也会写读书时的触动、生活里的小事，以及那些不想让它们就这样过去的普通日常。
+                </p>
+
+                <div className="mt-5 flex flex-wrap justify-center gap-2">
+                    {siteProfile.capabilityTags.slice(0, 4).map((tag) => (
+                        <span
+                            key={tag}
+                            className="rounded-full bg-card-border px-3 py-1 text-xs text-text-muted"
+                        >
+                            {tag}
+                        </span>
+                    ))}
+                </div>
+
+                <div className="mt-6 flex justify-center gap-3">
+                    <Link
+                        href="/about"
+                        className="rounded-full bg-primary px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-primary/90"
+                    >
+                        关于我
+                    </Link>
+                    <a
+                        href={siteProfile.socialLinks[0].href}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-2 rounded-full border border-card-border px-4 py-2 text-sm font-medium text-text-muted transition-colors hover:border-primary/30 hover:text-primary"
+                    >
+                        <FaGithub size={14} />
+                        GitHub
+                    </a>
                 </div>
             </div>
 
-            {/* Recent Posts */}
-            <div className="bg-card-bg rounded-xl shadow-sm p-6 animate-fade-in-up transition-colors" style={{ animationDelay: '0.1s' }}>
-                <h3 className="font-bold mb-4 flex items-center gap-2 border-b border-card-border pb-2">
+            <div className="rounded-3xl border border-card-border/80 bg-card-bg/80 p-6 shadow-sm backdrop-blur-sm">
+                <h3 className="mb-4 flex items-center gap-2 border-b border-card-border pb-3 font-bold">
                     <FaFire className="text-red-500" /> 最新文章
                 </h3>
                 {postsLoading ? (
                     <div className="space-y-4">
-                        {[1, 2, 3].map(i => (
-                            <div key={i} className="animate-pulse">
-                                <div className="h-4 bg-card-border rounded w-3/4 mb-2"></div>
-                                <div className="h-3 bg-card-border rounded w-1/4"></div>
+                        {[1, 2, 3].map((item) => (
+                            <div key={item} className="animate-pulse">
+                                <div className="mb-2 h-4 w-3/4 rounded bg-card-border"></div>
+                                <div className="h-3 w-1/4 rounded bg-card-border"></div>
                             </div>
                         ))}
                     </div>
                 ) : (
                     <ul className="space-y-4">
-                        {(recentPosts?.rows || []).slice(0, 5).map(article => (
+                        {(recentPosts?.rows || []).map((article) => (
                             <li key={article.id} className="group">
-                                <Link href={`/posts/${article.id}`} className="text-sm text-text-muted hover:text-primary transition-colors line-clamp-2">
+                                <Link
+                                    href={`/posts/${article.id}`}
+                                    className="line-clamp-2 text-sm text-text-muted transition-colors hover:text-primary"
+                                >
                                     {article.title}
                                 </Link>
-                                <div className="flex items-center gap-2 text-xs text-text-subtle mt-1">
-                                    <FaClock className="text-xs" />
+                                <div className="mt-1 flex items-center gap-2 text-xs text-text-subtle">
+                                    <FaClock className="text-[10px]" />
                                     <span>{formatDate(article.createdAt)}</span>
                                 </div>
                             </li>
@@ -96,27 +132,31 @@ export const Sidebar = () => {
                 )}
             </div>
 
-            {/* Categories */}
-            <div className="bg-card-bg rounded-xl shadow-sm p-6 animate-fade-in-up transition-colors" style={{ animationDelay: '0.2s' }}>
-                <h3 className="font-bold mb-4 flex items-center gap-2 border-b border-card-border pb-2">
+            <div className="rounded-3xl border border-card-border/80 bg-card-bg/80 p-6 shadow-sm backdrop-blur-sm">
+                <h3 className="mb-4 flex items-center gap-2 border-b border-card-border pb-3 font-bold">
                     <FaFolderOpen className="text-yellow-500" /> 分类
                 </h3>
                 {catsLoading ? (
                     <div className="space-y-2">
-                        {[1, 2, 3].map(i => (
-                            <div key={i} className="animate-pulse flex justify-between">
-                                <div className="h-4 bg-card-border rounded w-20"></div>
-                                <div className="h-4 bg-card-border rounded w-8"></div>
+                        {[1, 2, 3].map((item) => (
+                            <div key={item} className="flex animate-pulse justify-between">
+                                <div className="h-4 w-20 rounded bg-card-border"></div>
+                                <div className="h-4 w-8 rounded bg-card-border"></div>
                             </div>
                         ))}
                     </div>
                 ) : (
                     <ul className="space-y-2">
-                        {(categories || []).slice(0, 6).map((cat: Category) => (
+                        {visibleCategories.map((cat) => (
                             <li key={cat.name}>
-                                <Link href={`/categories/${encodeURIComponent(cat.name)}`} className="flex justify-between items-center text-sm text-text-muted hover:text-primary hover:bg-card-border/50 px-2 py-1 rounded transition-colors">
+                                <Link
+                                    href={`/categories/${encodeURIComponent(cat.name)}`}
+                                    className="flex items-center justify-between rounded-xl px-3 py-2 text-sm text-text-muted transition-colors hover:bg-card-border/50 hover:text-primary"
+                                >
                                     <span>{cat.name}</span>
-                                    <span className="bg-card-border text-text-subtle text-xs px-2 py-0.5 rounded-full">{cat.count}</span>
+                                    <span className="rounded-full bg-card-border px-2 py-0.5 text-xs text-text-subtle">
+                                        {cat.count}
+                                    </span>
                                 </Link>
                             </li>
                         ))}
@@ -124,24 +164,23 @@ export const Sidebar = () => {
                 )}
             </div>
 
-            {/* Tags */}
-            <div className="bg-card-bg rounded-xl shadow-sm p-6 animate-fade-in-up transition-colors" style={{ animationDelay: '0.3s' }}>
-                <h3 className="font-bold mb-4 flex items-center gap-2 border-b border-card-border pb-2">
-                    <FaTags className="text-green-500" /> 标签
+            <div className="rounded-3xl border border-card-border/80 bg-card-bg/80 p-6 shadow-sm backdrop-blur-sm">
+                <h3 className="mb-4 flex items-center gap-2 border-b border-card-border pb-3 font-bold">
+                    <FaTags className="text-green-500" /> 高频标签
                 </h3>
                 {tagsLoading ? (
                     <div className="flex flex-wrap gap-2">
-                        {[1, 2, 3, 4, 5].map(i => (
-                            <div key={i} className="animate-pulse h-6 bg-card-border rounded-full w-16"></div>
+                        {[1, 2, 3, 4, 5].map((item) => (
+                            <div key={item} className="h-6 w-16 animate-pulse rounded-full bg-card-border"></div>
                         ))}
                     </div>
                 ) : (
                     <div className="flex flex-wrap gap-2">
-                        {(tags || []).slice(0, 12).map((tag: Tag) => (
+                        {visibleTags.map((tag: Tag) => (
                             <Link
                                 key={tag.name}
                                 href={`/tags/${encodeURIComponent(tag.name)}`}
-                                className="group text-xs bg-card-border text-text-muted px-3 py-1 rounded-full hover:bg-primary hover:text-white transition-colors"
+                                className="group rounded-full bg-card-border px-3 py-1 text-xs text-text-muted transition-colors hover:bg-primary hover:text-white"
                             >
                                 {tag.name}
                                 <span className="ml-1 opacity-60 group-hover:opacity-100">({tag.count})</span>
@@ -151,30 +190,21 @@ export const Sidebar = () => {
                 )}
             </div>
 
-            {/* Site Stats */}
-            <div className="bg-card-bg rounded-xl shadow-sm p-6 animate-fade-in-up transition-colors" style={{ animationDelay: '0.4s' }}>
-                <h3 className="font-bold mb-4 flex items-center gap-2 border-b border-card-border pb-2">
-                    <FaHeart className="text-pink-500" /> 站点统计
+            <div className="rounded-3xl border border-card-border/80 bg-card-bg/80 p-6 shadow-sm backdrop-blur-sm">
+                <h3 className="mb-4 flex items-center gap-2 border-b border-card-border pb-3 font-bold">
+                    <FaHeart className="text-pink-500" /> 最近想留下的东西
                 </h3>
-                <div className="grid grid-cols-2 gap-4 text-center">
-                    <div className="bg-gradient-to-br from-primary/10 to-primary/5 rounded-lg p-3">
-                        <div className="text-lg font-bold text-primary">{recentPosts?.count || 0}</div>
-                        <div className="text-xs text-text-muted">总文章数</div>
-                    </div>
-                    <div className="bg-gradient-to-br from-pink-500/10 to-pink-500/5 rounded-lg p-3">
-                        <div className="text-lg font-bold text-pink-500">{categories?.length || 0}</div>
-                        <div className="text-xs text-text-muted">分类</div>
-                    </div>
-                    <div className="bg-gradient-to-br from-green-500/10 to-green-500/5 rounded-lg p-3">
-                        <div className="text-lg font-bold text-green-500">{tags?.length || 0}</div>
-                        <div className="text-xs text-text-muted">标签</div>
-                    </div>
-                    <div className="bg-gradient-to-br from-yellow-500/10 to-yellow-500/5 rounded-lg p-3">
-                        <div className="text-lg font-bold text-yellow-500">∞</div>
-                        <div className="text-xs text-text-muted">运行天数</div>
-                    </div>
+                <div className="space-y-4">
+                    {siteProfile.currentMoments.map((item) => (
+                        <div key={item.title} className="rounded-2xl bg-gradient-to-br from-primary/8 to-primary/5 p-4">
+                            <p className="text-sm font-semibold text-foreground">{item.title}</p>
+                            <p className="mt-2 text-xs leading-6 text-text-muted">
+                                {item.description}
+                            </p>
+                        </div>
+                    ))}
                 </div>
             </div>
         </aside>
     );
-};
+}

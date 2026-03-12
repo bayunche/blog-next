@@ -1,28 +1,34 @@
 /**
- * Strip common Markdown syntax from a string, leaving plain text.
+ * Remove common Markdown / Obsidian syntax and keep readable plain text.
  */
 export function stripMarkdown(text: string): string {
-    return text
-        // Remove images: ![alt](url)
+    const source = String(text || '');
+
+    return source
+        .replace(/```[\s\S]*?```/g, ' ')
+        .replace(/~~~[\s\S]*?~~~/g, ' ')
+        .replace(/!\[\[[^\]]+\]\]/g, ' ')
+        .replace(/\[\[([^\]|]+)\|([^\]]+)\]\]/g, '$2')
+        .replace(/\[\[([^\]]+)\]\]/g, '$1')
         .replace(/!\[([^\]]*)\]\([^)]*\)/g, '$1')
-        // Remove links: [text](url)
-        .replace(/\[([^\]]*)\]\([^)]*\)/g, '$1')
-        // Remove headings: # ## ### etc.
+        .replace(/\[([^\]]+)\]\([^)]*\)/g, '$1')
+        .replace(/==([^=]+)==/g, '$1')
+        .replace(/`{1,3}([^`]+)`{1,3}/g, '$1')
         .replace(/^#{1,6}\s+/gm, '')
-        // Remove bold/italic: **text**, *text*, __text__, _text_
-        .replace(/\*{1,2}([^*]+)\*{1,2}/g, '$1')
-        .replace(/_{1,2}([^_]+)_{1,2}/g, '$1')
-        // Remove inline code: `code`
-        .replace(/`([^`]+)`/g, '$1')
-        // Remove blockquotes: > text
-        .replace(/^>\s+/gm, '')
-        // Remove horizontal rules: --- or *** or ___
-        .replace(/^[-*_]{3,}\s*$/gm, '')
-        // Remove list markers: - item, * item, 1. item
-        .replace(/^[\s]*[-*+]\s+/gm, '')
-        .replace(/^[\s]*\d+\.\s+/gm, '')
-        // Collapse multiple blank lines
-        .replace(/\n{2,}/g, ' ')
-        .replace(/\n/g, ' ')
+        .replace(/^>\s?/gm, '')
+        .replace(/^\|?(?:\s*:?-+:?\s*\|)+\s*$/gm, ' ')
+        .replace(/^\s*[-*+]\s+\[[ xX]\]\s+/gm, '')
+        .replace(/^\s*[-*+]\s+/gm, '')
+        .replace(/^\s*\d+\.\s+/gm, '')
+        .replace(/^[-*_]{3,}\s*$/gm, ' ')
+        .replace(/\*\*([^*]+)\*\*/g, '$1')
+        .replace(/__([^_]+)__/g, '$1')
+        .replace(/(?<!\*)\*([^*]+)\*(?!\*)/g, '$1')
+        .replace(/(?<!_)_([^_]+)_(?!_)/g, '$1')
+        .replace(/~~([^~]+)~~/g, '$1')
+        .replace(/<[^>]+>/g, ' ')
+        .replace(/[|]/g, ' ')
+        .replace(/[\r\n]+/g, ' ')
+        .replace(/\s{2,}/g, ' ')
         .trim();
 }

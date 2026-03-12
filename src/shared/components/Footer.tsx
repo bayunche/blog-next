@@ -1,10 +1,65 @@
-export const Footer = () => {
+import Link from 'next/link';
+import { FaGithub } from 'react-icons/fa';
+import { siteLinks, siteProfile } from '@/shared/constants/siteProfile';
+
+export function Footer() {
+    const githubLink = siteProfile.socialLinks[0]?.href;
+
     return (
-        <footer className="w-full py-8 mt-16 text-center text-sm text-text-muted bg-card-bg/80 backdrop-blur-sm transition-colors">
-            <p>© {new Date().getFullYear()} 樱落繁星. All rights reserved.</p>
-            <p className="mt-2">
-                Powered by <a href="https://nextjs.org" className="hover:text-primary transition-colors">Next.js</a> & Bayunche
-            </p>
+        <footer className="mt-20 border-t border-card-border/70 bg-card-bg/75 backdrop-blur-sm transition-colors">
+            <div className="mx-auto flex max-w-7xl flex-col gap-8 px-4 py-10 md:flex-row md:items-start md:justify-between md:px-6 lg:px-8">
+                <div className="max-w-xl space-y-3">
+                    <h3 className="text-2xl font-bold font-serif">{siteProfile.siteName}</h3>
+                    <p className="text-sm leading-7 text-text-muted">
+                        {siteProfile.description}
+                    </p>
+                    <p className="text-xs text-text-subtle">
+                        既写技术，也写阅读、生活和普通日子里那些值得被留下来的小事。
+                    </p>
+                </div>
+
+                <div className="flex flex-wrap gap-8 text-sm">
+                    <div className="space-y-3">
+                        <p className="font-semibold text-foreground">导航</p>
+                        <div className="flex flex-col gap-2 text-text-muted">
+                            <Link href={siteLinks.posts} className="hover:text-primary">文章</Link>
+                            <Link href={siteLinks.archives} className="hover:text-primary">归档</Link>
+                            <Link href={siteLinks.about} className="hover:text-primary">关于</Link>
+                            <Link href={siteLinks.friends} className="hover:text-primary">友链</Link>
+                        </div>
+                    </div>
+
+                    <div className="space-y-3">
+                        <p className="font-semibold text-foreground">专题</p>
+                        <div className="flex flex-col gap-2 text-text-muted">
+                            {siteProfile.topics.slice(0, 6).map((topic) => (
+                                <Link key={topic.name} href={topic.href} className="hover:text-primary">
+                                    {topic.name}
+                                </Link>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div className="border-t border-card-border/70 px-4 py-4 text-sm text-text-muted md:px-6 lg:px-8">
+                <div className="mx-auto flex max-w-7xl flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                    <p>© {new Date().getFullYear()} {siteProfile.siteName}. Built with Next.js.</p>
+                    <div className="flex items-center gap-4">
+                        {githubLink ? (
+                            <a
+                                href={githubLink}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-2 hover:text-primary"
+                            >
+                                <FaGithub size={14} />
+                                GitHub
+                            </a>
+                        ) : null}
+                    </div>
+                </div>
+            </div>
         </footer>
     );
-};
+}

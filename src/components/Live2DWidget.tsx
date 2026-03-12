@@ -111,7 +111,7 @@ export const Live2DWidget = () => {
                     clearTimeout(frameReadyTimeoutRef.current);
                     frameReadyTimeoutRef.current = null;
                 }
-                setTransientMessage(data.payload?.error || '看板娘加载失败');
+                showFallbackMessage();
             }
         };
 
@@ -119,7 +119,7 @@ export const Live2DWidget = () => {
         return () => {
             window.removeEventListener('message', handleFrameMessage as EventListener);
         };
-    }, [enabled, setTransientMessage]);
+    }, [enabled, setTransientMessage, showFallbackMessage]);
 
     useEffect(() => {
         if (!enabled || hidden) return;
@@ -240,7 +240,7 @@ export const Live2DWidget = () => {
                             clearTimeout(frameReadyTimeoutRef.current);
                         }
                         frameReadyTimeoutRef.current = setTimeout(() => {
-                            setTransientMessage('看板娘资源未就绪，正在重试或等待网络...');
+                            setShowMessage(false);
                         }, 6000);
                     }}
                 />
