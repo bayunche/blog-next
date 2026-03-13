@@ -2,10 +2,11 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { message, Tag } from 'antd';
+import { message } from 'antd';
+import dayjs from 'dayjs';
 import AdminTable from '../components/AdminTable';
 import { articleApi, Article } from '@/shared/api/article';
-import dayjs from 'dayjs';
+import { getPrimaryCategory } from '@/shared/utils/articleDisplay';
 
 export default function ArticleListPage() {
     const [articles, setArticles] = useState<Article[]>([]);
@@ -15,9 +16,9 @@ export default function ArticleListPage() {
     const fetchArticles = async () => {
         setLoading(true);
         try {
-            const res = await articleApi.getList({ page: 1, pageSize: 100 }); // Simple pagination for now
-            setArticles(res.rows);
-        } catch (error) {
+            const res = await articleApi.getList({ page: 1, pageSize: 100 });
+            setArticles(res.rows || []);
+        } catch {
             message.error('获取文章列表失败');
         } finally {
             setLoading(false);
@@ -32,8 +33,8 @@ export default function ArticleListPage() {
         try {
             await articleApi.delete(record.id);
             message.success('文章删除成功');
-            fetchArticles(); // Refresh list
-        } catch (error) {
+            fetchArticles();
+        } catch {
             message.error('文章删除失败');
         }
     };
@@ -55,7 +56,7 @@ export default function ArticleListPage() {
             title: '分类',
             dataIndex: 'category',
             key: 'category',
-            render: (cat: any) => cat?.name || '未分类',
+            render: (_: unknown, record: Article) => getPrimaryCategory(record)?.name || '未分类',
         },
         {
             title: '查看次数',

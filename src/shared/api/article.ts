@@ -8,7 +8,10 @@ export interface Article {
     updatedAt: string
     viewCount: number
     cover?: string
+    description?: string
     music?: unknown
+    musicId?: string | null
+    musicName?: string | null
     category?: { id: number; name: string }
     categories?: { id: number; name: string }[]
     tags?: { id: number; name: string }[]

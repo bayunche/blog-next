@@ -1,4 +1,4 @@
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+﻿# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
 # dependencies
 /node_modules
@@ -45,3 +45,13 @@ next-env.d.ts
 /server/data/music-config.json
 /docker/remark42/
 /.secret-backup/
+# offline packaging artifacts
+/dist/
+
+# local temp artifacts
+/.pwtmp/
+/test-results/
+
+# local database backup artifacts
+/docker/mysql/backup/*
+!/docker/mysql/backup/.gitkeep

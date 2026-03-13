@@ -18,6 +18,70 @@ const archiver = require('archiver') // 打包 zip
 const send = require('koa-send') // 文件下载
 const { v4: uuidv4, stringify } = require('uuid')
 
+const normalizeName = value => String(value || '').trim().replace(/\s+/g, ' ')
+
+const normalizeNameList = list => {
+  const source = Array.isArray(list) ? list : []
+  const seen = new Set()
+
+  return source
+    .map(normalizeName)
+    .filter(Boolean)
+    .filter(name => {
+      const key = name.toLowerCase()
+      if (seen.has(key)) return false
+      seen.add(key)
+      return true
+    })
+}
+
+const normalizeRelationItems = items => {
+  const source = Array.isArray(items) ? items : []
+  const seen = new Set()
+
+  return source
+    .map(item => {
+      if (!item) return null
+      const raw = typeof item.toJSON === 'function' ? item.toJSON() : { ...item }
+      const name = normalizeName(raw.name)
+      if (!name) return null
+      const key = name.toLowerCase()
+      if (seen.has(key)) return null
+      seen.add(key)
+      return { ...raw, name }
+    })
+    .filter(Boolean)
+}
+
+const normalizeArticlePayload = article => {
+  if (!article) return article
+
+  const raw = typeof article.toJSON === 'function' ? article.toJSON() : { ...article }
+  const categories = normalizeRelationItems(raw.categories)
+  const tags = normalizeRelationItems(raw.tags)
+  const directCategoryName = normalizeName(raw.category && raw.category.name)
+  const category = directCategoryName
+    ? { ...(typeof raw.category?.toJSON === 'function' ? raw.category.toJSON() : raw.category), name: directCategoryName }
+    : categories[0] || null
+
+  return {
+    ...raw,
+    categories,
+    category,
+    tags,
+  }
+}
+
+const buildNormalizedIncludeWhere = value => {
+  const normalized = normalizeName(value).toLowerCase()
+  if (!normalized) return undefined
+
+  return sequelize.where(
+    sequelize.fn('LOWER', sequelize.fn('TRIM', sequelize.col('name'))),
+    normalized
+  )
+}
+
 class ArticleController {
   // 初始化数据 关于页面（用于评论关联）
   static async initAboutPage() {
@@ -53,14 +117,14 @@ class ArticleController {
       if (result) {
         ctx.throw(403, '创建失败，该文章已存在！')
       } else {
-        const tags = tagList.map(t => ({ name: t }))
-        const categories = categoryList.map(c => ({ name: c }))
+        const tags = normalizeNameList(tagList).map(t => ({ name: t }))
+        const categories = normalizeNameList(categoryList).map(c => ({ name: c }))
         const uuid = uuidv4().toString().replace(/-/g, '')
         const data = await ArticleModel.create(
           { title, content, cover, description, authorId, tags, categories, type, top, uuid, musicId, musicName },
           { include: [TagModel, CategoryModel] }
         )
-        ctx.body = data
+        ctx.body = normalizeArticlePayload(data)
       }
     }
   }
@@ -113,7 +177,7 @@ class ArticleController {
       })
       console.log(data.uuid)
       if (data.type) {
-        ctx.body = data
+        ctx.body = normalizeArticlePayload(data)
       } else {
         ctx.body = null
       }
@@ -163,7 +227,7 @@ class ArticleController {
           reply.user.github = JSON.parse(reply.user.github)
         })
       })
-      ctx.body = data
+      ctx.body = normalizeArticlePayload(data)
     }
   }
   // 获取文章列表
@@ -181,8 +245,8 @@ class ArticleController {
 
     if (validator) {
       const { page = 1, pageSize = 10, preview = 1, keyword = '', tag, category, order, type = null } = ctx.query
-      const tagFilter = tag ? { name: tag } : null
-      const categoryFilter = category ? { name: category } : null
+      const tagFilter = buildNormalizedIncludeWhere(tag)
+      const categoryFilter = buildNormalizedIncludeWhere(category)
 
       let articleOrder = [['createdAt', 'DESC']]
       if (order) {
@@ -213,13 +277,13 @@ class ArticleController {
               model: TagModel,
               attributes: ['id', 'name'],
               ...(tagFilter ? { where: tagFilter } : {}),
-              required: false
+              required: !!tagFilter
             },
             {
               model: CategoryModel,
               attributes: ['id', 'name'],
               ...(categoryFilter ? { where: categoryFilter } : {}),
-              required: false
+              required: !!categoryFilter
             },
             {
               model: CommentModel,
@@ -239,7 +303,7 @@ class ArticleController {
             d.content = d.content.slice(0, 1000) // 只是获取预览，减少打了的数据传输。。。
           })
         }
-        data.rows = data.rows.sort((a, b) => b.top - a.top)
+        data.rows = data.rows.map(normalizeArticlePayload).sort((a, b) => b.top - a.top)
         ctx.body = data
       } else {
         const data = await ArticleModel.findAndCountAll({
@@ -261,13 +325,13 @@ class ArticleController {
               model: TagModel,
               attributes: ['id', 'name'],
               ...(tagFilter ? { where: tagFilter } : {}),
-              required: false
+              required: !!tagFilter
             },
             {
               model: CategoryModel,
               attributes: ['id', 'name'],
               ...(categoryFilter ? { where: categoryFilter } : {}),
-              required: false
+              required: !!categoryFilter
             },
             {
               model: CommentModel,
@@ -287,7 +351,7 @@ class ArticleController {
             d.content = d.content.slice(0, 1000) // 只是获取预览，减少打了的数据传输。。。
           })
         }
-        data.rows = data.rows.sort((a, b) => b.top - a.top)
+        data.rows = data.rows.map(normalizeArticlePayload).sort((a, b) => b.top - a.top)
         ctx.body = data
       }
     }
@@ -317,8 +381,8 @@ class ArticleController {
     if (validator) {
       const { title, content, cover, description, categories = [], tags = [], type, top, musicId, musicName } = ctx.request.body
       const articleId = parseInt(ctx.params.id)
-      const tagList = tags.map(tag => ({ name: tag, articleId }))
-      const categoryList = categories.map(cate => ({ name: cate, articleId }))
+      const tagList = normalizeNameList(tags).map(tag => ({ name: tag, articleId }))
+      const categoryList = normalizeNameList(categories).map(cate => ({ name: cate, articleId }))
       await ArticleModel.update({ title, content, cover, description, type, top, musicId, musicName }, { where: { id: articleId } })
       await TagModel.destroy({ where: { articleId } })
       await TagModel.bulkCreate(tagList)

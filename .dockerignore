@@ -5,7 +5,7 @@ node_modules
 **/node_modules
 
 # 构建产物
-# .next
+.next
 dist
 build
 out
@@ -55,3 +55,7 @@ docs
 .dockerignore
 Dockerfile*
 docker-compose*.yml
+docker
+.pwtmp
+.secret-backup
+test-results

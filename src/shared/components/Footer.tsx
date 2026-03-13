@@ -1,9 +1,35 @@
+'use client';
+
 import Link from 'next/link';
+import { useEffect, useMemo, useState } from 'react';
 import { FaGithub } from 'react-icons/fa';
+import { categoryApi, Category } from '@/shared/api/category';
 import { siteLinks, siteProfile } from '@/shared/constants/siteProfile';
+import { buildTopicCards } from '@/shared/utils/topicCards';
 
 export function Footer() {
     const githubLink = siteProfile.socialLinks[0]?.href;
+    const [categories, setCategories] = useState<Category[]>([]);
+
+    useEffect(() => {
+        let cancelled = false;
+
+        categoryApi.getList()
+            .then((result) => {
+                if (cancelled) return;
+                setCategories(result || []);
+            })
+            .catch(() => {
+                if (cancelled) return;
+                setCategories([]);
+            });
+
+        return () => {
+            cancelled = true;
+        };
+    }, []);
+
+    const topicCards = useMemo(() => buildTopicCards(categories, 6), [categories]);
 
     return (
         <footer className="mt-20 border-t border-card-border/70 bg-card-bg/75 backdrop-blur-sm transition-colors">
@@ -32,7 +58,11 @@ export function Footer() {
                     <div className="space-y-3">
                         <p className="font-semibold text-foreground">专题</p>
                         <div className="flex flex-col gap-2 text-text-muted">
-                            {siteProfile.topics.slice(0, 6).map((topic) => (
+                            {topicCards.length > 0 ? topicCards.map((topic) => (
+                                <Link key={topic.rawName} href={topic.href} className="hover:text-primary">
+                                    {topic.displayName}
+                                </Link>
+                            )) : siteProfile.topics.slice(0, 6).map((topic) => (
                                 <Link key={topic.name} href={topic.href} className="hover:text-primary">
                                     {topic.name}
                                 </Link>

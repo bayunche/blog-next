@@ -10,6 +10,7 @@ import request from '@/shared/api/request';
 import { useAuthStore } from '@/shared/store/authStore';
 import { categoryApi } from '@/shared/api/category';
 import { tagApi } from '@/shared/api/tag';
+import { getPrimaryCategory } from '@/shared/utils/articleDisplay';
 import '@uiw/react-md-editor/markdown-editor.css';
 import '@uiw/react-markdown-preview/markdown.css';
 import type { UploadProps } from 'antd';
@@ -287,7 +288,7 @@ export default function ArticleEditor({ articleId }: ArticleEditorProps) {
                 form.setFieldsValue({
                     title: res.title,
                     cover: res.cover,
-                    categories: res.category ? [res.category.name] : [],
+                    categories: getPrimaryCategory(res) ? [getPrimaryCategory(res)!.name] : [],
                     tags: (res.tags || []).map(t => t.name),
                     description: res.content.substring(0, 100)
                 });

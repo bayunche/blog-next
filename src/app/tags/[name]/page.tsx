@@ -4,7 +4,7 @@ import { ArticleCard } from '@/features/article/components/ArticleCard';
 import { articleApi, Article } from '@/shared/api/article';
 import { getTagMeta } from '@/shared/constants/tagMeta';
 import { getArticleExcerpt } from '@/shared/utils/getArticleExcerpt';
-import { estimateReadingMinutes } from '@/shared/utils/articleDisplay';
+import { estimateReadingMinutes, getPrimaryCategory } from '@/shared/utils/articleDisplay';
 
 export const dynamic = 'force-dynamic';
 
@@ -30,12 +30,40 @@ async function getArticlesByTag(tagName: string) {
     }
 }
 
+function buildRelatedTags(tagName: string, articles: Article[]): string[] {
+    const current = tagName.trim().toLowerCase();
+    const counter = new Map<string, { name: string; count: number }>();
+
+    for (const article of articles) {
+        for (const tag of article.tags || []) {
+            const normalizedName = String(tag?.name || '').trim();
+            if (!normalizedName || normalizedName.toLowerCase() === current) continue;
+
+            const key = normalizedName.toLowerCase();
+            const existing = counter.get(key);
+
+            if (existing) {
+                existing.count += 1;
+            } else {
+                counter.set(key, { name: normalizedName, count: 1 });
+            }
+        }
+    }
+
+    return Array.from(counter.values())
+        .sort((left, right) => right.count - left.count || left.name.localeCompare(right.name, 'zh-Hans-CN'))
+        .slice(0, 6)
+        .map((item) => item.name);
+}
+
 export default async function TagPage({ params }: { params: Promise<{ name: string }> }) {
     const { name } = await params;
     const tagName = decodeTagName(name);
     const result = await getArticlesByTag(tagName);
     const articles = result.rows || [];
     const tagMeta = getTagMeta(tagName);
+    const relatedTags = buildRelatedTags(tagName, articles);
+    const displayRelatedTags = relatedTags.length > 0 ? relatedTags : tagMeta.relatedTags;
 
     return (
         <div className="min-h-screen pb-16 pt-20">
@@ -65,10 +93,10 @@ export default async function TagPage({ params }: { params: Promise<{ name: stri
                         </p>
                     </div>
 
-                    {tagMeta.relatedTags.length > 0 ? (
+                    {displayRelatedTags.length > 0 ? (
                         <div className="flex flex-wrap gap-3">
                             <span className="text-sm text-text-muted">相关标签：</span>
-                            {tagMeta.relatedTags.map((relatedTag) => (
+                            {displayRelatedTags.map((relatedTag) => (
                                 <Link
                                     key={relatedTag}
                                     href={`/tags/${encodeURIComponent(relatedTag)}`}
@@ -94,7 +122,7 @@ export default async function TagPage({ params }: { params: Promise<{ name: stri
                                 content={article.content}
                                 cover={article.cover}
                                 createdAt={article.createdAt}
-                                category={article.category || article.categories?.[0]}
+                                category={getPrimaryCategory(article)}
                                 tags={article.tags}
                                 index={index}
                                 viewCount={article.viewCount}
@@ -106,7 +134,7 @@ export default async function TagPage({ params }: { params: Promise<{ name: stri
                 ) : (
                     <div className="rounded-3xl border border-dashed border-card-border bg-card-bg/70 px-6 py-16 text-center">
                         <div className="mb-4 text-6xl">🏷️</div>
-                        <h3 className="text-xl font-bold mb-2">这个标签下还没有文章</h3>
+                        <h3 className="mb-2 text-xl font-bold">这个标签下还没有文章</h3>
                         <p className="text-text-muted">试试相关标签，或者先去首页看看推荐阅读。</p>
                     </div>
                 )}

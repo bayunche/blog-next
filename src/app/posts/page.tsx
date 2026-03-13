@@ -8,9 +8,9 @@ import { ArticleCard } from '@/features/article/components/ArticleCard';
 import { ArticleListSkeleton } from '@/components/Skeleton';
 import { articleApi, Article } from '@/shared/api/article';
 import { categoryApi, Category } from '@/shared/api/category';
-import { siteProfile } from '@/shared/constants/siteProfile';
 import { getArticleExcerpt } from '@/shared/utils/getArticleExcerpt';
-import { estimateReadingMinutes, getDisplayCategoryName } from '@/shared/utils/articleDisplay';
+import { estimateReadingMinutes, getDisplayCategoryName, getPrimaryCategory } from '@/shared/utils/articleDisplay';
+import { buildTopicCards } from '@/shared/utils/topicCards';
 
 const PAGE_SIZE = 10;
 
@@ -74,6 +74,8 @@ export default function PostsPage() {
             .map(([displayName, data]) => ({ displayName, ...data }));
     }, [categories]);
 
+    const topicCards = useMemo(() => buildTopicCards(categories, 8), [categories]);
+
     const sortedArticles = useMemo(() => {
         const items = [...articles];
 
@@ -84,8 +86,8 @@ export default function PostsPage() {
 
         if (sortMode === 'featured') {
             items.sort((left, right) => {
-                const leftScore = (left.viewCount || 0) + (left.tags?.length || 0) * 12 + (left.category ? 8 : 0);
-                const rightScore = (right.viewCount || 0) + (right.tags?.length || 0) * 12 + (right.category ? 8 : 0);
+                const leftScore = (left.viewCount || 0) + (left.tags?.length || 0) * 12 + (getPrimaryCategory(left) ? 8 : 0);
+                const rightScore = (right.viewCount || 0) + (right.tags?.length || 0) * 12 + (getPrimaryCategory(right) ? 8 : 0);
                 return rightScore - leftScore;
             });
             return items;
@@ -176,13 +178,13 @@ export default function PostsPage() {
 
                     <div className="flex flex-wrap items-center justify-center gap-3 text-sm text-text-muted">
                         <span>专题入口：</span>
-                        {siteProfile.topics.map((topic) => (
+                        {topicCards.map((topic) => (
                             <Link
-                                key={topic.name}
+                                key={topic.rawName}
                                 href={topic.href}
                                 className="rounded-full border border-card-border px-3 py-1.5 transition-colors hover:border-primary/30 hover:text-primary"
                             >
-                                {topic.name}
+                                {topic.displayName}
                             </Link>
                             ))}
                     </div>

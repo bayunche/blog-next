@@ -1,13 +1,17 @@
 import Link from 'next/link';
 import type { Category } from '@/shared/api/category';
-import { siteProfile } from '@/shared/constants/siteProfile';
+import { buildTopicCards } from '@/shared/utils/topicCards';
 
 interface TopicGridProps {
     categories: Category[];
 }
 
 export function TopicGrid({ categories }: TopicGridProps) {
-    const countMap = new Map(categories.map((item) => [item.name.toLowerCase(), item.count]));
+    const topicCards = buildTopicCards(categories, 6);
+
+    if (topicCards.length === 0) {
+        return null;
+    }
 
     return (
         <section id="topics" className="space-y-6">
@@ -22,28 +26,30 @@ export function TopicGrid({ categories }: TopicGridProps) {
             </div>
 
             <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-                {siteProfile.topics.map((topic) => {
-                    const count = topic.matchNames.reduce((total, key) => total + (countMap.get(key.toLowerCase()) || 0), 0);
-
+                {topicCards.map((topic) => {
                     return (
                         <Link
-                            key={topic.name}
+                            key={topic.rawName}
                             href={topic.href}
                             className="group rounded-3xl border border-card-border/80 bg-card-bg/70 p-6 shadow-sm transition-all motion-transition hover:-translate-y-1 hover:border-primary/30 hover:shadow-xl"
                         >
                             <div className="mb-4 flex items-start justify-between gap-4">
                                 <div>
                                     <h3 className="text-xl font-semibold transition-colors group-hover:text-primary">
-                                        {topic.name}
+                                        {topic.displayName}
                                     </h3>
                                     <p className="mt-2 text-sm leading-7 text-text-muted">
                                         {topic.description}
                                     </p>
                                 </div>
                                 <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
-                                    {count} 篇
+                                    {topic.count} 篇
                                 </span>
                             </div>
+
+                            <p className="mb-3 text-xs leading-6 text-text-subtle">
+                                {topic.note}
+                            </p>
 
                             <div className="text-sm font-medium text-primary/80 transition-colors group-hover:text-primary">
                                 进入专题 →

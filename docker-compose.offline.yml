@@ -1,0 +1,146 @@
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: sakurairo-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root123456}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-sakurairo_blog}
+      MYSQL_USER: ${MYSQL_USER:-sakurairo}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-sakurairo123}
+      TZ: Asia/Shanghai
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./docker/mysql/init:/docker-entrypoint-initdb.d
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - sakurairo-network
+
+  server:
+    image: blog-sakurairo-server
+    container_name: sakurairo-server
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      SERVER_PORT: 6060
+      MUSIC_API_URL: http://music-api:3000
+      MYSQL_HOST: mysql
+      MYSQL_PORT: 3306
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-sakurairo_blog}
+      MYSQL_USER: ${MYSQL_USER:-sakurairo}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-sakurairo123}
+      TOKEN_SECRET: ${TOKEN_SECRET:-your_jwt_secret_key_change_this}
+      TOKEN_EXPIRES_IN: 720h
+      GITHUB_CLIENT_ID: ${GITHUB_CLIENT_ID:-}
+      GITHUB_CLIENT_SECRET: ${GITHUB_CLIENT_SECRET:-}
+      ADMIN_GITHUB_LOGIN_NAME: ${ADMIN_GITHUB_LOGIN_NAME:-}
+      GITHUB_REDIRECT_URI: ${NEXT_PUBLIC_GITHUB_REDIRECT_URI:-http://localhost/api/conn/github/callback}
+      IMAGE_BED_TYPE: ${IMAGE_BED_TYPE:-chevereto}
+      CHEVERETO_URL: ${CHEVERETO_URL:-}
+      CHEVERETO_API_KEY: ${CHEVERETO_API_KEY:-}
+    volumes:
+      - ./server/data:/app/data
+    depends_on:
+      mysql:
+        condition: service_healthy
+      music-api:
+        condition: service_started
+    networks:
+      - sakurairo-network
+
+  web:
+    image: blog-sakurairo-web
+    container_name: sakurairo-web
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      API_URL: http://server:6060
+      INTERNAL_API_URL: http://server:6060
+      INTERNAL_REMARK42_URL: http://remark42:8080
+      NEXT_PUBLIC_REMARK42_URL: ${NEXT_PUBLIC_REMARK42_URL:-http://localhost/comments}
+      NEXT_PUBLIC_REMARK42_USE_PROXY: ${NEXT_PUBLIC_REMARK42_USE_PROXY:-true}
+      NEXT_PUBLIC_REMARK42_SITE_ID: ${NEXT_PUBLIC_REMARK42_SITE_ID:-sakurairo}
+      NEXT_PUBLIC_GITHUB_CLIENT_ID: ${NEXT_PUBLIC_GITHUB_CLIENT_ID:-}
+      NEXT_PUBLIC_GITHUB_REDIRECT_URI: ${NEXT_PUBLIC_GITHUB_REDIRECT_URI:-http://localhost/api/conn/github/callback}
+      CHEVERETO_URL: ${CHEVERETO_URL:-}
+    depends_on:
+      - server
+    networks:
+      - sakurairo-network
+
+  music-api:
+    image: blog-sakurairo-music-api
+    container_name: sakurairo-music-api
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+    networks:
+      - sakurairo-network
+
+  nginx:
+    image: nginx:alpine
+    container_name: sakurairo-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./docker/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./docker/nginx/ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - web
+      - server
+      - remark42
+    networks:
+      - sakurairo-network
+
+  remark42:
+    image: umputun/remark42:latest
+    container_name: sakurairo-remark42
+    restart: unless-stopped
+    environment:
+      REMARK_URL: ${REMARK42_URL:-http://localhost/comments}
+      SECRET: ${REMARK42_SECRET:-secret}
+      SITE: ${REMARK42_SITE_ID:-sakurairo}
+      AUTH_GITHUB_CID: ${REMARK42_GITHUB_CLIENT_ID:-}
+      AUTH_GITHUB_CSEC: ${REMARK42_GITHUB_CLIENT_SECRET:-}
+      ORIGIN: ${REMARK42_ORIGIN_PROD:-http://localhost}
+    volumes:
+      - ./docker/remark42:/srv/var
+    networks:
+      - sakurairo-network
+
+  db-backup:
+    image: blog-sakurairo-db-backup
+    container_name: sakurairo-db-backup
+    restart: unless-stopped
+    environment:
+      MYSQL_HOST: mysql
+      MYSQL_PORT: 3306
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-sakurairo_blog}
+      MYSQL_USER: root
+      MYSQL_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root123456}
+    volumes:
+      - ./docker/mysql/backup:/backup
+      - ./docker/mysql/init:/docker-entrypoint-initdb.d
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - sakurairo-network
+
+volumes:
+  mysql_data:
+
+networks:
+  sakurairo-network:
+    driver: bridge
