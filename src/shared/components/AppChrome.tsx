@@ -34,7 +34,7 @@ export function AppChrome({ children }: AppChromeProps) {
                     <SakuraParticles count={25} />
 
                     <Navbar />
-                    <main className="min-h-screen">
+                    <main className="min-h-screen pb-[calc(env(safe-area-inset-bottom)+5.5rem)] md:pb-0">
                         {children}
                     </main>
                     <Footer />

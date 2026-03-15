@@ -2,14 +2,12 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { usePathname } from 'next/navigation';
-import { useTheme } from '@/shared/providers/ThemeProvider';
 
 declare global {
     interface Window {
         remark_config?: Record<string, unknown>;
         REMARK42?: {
             createInstance?: (config: Record<string, unknown>) => void;
-            changeTheme?: (theme: string) => void;
             destroy?: () => void;
         };
     }
@@ -52,7 +50,6 @@ function ensureRemarkScript(
 
 export default function Comments() {
     const [loadError, setLoadError] = useState(false);
-    const { theme } = useTheme();
     const pathname = usePathname();
     const containerRef = useRef<HTMLDivElement | null>(null);
 
@@ -72,7 +69,7 @@ export default function Comments() {
             host,
             site_id: siteId,
             components: ['embed'],
-            theme: theme === 'dark' ? 'dark' : 'light',
+            theme: 'dark',
             locale: 'zh',
             show_email_subscription: false,
         };
@@ -110,7 +107,7 @@ export default function Comments() {
             }
             container.innerHTML = '';
         };
-    }, [pathname, theme]);
+    }, [pathname]);
 
     return (
         <div className="w-full mt-10 animate-fade-in-up">

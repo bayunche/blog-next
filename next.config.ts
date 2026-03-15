@@ -10,8 +10,24 @@ const resolveHostname = (rawUrl?: string): string | null => {
   }
 };
 
-const imageBedHostname = resolveHostname(
-  process.env.CHEVERETO_URL || process.env.NEXT_PUBLIC_IMAGE_BED_URL
+const collectConfiguredUrls = (...rawValues: Array<string | undefined>): string[] =>
+  rawValues
+    .flatMap((value) => String(value || "").split(/[,\s]+/))
+    .map((value) => value.trim())
+    .filter(Boolean);
+
+const imageBedHostnames = Array.from(
+  new Set(
+    collectConfiguredUrls(
+      process.env.IMAGE_BED_PUBLIC_URL,
+      process.env.NEXT_PUBLIC_IMAGE_BED_URL,
+      process.env.PICUI_PUBLIC_URL,
+      process.env.CHEVERETO_URL,
+      process.env.IMAGE_BED_TYPE === "picui" ? "https://free.picui.cn" : undefined,
+    )
+      .map((value) => resolveHostname(value))
+      .filter((value): value is string => Boolean(value))
+  )
 );
 
 const defaultRemotePatterns: NonNullable<NextConfig["images"]>["remotePatterns"] = [
@@ -23,12 +39,10 @@ const defaultRemotePatterns: NonNullable<NextConfig["images"]>["remotePatterns"]
   { protocol: 'https', hostname: '2heng.xin' },
 ];
 
-const imageBedPatterns = imageBedHostname
-  ? [
-      { protocol: 'https' as const, hostname: imageBedHostname },
-      { protocol: 'http' as const, hostname: imageBedHostname },
-    ]
-  : [];
+const imageBedPatterns = imageBedHostnames.flatMap((hostname) => [
+  { protocol: 'https' as const, hostname },
+  { protocol: 'http' as const, hostname },
+]);
 
 const remotePatterns = [...defaultRemotePatterns, ...imageBedPatterns].filter(
   (item, index, arr) =>

@@ -14,8 +14,8 @@ const {
 
 const fs = require('fs')
 const { uploadPath, outputPath, findOrCreateFilePath, decodeFile, generateFile } = require('../utils/file')
-const archiver = require('archiver') // 打包 zip
-const send = require('koa-send') // 文件下载
+const archiver = require('archiver') // 閹垫挸瀵?zip
+const send = require('koa-send') // 閺傚洣娆㈡稉瀣祰
 const { v4: uuidv4, stringify } = require('uuid')
 
 const normalizeName = value => String(value || '').trim().replace(/\s+/g, ' ')
@@ -83,25 +83,26 @@ const buildNormalizedIncludeWhere = value => {
 }
 
 class ArticleController {
-  // 初始化数据 关于页面（用于评论关联）
+  // 閸掓繂顫愰崠鏍ㄦ殶閹?閸忓厖绨い鐢告桨閿涘牏鏁ゆ禍搴ょ槑鐠佸搫鍙ч懕鏃撶礆
   static async initAboutPage() {
     const result = await ArticleModel.findOne({ where: { id: -1 } })
     if (!result) {
       ArticleModel.create({
         id: -1,
-        title: '关于页面',
-        content: '关于页面存档，勿删',
+        title: '閸忓厖绨い鐢告桨',
+        content: '閸忓厖绨い鐢告桨鐎涙ɑ銆傞敍灞藉瑏閸?,
       })
     }
   }
 
-  // 创建文章
+  // 閸掓稑缂撻弬鍥╃彿
   static async create(ctx) {
     const validator = ctx.validate(ctx.request.body, {
       authorId: Joi.number().required(),
       title: Joi.string().required(),
       content: Joi.string(),
       cover: Joi.string().allow('', null),
+      cardCover: Joi.string().allow('', null),
       description: Joi.string().allow('', null),
       categoryList: Joi.array(),
       tagList: Joi.array(),
@@ -112,16 +113,16 @@ class ArticleController {
     })
 
     if (validator) {
-      const { title, content, cover, description, categoryList = [], tagList = [], authorId, type, top, musicId, musicName } = ctx.request.body
+      const { title, content, cover, cardCover, description, categoryList = [], tagList = [], authorId, type, top, musicId, musicName } = ctx.request.body
       const result = await ArticleModel.findOne({ where: { title } })
       if (result) {
-        ctx.throw(403, '创建失败，该文章已存在！')
+        ctx.throw(403, '閸掓稑缂撴径杈Е閿涘矁顕氶弬鍥╃彿瀹告彃鐡ㄩ崷顭掔磼')
       } else {
         const tags = normalizeNameList(tagList).map(t => ({ name: t }))
         const categories = normalizeNameList(categoryList).map(c => ({ name: c }))
         const uuid = uuidv4().toString().replace(/-/g, '')
         const data = await ArticleModel.create(
-          { title, content, cover, description, authorId, tags, categories, type, top, uuid, musicId, musicName },
+          { title, content, cover, cardCover, description, authorId, tags, categories, type, top, uuid, musicId, musicName },
           { include: [TagModel, CategoryModel] }
         )
         ctx.body = normalizeArticlePayload(data)
@@ -129,20 +130,18 @@ class ArticleController {
     }
   }
 
-  // 获取文章详情
-  static async findById(ctx) {
+  // 閼惧嘲褰囬弬鍥╃彿鐠囷附鍎?  static async findById(ctx) {
     const validator = ctx.validate(
       { ...ctx.params, ...ctx.query },
       {
         id: Joi.number().required(),
-        type: Joi.number(), // type 用于区分是否增加浏览次数 1 新增浏览次数 0 不新增
-      }
+        type: Joi.number(), // type 閻劋绨崠鍝勫瀻閺勵垰鎯佹晶鐐插濞村繗顫嶅▎鈩冩殶 1 閺傛澘顤冨ù蹇氼潔濞嗏剝鏆?0 娑撳秵鏌婃晶?      }
     )
     if (validator) {
       const data = await ArticleModel.findOne({
         where: { id: ctx.params.id },
         include: [
-          // 查找 分类 标签 评论 回复...
+          // 閺屻儲澹?閸掑棛琚?閺嶅洨顒?鐠囧嫯顔?閸ョ偛顦?..
           { model: TagModel, attributes: ['id', 'name'] },
           { model: CategoryModel, attributes: ['id', 'name'] },
           {
@@ -166,8 +165,7 @@ class ArticleController {
       const { type = 1 } = ctx.query
       // viewer count ++
       type === 1 && ArticleModel.update({ viewCount: ++data.viewCount }, { where: { id: ctx.params.id } })
-      // 每个浏览记录都存一个stamp，这样后续能够看出文章的阅读趋势方便推荐
-      type === 1 && RecordModel.create({ articleId: ctx.params.id })
+      // 濮ｅ繋閲滃ù蹇氼潔鐠佹澘缍嶉柈钘夌摠娑撯偓娑撶尰tamp閿涘矁绻栭弽宄版倵缂侇叀鍏樻径鐔烘箙閸戠儤鏋冪粩鐘垫畱闂冨懓顕扮搾瀣◢閺傞€涚┒閹恒劏宕?      type === 1 && RecordModel.create({ articleId: ctx.params.id })
       // JSON.parse(github)
       data.comments.forEach(comment => {
         comment.user.github = JSON.parse(comment.user.github)
@@ -195,7 +193,7 @@ class ArticleController {
       let data = await ArticleModel.findOne({
         where: { uuid: ctx.params.uuid },
         include: [
-          // 查找 分类 标签 评论 回复...
+          // 閺屻儲澹?閸掑棛琚?閺嶅洨顒?鐠囧嫯顔?閸ョ偛顦?..
           { model: TagModel, attributes: ['id', 'name'] },
           { model: CategoryModel, attributes: ['id', 'name'] },
           {
@@ -218,8 +216,7 @@ class ArticleController {
       const { type = 1 } = ctx.query
       // viewer count ++
       type === 1 && ArticleModel.update({ viewCount: ++data.viewCount }, { where: { id: data.id } })
-      // 每个浏览记录都存一个stamp，这样后续能够看出文章的阅读趋势方便推荐
-      type === 1 && RecordModel.create({ articleId: data.id })
+      // 濮ｅ繋閲滃ù蹇氼潔鐠佹澘缍嶉柈钘夌摠娑撯偓娑撶尰tamp閿涘矁绻栭弽宄版倵缂侇叀鍏樻径鐔烘箙閸戠儤鏋冪粩鐘垫畱闂冨懓顕扮搾瀣◢閺傞€涚┒閹恒劏宕?      type === 1 && RecordModel.create({ articleId: data.id })
       // JSON.parse(github)
       data.comments.forEach(comment => {
         comment.user.github = JSON.parse(comment.user.github)
@@ -230,13 +227,11 @@ class ArticleController {
       ctx.body = normalizeArticlePayload(data)
     }
   }
-  // 获取文章列表
-  static async getList(ctx) {
+  // 閼惧嘲褰囬弬鍥╃彿閸掓銆?  static async getList(ctx) {
     const validator = ctx.validate(ctx.query, {
       page: Joi.string(),
       pageSize: Joi.number(),
-      keyword: Joi.string().allow(''), // 关键字查询
-      category: Joi.string(),
+      keyword: Joi.string().allow(''), // 閸忔娊鏁€涙鐓＄拠?      category: Joi.string(),
       tag: Joi.string(),
       preview: Joi.number(),
       order: Joi.string(),
@@ -256,8 +251,7 @@ class ArticleController {
         const data = await ArticleModel.findAndCountAll({
           where: {
             id: {
-              $not: -1, // 过滤关于页面的副本
-            },
+              $not: -1, // 鏉╁洦鎶ら崗鍏呯艾妞ょ敻娼伴惃鍕閺?            },
             $and: {
               type: {
                 $eq: JSON.parse(type),
@@ -296,12 +290,10 @@ class ArticleController {
           limit: parseInt(pageSize),
           order: articleOrder,
           row: true,
-          distinct: true, // count 计算
-        })
+          distinct: true, // count 鐠侊紕鐣?        })
         if (preview === 1) {
           data.rows.forEach(d => {
-            d.content = d.content.slice(0, 1000) // 只是获取预览，减少打了的数据传输。。。
-          })
+            d.content = d.content.slice(0, 1000) // 閸欘亝妲搁懢宄板絿妫板嫯顫嶉敍灞藉櫤鐏忔垶澧︽禍鍡欐畱閺佺増宓佹导鐘虹翻閵嗗倶鈧倶鈧?          })
         }
         data.rows = data.rows.map(normalizeArticlePayload).sort((a, b) => b.top - a.top)
         ctx.body = data
@@ -309,8 +301,7 @@ class ArticleController {
         const data = await ArticleModel.findAndCountAll({
           where: {
             id: {
-              $not: -1, // 过滤关于页面的副本
-            },
+              $not: -1, // 鏉╁洦鎶ら崗鍏呯艾妞ょ敻娼伴惃鍕閺?            },
             $or: {
               title: {
                 $like: `%${keyword}%`,
@@ -344,12 +335,10 @@ class ArticleController {
           limit: parseInt(pageSize),
           order: articleOrder,
           row: true,
-          distinct: true, // count 计算
-        })
+          distinct: true, // count 鐠侊紕鐣?        })
         if (preview === 1) {
           data.rows.forEach(d => {
-            d.content = d.content.slice(0, 1000) // 只是获取预览，减少打了的数据传输。。。
-          })
+            d.content = d.content.slice(0, 1000) // 閸欘亝妲搁懢宄板絿妫板嫯顫嶉敍灞藉櫤鐏忔垶澧︽禍鍡欐畱閺佺増宓佹导鐘虹翻閵嗗倶鈧倶鈧?          })
         }
         data.rows = data.rows.map(normalizeArticlePayload).sort((a, b) => b.top - a.top)
         ctx.body = data
@@ -357,7 +346,7 @@ class ArticleController {
     }
   }
 
-  // 修改文章
+  // 娣囶喗鏁奸弬鍥╃彿
   static async update(ctx) {
     const validator = ctx.validate(
       {
@@ -369,6 +358,7 @@ class ArticleController {
         title: Joi.string(),
         content: Joi.string(),
         cover: Joi.string().allow('', null),
+        cardCover: Joi.string().allow('', null),
         description: Joi.string().allow('', null),
         categories: Joi.array(),
         tags: Joi.array(),
@@ -379,11 +369,11 @@ class ArticleController {
       }
     )
     if (validator) {
-      const { title, content, cover, description, categories = [], tags = [], type, top, musicId, musicName } = ctx.request.body
+      const { title, content, cover, cardCover, description, categories = [], tags = [], type, top, musicId, musicName } = ctx.request.body
       const articleId = parseInt(ctx.params.id)
       const tagList = normalizeNameList(tags).map(tag => ({ name: tag, articleId }))
       const categoryList = normalizeNameList(categories).map(cate => ({ name: cate, articleId }))
-      await ArticleModel.update({ title, content, cover, description, type, top, musicId, musicName }, { where: { id: articleId } })
+      await ArticleModel.update({ title, content, cover, cardCover, description, type, top, musicId, musicName }, { where: { id: articleId } })
       await TagModel.destroy({ where: { articleId } })
       await TagModel.bulkCreate(tagList)
       await CategoryModel.destroy({ where: { articleId } })
@@ -392,7 +382,7 @@ class ArticleController {
     }
   }
 
-  // 删除文章
+  // 閸掔娀娅庨弬鍥╃彿
   static async delete(ctx) {
     const validator = ctx.validate(ctx.params, {
       id: Joi.number().required(),
@@ -412,8 +402,7 @@ class ArticleController {
     }
   }
 
-  // 删除多个文章
-  static async delList(ctx) {
+  // 閸掔娀娅庢径姘嚋閺傚洨鐝?  static async delList(ctx) {
     const validator = ctx.validate(ctx.params, {
       list: Joi.string().required(),
     })
@@ -434,10 +423,8 @@ class ArticleController {
   }
 
   /**
-   * 确认文章是否存在
-   *
-   * @response existList: 数据库中已存在有的文章（包含文章的具体内容）
-   * @response noExistList: 解析 md 文件 并且返回数据库中不存在的 具体有文件名 解析后的文件标题
+   * 绾喛顓婚弬鍥╃彿閺勵垰鎯佺€涙ê婀?   *
+   * @response existList: 閺佺増宓佹惔鎾茶厬瀹告彃鐡ㄩ崷銊︽箒閻ㄥ嫭鏋冪粩鐙呯礄閸栧懎鎯堥弬鍥╃彿閻ㄥ嫬鍙挎担鎾冲敶鐎圭櫢绱?   * @response noExistList: 鐟欙絾鐎?md 閺傚洣娆?楠炴湹绗栨潻鏂挎礀閺佺増宓佹惔鎾茶厬娑撳秴鐡ㄩ崷銊ф畱 閸忚渹缍嬮張澶嬫瀮娴犺泛鎮?鐟欙絾鐎介崥搴ｆ畱閺傚洣娆㈤弽鍥暯
    */
   static async checkExist(ctx) {
     const validator = ctx.validate(ctx.request.body, {
@@ -471,36 +458,31 @@ class ArticleController {
     }
   }
 
-  // 上传文章
+  // 娑撳﹣绱堕弬鍥╃彿
   static async upload(ctx) {
-    const file = ctx.request.files.file // 获取上传文件
-
-    await findOrCreateFilePath(uploadPath) // 创建文件目录
-    const upload = file => {
-      const reader = fs.createReadStream(file.path) // 创建可读流
-      const fileName = file.name
+    const file = ctx.request.files.file // 閼惧嘲褰囨稉濠佺炊閺傚洣娆?
+    await findOrCreateFilePath(uploadPath) // 閸掓稑缂撻弬鍥︽閻╊喖缍?    const upload = file => {
+      const reader = fs.createReadStream(file.path) // 閸掓稑缂撻崣顖濐嚢濞?      const fileName = file.name
       const filePath = `${uploadPath}/${fileName}`
       const upStream = fs.createWriteStream(filePath)
       reader.pipe(upStream)
 
       reader.on('end', function () {
-        console.log('上传成功')
+        console.log('娑撳﹣绱堕幋鎰')
       })
     }
     Array.isArray(file) ? file.forEach(it => upload(it)) : upload(file)
     ctx.status = 204
   }
 
-  // 确认插入文章
-  static async uploadConfirm(ctx) {
+  // 绾喛顓婚幓鎺戝弳閺傚洨鐝?  static async uploadConfirm(ctx) {
     const validator = ctx.validate(ctx.request.body, {
       authorId: Joi.number(),
       uploadList: Joi.array(),
     })
     if (validator) {
       const { uploadList, authorId } = ctx.request.body
-      await findOrCreateFilePath(uploadPath) // 检查目录
-      // const insertList = []
+      await findOrCreateFilePath(uploadPath) // 濡偓閺屻儳娲拌ぐ?      // const insertList = []
       // const updateList = []
       // uploadList.forEach(file => {
       //   file.exist ? updateList.push(file) : insertList.push(file)
@@ -528,7 +510,7 @@ class ArticleController {
       const updateList = list.filter(d => !!d.articleId)
       const insertList = list.filter(d => !d.articleId)
 
-      // 插入文章
+      // 閹绘帒鍙嗛弬鍥╃彿
       const insertResultList = await Promise.all(
         insertList.map(data => ArticleModel.create(data, { include: [TagModel, CategoryModel] }))
       )
@@ -545,11 +527,11 @@ class ArticleController {
         })
       )
 
-      ctx.body = { message: '导入文章成功', insertList: insertResultList, updateList: updateResultList }
+      ctx.body = { message: '鐎电厧鍙嗛弬鍥╃彿閹存劕濮?, insertList: insertResultList, updateList: updateResultList }
     }
   }
 
-  // 导出文章
+  // 鐎电厧鍤弬鍥╃彿
   static async output(ctx) {
     const validator = ctx.validate(ctx.params, {
       id: Joi.number().required(),
@@ -559,8 +541,7 @@ class ArticleController {
       const article = await ArticleModel.findOne({
         where: { id: ctx.params.id },
         include: [
-          // 查找 分类
-          { model: TagModel, attributes: ['id', 'name'] },
+          // 閺屻儲澹?閸掑棛琚?          { model: TagModel, attributes: ['id', 'name'] },
           { model: CategoryModel, attributes: ['id', 'name'] },
         ],
       })
@@ -583,8 +564,7 @@ class ArticleController {
           id: articleList,
         },
         include: [
-          // 查找 分类
-          { model: TagModel, attributes: ['id', 'name'] },
+          // 閺屻儲澹?閸掑棛琚?          { model: TagModel, attributes: ['id', 'name'] },
           { model: CategoryModel, attributes: ['id', 'name'] },
         ],
       })
@@ -592,15 +572,14 @@ class ArticleController {
       // const filePath = await generateFile(list[0])
       await Promise.all(list.map(article => generateFile(article)))
 
-      // 打包压缩 ...
+      // 閹垫挸瀵橀崢瀣級 ...
       const zipName = 'mdFiles.zip'
       const zipStream = fs.createWriteStream(`${outputPath}/${zipName}`)
       const zip = archiver('zip')
       zip.pipe(zipStream)
       list.forEach(item => {
         zip.append(fs.createReadStream(`${outputPath}/${item.title}.md`), {
-          name: `${item.title}.md`, // 压缩文件名
-        })
+          name: `${item.title}.md`, // 閸樺缂夐弬鍥︽閸?        })
       })
       await zip.finalize()
 
@@ -613,12 +592,10 @@ class ArticleController {
     const list = await ArticleModel.findAll({
       where: {
         id: {
-          $not: -1, // 过滤关于页面的副本
-        },
+          $not: -1, // 鏉╁洦鎶ら崗鍏呯艾妞ょ敻娼伴惃鍕閺?        },
       },
       include: [
-        // 查找 分类
-        { model: TagModel, attributes: ['id', 'name'] },
+        // 閺屻儲澹?閸掑棛琚?        { model: TagModel, attributes: ['id', 'name'] },
         { model: CategoryModel, attributes: ['id', 'name'] },
       ],
     })
@@ -626,15 +603,14 @@ class ArticleController {
     // const filePath = await generateFile(list[0])
     await Promise.all(list.map(article => generateFile(article)))
 
-    // 打包压缩 ...
+    // 閹垫挸瀵橀崢瀣級 ...
     const zipName = 'mdFiles.zip'
     const zipStream = fs.createWriteStream(`${outputPath}/${zipName}`)
     const zip = archiver('zip')
     zip.pipe(zipStream)
     list.forEach(item => {
       zip.append(fs.createReadStream(`${outputPath}/${item.title}.md`), {
-        name: `${item.title}.md`, // 压缩文件名
-      })
+        name: `${item.title}.md`, // 閸樺缂夐弬鍥︽閸?      })
     })
     await zip.finalize()
 
@@ -642,18 +618,15 @@ class ArticleController {
     await send(ctx, zipName, { root: outputPath })
   }
 
-  // 获取归档数据
+  // 閼惧嘲褰囪ぐ鎺撱€傞弫鐗堝祦
   static async getArchives(ctx) {
     try {
-      // 查询所有已发布的文章，按创建时间倒序排列
-      const articles = await ArticleModel.findAll({
+      // 閺屻儴顕楅幍鈧張澶婂嚒閸欐垵绔烽惃鍕瀮缁旂媴绱濋幐澶婂灡瀵ょ儤妞傞梻鏉戔偓鎺戠碍閹烘帒鍨?      const articles = await ArticleModel.findAll({
         where: {
           id: {
-            $not: -1, // 过滤关于页面的副本
-          },
-          type: true, // 只查询已发布的文章
-        },
-        attributes: ['id', 'title', 'description', 'cover', 'viewCount', 'likeCount', 'createdAt', 'updatedAt'],
+            $not: -1, // 鏉╁洦鎶ら崗鍏呯艾妞ょ敻娼伴惃鍕閺?          },
+          type: true, // 閸欘亝鐓＄拠銏犲嚒閸欐垵绔烽惃鍕瀮缁?        },
+        attributes: ['id', 'title', 'description', 'cover', 'cardCover', 'viewCount', 'likeCount', 'createdAt', 'updatedAt'],
         include: [
           { model: TagModel, attributes: ['id', 'name'] },
           { model: CategoryModel, attributes: ['id', 'name'] },
@@ -662,16 +635,14 @@ class ArticleController {
         order: [['createdAt', 'DESC']],
       })
 
-      // 按年月分组
-      const archiveMap = new Map()
+      // 閹稿鍕鹃張鍫濆瀻缂?      const archiveMap = new Map()
 
       articles.forEach(article => {
         const date = new Date(article.createdAt)
         const year = date.getFullYear()
         const month = date.getMonth() + 1
 
-        // 初始化年份数据
-        if (!archiveMap.has(year)) {
+        // 閸掓繂顫愰崠鏍у嬀娴犺姤鏆熼幑?        if (!archiveMap.has(year)) {
           archiveMap.set(year, {
             year,
             count: 0,
@@ -682,8 +653,7 @@ class ArticleController {
         const yearData = archiveMap.get(year)
         yearData.count++
 
-        // 初始化月份数据
-        if (!yearData.months.has(month)) {
+        // 閸掓繂顫愰崠鏍ㄦ箑娴犺姤鏆熼幑?        if (!yearData.months.has(month)) {
           yearData.months.set(month, {
             month,
             count: 0,
@@ -694,12 +664,13 @@ class ArticleController {
         const monthData = yearData.months.get(month)
         monthData.count++
 
-        // 转换文章数据格式
+        // 鏉烆剚宕查弬鍥╃彿閺佺増宓侀弽鐓庣础
         const articleData = {
           id: article.id,
           title: article.title,
           description: article.description,
           cover: article.cover,
+          cardCover: article.cardCover,
           viewCount: article.viewCount,
           likeCount: article.likeCount,
           commentCount: article.comments?.length || 0,
@@ -712,8 +683,7 @@ class ArticleController {
         monthData.articles.push(articleData)
       })
 
-      // 转换为数组格式
-      const years = Array.from(archiveMap.values()).map(yearData => ({
+      // 鏉烆剚宕叉稉鐑樻殶缂佸嫭鐗稿?      const years = Array.from(archiveMap.values()).map(yearData => ({
         year: yearData.year,
         count: yearData.count,
         months: Array.from(yearData.months.values()).map(monthData => ({
@@ -725,8 +695,8 @@ class ArticleController {
 
       ctx.body = years
     } catch (error) {
-      console.error('获取归档数据失败:', error)
-      ctx.throw(500, '获取归档数据失败')
+      console.error('閼惧嘲褰囪ぐ鎺撱€傞弫鐗堝祦婢惰精瑙?', error)
+      ctx.throw(500, '閼惧嘲褰囪ぐ鎺撱€傞弫鐗堝祦婢惰精瑙?)
     }
   }
 

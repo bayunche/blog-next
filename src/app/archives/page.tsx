@@ -55,13 +55,13 @@ export default async function ArchivesPage() {
                         <p className="text-sm font-medium uppercase tracking-[0.28em] text-primary/80">
                             Writing Timeline
                         </p>
-                        <h1 className="text-4xl font-bold font-serif">归档</h1>
+                        <h1 className="text-3xl font-bold font-serif sm:text-4xl">归档</h1>
                         <p className="mx-auto max-w-3xl text-sm leading-7 text-text-muted">
                             这里不只是时间线，也是我把技术、阅读、生活和阶段心绪一点点留下来的地方。
                         </p>
                     </div>
 
-                    <div className="grid gap-4 md:grid-cols-3">
+                    <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3">
                         <div className="rounded-3xl border border-card-border bg-card-bg/80 p-6 text-center shadow-sm backdrop-blur-sm">
                             <div className="text-3xl font-bold text-primary">{totalCount}</div>
                             <div className="mt-2 text-sm text-text-muted">累计文章</div>
@@ -115,7 +115,7 @@ export default async function ArchivesPage() {
                                 </div>
 
                                 {yearData.months.map((monthData) => (
-                                    <div key={`${yearData.year}-${monthData.month}`} className="mb-8 ml-16">
+                                    <div key={`${yearData.year}-${monthData.month}`} className="mb-8 ml-8 sm:ml-16">
                                         <div className="mb-4 flex items-center gap-3">
                                             <div className="h-3 w-3 rounded-full bg-primary/60" />
                                             <h3 className="text-xl font-medium text-text-muted">
@@ -124,7 +124,7 @@ export default async function ArchivesPage() {
                                             </h3>
                                         </div>
 
-                                        <ul className="ml-6 space-y-3">
+                                        <ul className="ml-0 space-y-3 sm:ml-6">
                                             {monthData.articles.map((article) => {
                                                 const date = new Date(article.createdAt);
                                                 const day = date.getDate();
@@ -133,7 +133,7 @@ export default async function ArchivesPage() {
                                                     <li key={article.id} className="group">
                                                         <Link
                                                             href={`/posts/${article.id}`}
-                                                            className="-ml-3 flex items-center gap-4 rounded-xl p-3 transition-all hover:bg-card-bg/50"
+                                                            className="-ml-3 flex flex-wrap items-center gap-3 rounded-xl p-3 transition-all hover:bg-card-bg/50 sm:flex-nowrap sm:gap-4"
                                                         >
                                                             <span className="w-8 shrink-0 text-center text-sm text-text-subtle">
                                                                 {day}日

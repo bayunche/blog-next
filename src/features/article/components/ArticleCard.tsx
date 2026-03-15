@@ -62,7 +62,7 @@ export const ArticleCard = ({
             ].join(' ')}
             style={{ animationDelay: `${index * 80}ms` }}
         >
-            <div className={isFeatured ? 'relative min-h-[280px] lg:min-h-[360px]' : 'relative h-56 w-full overflow-hidden md:h-[320px] md:w-1/2'}>
+            <div className={isFeatured ? 'relative min-h-[220px] sm:min-h-[280px] lg:min-h-[360px]' : 'relative h-48 w-full overflow-hidden sm:h-56 md:h-[320px] md:w-1/2'}>
                 <Link href={`/posts/${id}`} className="block h-full w-full">
                     <Image
                         src={cover || '/images/background.jpg'}
@@ -73,7 +73,7 @@ export const ArticleCard = ({
                     <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-black/10 to-transparent" />
                 </Link>
 
-                <div className="absolute left-4 top-4 flex flex-wrap gap-2">
+                <div className="absolute left-3 right-3 top-3 flex flex-wrap gap-2 sm:left-4 sm:right-auto sm:top-4">
                     <Link
                         href={`/categories/${encodeURIComponent(rawCategoryName)}`}
                         prefetch={false}
@@ -94,10 +94,10 @@ export const ArticleCard = ({
                 </div>
             </div>
 
-            <div className="relative flex flex-1 flex-col justify-center p-6 md:p-8">
+            <div className="relative flex flex-1 flex-col justify-center p-5 sm:p-6 md:p-8">
                 <div className={`absolute top-0 ${isReversed ? 'right-0' : 'left-0'} h-full w-1 bg-gradient-to-b from-primary via-pink-400 to-purple-500 opacity-0 transition-opacity motion-transition group-hover:opacity-100`} />
 
-                <div className="mb-4 flex flex-wrap items-center gap-4 text-xs text-text-muted">
+                <div className="mb-4 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-text-muted">
                     <span className="inline-flex items-center gap-1.5">
                         <FaCalendar className="text-primary" />
                         {dayjs(createdAt).format('YYYY年M月D日')}
@@ -118,11 +118,11 @@ export const ArticleCard = ({
                     ) : null}
                 </div>
 
-                <h2 className={`mb-4 font-bold transition-colors motion-transition group-hover:text-primary ${isFeatured ? 'text-2xl md:text-3xl' : 'text-xl md:text-2xl'}`}>
+                <h2 className={`mb-4 font-bold transition-colors motion-transition group-hover:text-primary ${isFeatured ? 'text-xl sm:text-2xl md:text-3xl' : 'text-lg sm:text-xl md:text-2xl'}`}>
                     <Link href={`/posts/${id}`}>{title}</Link>
                 </h2>
 
-                <p className={`mb-6 text-sm leading-relaxed text-text-muted ${isFeatured ? 'line-clamp-4' : 'line-clamp-3'}`}>
+                <p className={`mb-6 text-sm leading-7 text-text-muted ${isFeatured ? 'line-clamp-4' : 'line-clamp-3'}`}>
                     {summary}
                 </p>
 

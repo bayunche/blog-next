@@ -37,6 +37,17 @@ export const SearchModal = ({ isOpen, onClose }: SearchModalProps) => {
         return () => document.removeEventListener('keydown', handleKeyDown);
     }, [isOpen, onClose]);
 
+    useEffect(() => {
+        const originalOverflow = document.body.style.overflow;
+        if (isOpen) {
+            document.body.style.overflow = 'hidden';
+        }
+
+        return () => {
+            document.body.style.overflow = originalOverflow;
+        };
+    }, [isOpen]);
+
     // Debounced search
     const handleSearch = useCallback(async (searchQuery: string) => {
         if (!searchQuery.trim()) {
@@ -46,7 +57,7 @@ export const SearchModal = ({ isOpen, onClose }: SearchModalProps) => {
 
         setLoading(true);
         try {
-            const res = await articleApi.getList({ page: 1, pageSize: 10, keyword: searchQuery });
+            const res = await articleApi.getList({ page: 1, pageSize: 10, keyword: searchQuery, type: true });
             setResults(res.rows);
         } catch (error) {
             console.error('Search failed:', error);
@@ -80,7 +91,7 @@ export const SearchModal = ({ isOpen, onClose }: SearchModalProps) => {
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 z-[100] flex items-start justify-center pt-20 px-4">
+        <div className="fixed inset-0 z-[100] flex items-start justify-center px-4 pb-[calc(env(safe-area-inset-bottom)+1rem)] pt-20 sm:pt-24">
             {/* Backdrop */}
             <div
                 className="absolute inset-0 bg-black/50 backdrop-blur-sm"
@@ -88,28 +99,28 @@ export const SearchModal = ({ isOpen, onClose }: SearchModalProps) => {
             />
 
             {/* Modal */}
-            <div className="relative w-full max-w-2xl bg-card-bg rounded-2xl shadow-2xl overflow-hidden transition-colors">
+            <div className="relative w-full max-w-2xl overflow-hidden rounded-2xl bg-card-bg shadow-2xl transition-colors">
                 {/* Search Input */}
-                <div className="flex items-center gap-4 p-4 border-b border-card-border">
-                    <FaSearch className="text-text-muted" size={20} />
+                <div className="flex items-center gap-3 border-b border-card-border px-4 py-4 sm:gap-4">
+                    <FaSearch className="shrink-0 text-text-muted" size={18} />
                     <input
                         ref={inputRef}
                         type="text"
                         value={query}
                         onChange={handleInputChange}
                         placeholder="搜索文章标题或内容..."
-                        className="flex-1 bg-transparent text-lg outline-none placeholder:text-text-subtle"
+                        className="min-w-0 flex-1 bg-transparent text-base outline-none placeholder:text-text-subtle sm:text-lg"
                     />
                     <button
                         onClick={onClose}
-                        className="p-2 hover:bg-card-border rounded-lg transition-colors"
+                        className="rounded-lg p-2 transition-colors hover:bg-card-border"
                     >
                         <FaTimes size={16} />
                     </button>
                 </div>
 
                 {/* Results */}
-                <div className="max-h-[60vh] overflow-y-auto">
+                <div className="max-h-[min(70vh,calc(100dvh-8rem))] overflow-y-auto sm:max-h-[60vh]">
                     {loading && (
                         <div className="p-8 text-center text-text-muted">
                             搜索中...

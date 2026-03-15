@@ -99,7 +99,7 @@ export function Hero() {
     return (
         <section
             ref={heroRef}
-            className="relative flex min-h-screen items-center overflow-hidden text-white"
+            className="relative flex min-h-[100svh] items-center overflow-hidden text-white"
         >
             <div
                 className="absolute inset-0 transition-opacity motion-transition-micro"
@@ -115,28 +115,28 @@ export function Hero() {
             </div>
 
             <div
-                className="relative z-10 mx-auto flex w-full max-w-7xl flex-col gap-10 px-4 py-24 lg:flex-row lg:items-center lg:justify-between"
+                className="relative z-10 mx-auto flex w-full max-w-7xl flex-col gap-8 px-4 pb-24 pt-28 sm:gap-10 sm:py-24 lg:flex-row lg:items-center lg:justify-between"
                 style={{
                     opacity: contentOpacity,
                     transform: `translate3d(0, ${-contentOffset}px, 0) scale(${contentScale})`,
                 }}
             >
-                <div className="max-w-3xl space-y-7">
-                    <div className="inline-flex items-center rounded-full border border-white/15 bg-white/10 px-4 py-2 text-sm backdrop-blur-md">
+                <div className="max-w-3xl space-y-6 sm:space-y-7">
+                    <div className="inline-flex max-w-full items-center rounded-full border border-white/15 bg-white/10 px-4 py-2 text-xs backdrop-blur-md sm:text-sm">
                         个人博客 · 也写技术，也写生活
                     </div>
 
                     <div className="space-y-5">
                         <div className="space-y-3">
-                            <p className="text-sm uppercase tracking-[0.38em] text-white/75">
+                            <p className="text-xs uppercase tracking-[0.32em] text-white/75 sm:text-sm sm:tracking-[0.38em]">
                                 {siteProfile.siteNameEn}
                             </p>
-                            <h1 className="text-4xl font-bold font-serif leading-tight md:text-6xl">
+                            <h1 className="text-3xl font-bold font-serif leading-tight sm:text-4xl md:text-6xl">
                                 {siteProfile.siteName}
                             </h1>
                         </div>
 
-                        <p className="max-w-2xl text-lg leading-8 text-white/90 md:text-2xl md:leading-10">
+                        <p className="max-w-2xl text-base leading-7 text-white/90 sm:text-lg sm:leading-8 md:text-2xl md:leading-10">
                             {siteProfile.tagline}
                         </p>
                         <p className="max-w-2xl text-sm leading-8 text-white/70 md:text-base">
@@ -158,7 +158,7 @@ export function Hero() {
                     <div className="flex flex-wrap gap-3">
                         {siteProfile.homeCtas.map((cta) => {
                             const baseClass = [
-                                'inline-flex items-center justify-center rounded-full px-5 py-3 text-sm font-medium transition-all motion-transition',
+                                'inline-flex w-full items-center justify-center rounded-full px-5 py-3 text-sm font-medium transition-all motion-transition sm:w-auto',
                                 cta.style === 'primary'
                                     ? 'bg-white text-slate-900 hover:bg-white/90'
                                     : cta.style === 'secondary'
@@ -190,7 +190,7 @@ export function Hero() {
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 aria-label={label}
-                                className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-4 py-2 text-sm text-white/85 backdrop-blur-md transition-all motion-transition hover:-translate-y-0.5 hover:bg-white/20"
+                                className="inline-flex w-full items-center justify-center gap-2 rounded-full border border-white/15 bg-white/10 px-4 py-2 text-sm text-white/85 backdrop-blur-md transition-all motion-transition hover:-translate-y-0.5 hover:bg-white/20 sm:w-auto"
                             >
                                 <Icon size={15} />
                                 <span>{label}</span>
@@ -199,8 +199,8 @@ export function Hero() {
                     </div>
                 </div>
 
-                <div className="w-full max-w-md space-y-6 lg:ml-6">
-                    <div className="rounded-[2rem] border border-white/15 bg-white/10 p-6 backdrop-blur-xl shadow-2xl">
+                <div className="w-full max-w-md space-y-5 sm:space-y-6 lg:ml-6">
+                    <div className="rounded-[2rem] border border-white/15 bg-white/10 p-5 backdrop-blur-xl shadow-2xl sm:p-6">
                         <div className="flex items-center gap-4">
                             <div className="relative h-20 w-20 overflow-hidden rounded-2xl border border-white/20">
                                 <Image
@@ -239,13 +239,13 @@ export function Hero() {
                         </div>
                     </div>
 
-                    <div className="rounded-[2rem] border border-white/15 bg-white/10 p-6 backdrop-blur-xl shadow-xl">
+                    <div className="rounded-[2rem] border border-white/15 bg-white/10 p-5 backdrop-blur-xl shadow-xl sm:p-6">
                         <div className="flex items-start justify-between gap-4">
                             <div className="space-y-2 text-left">
                                 <p className="text-sm uppercase tracking-[0.28em] text-white/65">
                                     此刻想记住的一句话
                                 </p>
-                                <p className={`text-base leading-8 transition-opacity ${loading ? 'opacity-45' : 'opacity-100'}`}>
+                                <p className={`text-sm leading-7 transition-opacity sm:text-base sm:leading-8 ${loading ? 'opacity-45' : 'opacity-100'}`}>
                                     {quote ? quote.hitokoto : '...'}
                                 </p>
                                 {quote ? (
@@ -270,7 +270,7 @@ export function Hero() {
 
             <a
                 href="#featured"
-                className="absolute bottom-12 left-1/2 z-20 -translate-x-1/2 animate-bounce p-2 text-white/80 transition-colors hover:text-white"
+                className="absolute bottom-8 left-1/2 z-20 -translate-x-1/2 animate-bounce p-2 text-white/80 transition-colors hover:text-white sm:bottom-12"
                 aria-label="向下滚动"
                 style={{ opacity: contentOpacity }}
             >

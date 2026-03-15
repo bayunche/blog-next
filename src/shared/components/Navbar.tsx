@@ -2,12 +2,11 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useEffectEvent, useState } from 'react';
 import { clsx } from 'clsx';
 import { usePathname } from 'next/navigation';
-import { FaBars, FaGithub, FaMoon, FaSearch, FaSun, FaTimes } from 'react-icons/fa';
+import { FaBars, FaGithub, FaSearch, FaTimes } from 'react-icons/fa';
 import { SearchModal } from './SearchModal';
-import { useTheme } from '@/shared/providers/ThemeProvider';
 import { siteLinks, siteProfile } from '@/shared/constants/siteProfile';
 
 const navItems = [
@@ -24,7 +23,9 @@ export function Navbar() {
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const [searchOpen, setSearchOpen] = useState(false);
     const pathname = usePathname();
-    const { theme, toggleTheme } = useTheme();
+    const closeMobileMenu = useEffectEvent(() => {
+        setMobileMenuOpen(false);
+    });
 
     useEffect(() => {
         const handleScroll = () => setScrolled(window.scrollY > 50);
@@ -43,6 +44,21 @@ export function Navbar() {
         document.addEventListener('keydown', handleKeyDown);
         return () => document.removeEventListener('keydown', handleKeyDown);
     }, []);
+
+    useEffect(() => {
+        closeMobileMenu();
+    }, [pathname]);
+
+    useEffect(() => {
+        const originalOverflow = document.body.style.overflow;
+        if (mobileMenuOpen) {
+            document.body.style.overflow = 'hidden';
+        }
+
+        return () => {
+            document.body.style.overflow = originalOverflow;
+        };
+    }, [mobileMenuOpen]);
 
     const closeSearch = useCallback(() => setSearchOpen(false), []);
     const githubLink = siteProfile.socialLinks[0]?.href;
@@ -74,7 +90,7 @@ export function Navbar() {
                 )}
             >
                 <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-                    <Link href="/" className="group flex items-center gap-3">
+                    <Link href="/" className="group flex min-w-0 items-center gap-3">
                         <div className="relative h-10 w-10 overflow-hidden rounded-full border-2 border-primary/50 transition-colors group-hover:border-primary">
                             <Image
                                 src={siteProfile.author.avatar}
@@ -85,7 +101,7 @@ export function Navbar() {
                         </div>
                         <span
                             className={clsx(
-                                'text-xl font-bold font-serif transition-colors',
+                                'truncate text-lg font-bold font-serif transition-colors sm:text-xl',
                                 scrolled ? 'text-foreground' : 'text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.45)]'
                             )}
                         >
@@ -105,8 +121,8 @@ export function Navbar() {
                                             ? 'bg-primary text-white'
                                             : 'text-foreground hover:bg-primary/10 hover:text-primary'
                                         : isActive(item.path)
-                                            ? 'bg-white/25 text-white backdrop-blur-sm'
-                                            : 'text-white/90 hover:bg-white/15 hover:text-white'
+                                          ? 'bg-white/25 text-white backdrop-blur-sm'
+                                          : 'text-white/90 hover:bg-white/15 hover:text-white'
                                 )}
                             >
                                 {item.name}
@@ -126,19 +142,6 @@ export function Navbar() {
                             )}
                         >
                             <FaSearch size={16} />
-                        </button>
-
-                        <button
-                            onClick={toggleTheme}
-                            aria-label="切换主题"
-                            className={clsx(
-                                'rounded-full p-2.5 transition-all motion-transition',
-                                scrolled
-                                    ? 'text-foreground hover:bg-primary/10 hover:text-primary'
-                                    : 'text-white hover:bg-white/15'
-                            )}
-                        >
-                            {theme === 'dark' ? <FaSun size={16} /> : <FaMoon size={16} />}
                         </button>
 
                         {githubLink ? (
@@ -187,8 +190,9 @@ export function Navbar() {
                         'absolute right-0 top-0 h-full w-72 bg-card-bg/95 shadow-2xl backdrop-blur-xl transition-transform motion-transition-slow',
                         mobileMenuOpen ? 'translate-x-0' : 'translate-x-full'
                     )}
+                    style={{ width: 'min(20rem, calc(100vw - 1rem))' }}
                 >
-                    <div className="flex flex-col px-6 pt-20">
+                    <div className="flex h-full flex-col overflow-y-auto px-5 pb-[calc(env(safe-area-inset-bottom)+1.5rem)] pt-20 sm:px-6">
                         {navItems.map((item) => (
                             <Link
                                 key={item.path}
@@ -201,9 +205,9 @@ export function Navbar() {
                             >
                                 {item.name}
                             </Link>
-                        ))}
+                                ))}
 
-                        <div className="mt-8 flex gap-4 border-t border-card-border pt-4">
+                        <div className="mt-8 flex flex-wrap gap-4 border-t border-card-border pt-4">
                             {githubLink ? (
                                 <a
                                     href={githubLink}
@@ -214,12 +218,6 @@ export function Navbar() {
                                     <FaGithub size={20} />
                                 </a>
                             ) : null}
-                            <button
-                                onClick={toggleTheme}
-                                className="rounded-full bg-card-border p-3 transition-colors hover:bg-primary hover:text-white"
-                            >
-                                {theme === 'dark' ? <FaSun size={20} /> : <FaMoon size={20} />}
-                            </button>
                             <button
                                 onClick={() => {
                                     setSearchOpen(true);

@@ -12,7 +12,7 @@ interface RelatedPostsProps {
 export function RelatedPosts({ posts }: RelatedPostsProps) {
     return (
         <section className="space-y-6">
-            <div className="flex items-end justify-between gap-4">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
                 <div>
                     <p className="mb-2 text-sm font-medium uppercase tracking-[0.28em] text-primary/80">
                         Continue Reading
@@ -21,7 +21,7 @@ export function RelatedPosts({ posts }: RelatedPostsProps) {
                 </div>
                 <Link
                     href="/posts"
-                    className="inline-flex items-center gap-2 text-sm font-medium text-primary transition-colors hover:text-primary/80"
+                    className="inline-flex self-start items-center gap-2 text-sm font-medium text-primary transition-colors hover:text-primary/80"
                 >
                     更多文章
                     <FaArrowRight size={12} />

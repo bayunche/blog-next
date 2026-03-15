@@ -10,7 +10,7 @@ export default function FriendsPage() {
                     <p className="text-sm font-medium uppercase tracking-[0.28em] text-primary/80">
                         Around The Web
                     </p>
-                    <h1 className="text-4xl font-bold font-serif">友情链接</h1>
+                    <h1 className="text-3xl font-bold font-serif sm:text-4xl">友情链接</h1>
                     <p className="mx-auto max-w-3xl text-sm leading-7 text-text-muted">
                         这里放的是我愿意长期回访的站点。有的是技术博客，有的是阅读、生活和写作记录；它们让我觉得，互联网依然保留着认真表达的温度。
                     </p>
@@ -19,7 +19,7 @@ export default function FriendsPage() {
 
             <div className="mx-auto max-w-6xl space-y-10 px-4 py-12">
                 <section className="grid gap-6 lg:grid-cols-[1.1fr_1fr]">
-                    <div className="rounded-[2rem] border border-card-border bg-card-bg/85 p-8 shadow-sm backdrop-blur-sm">
+                    <div className="rounded-[2rem] border border-card-border bg-card-bg/85 p-5 shadow-sm backdrop-blur-sm sm:p-8">
                         <h2 className="text-2xl font-bold font-serif">本站友链信息</h2>
                         <p className="mt-4 text-sm leading-8 text-text-muted">
                             {siteProfile.friendExchange.summary}
@@ -35,7 +35,7 @@ export default function FriendsPage() {
                         </p>
                     </div>
 
-                    <div className="rounded-[2rem] border border-card-border bg-card-bg/85 p-8 shadow-sm backdrop-blur-sm">
+                    <div className="rounded-[2rem] border border-card-border bg-card-bg/85 p-5 shadow-sm backdrop-blur-sm sm:p-8">
                         <h2 className="text-2xl font-bold font-serif">申请友链条件</h2>
                         <p className="mt-4 text-sm leading-7 text-text-muted">
                             不要求风格一致，只希望彼此都在持续写作，也愿意让自己的站点保留一点真实和温度。
@@ -63,7 +63,7 @@ export default function FriendsPage() {
                             </p>
                         </div>
 
-                        <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+                        <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3 xl:gap-6">
                             {group.links.map((friend, index) => (
                                 <a
                                     key={friend.name}

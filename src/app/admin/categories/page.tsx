@@ -14,7 +14,7 @@ export default function CategoryListPage() {
         try {
             const res = await categoryApi.getList();
             setCategories(res);
-        } catch (error) {
+        } catch {
             message.error('获取分类失败');
         } finally {
             setLoading(false);
@@ -30,7 +30,7 @@ export default function CategoryListPage() {
             await categoryApi.delete(record.name);
             message.success('分类删除成功');
             fetchCategories();
-        } catch (error) {
+        } catch {
             message.error('分类删除失败');
         }
     };
@@ -46,7 +46,7 @@ export default function CategoryListPage() {
                     await categoryApi.update(record.name, newName);
                     message.success('分类已更新');
                     fetchCategories();
-                } catch (err) {
+                } catch {
                     message.error('分类更新失败');
                 }
             }

@@ -15,8 +15,8 @@ export const dynamic = 'force-dynamic';
 async function getHomeData(): Promise<{ posts: Article[]; categories: Category[] }> {
     try {
         const [articleRes, categories] = await Promise.all([
-            articleApi.getList({ page: 1, pageSize: 12, preview: 1 }),
-            categoryApi.getList(),
+            articleApi.getList({ page: 1, pageSize: 12, preview: 1, type: true }),
+            categoryApi.getPublicList(),
         ]);
 
         return {
@@ -59,17 +59,17 @@ export default async function Home() {
         <>
             <Hero />
 
-            <div className="container mx-auto max-w-7xl space-y-20 px-4 py-16">
+            <div className="container mx-auto max-w-7xl space-y-16 px-4 py-12 sm:space-y-20 sm:py-16">
                 <FeaturedPosts posts={featuredPosts} />
 
                 <TopicGrid categories={categories} />
 
                 <section className="grid gap-6 lg:grid-cols-[1.2fr_1fr]">
-                    <div className="rounded-[2rem] border border-card-border/80 bg-card-bg/80 p-8 shadow-sm backdrop-blur-sm">
+                    <div className="rounded-[2rem] border border-card-border/80 bg-card-bg/80 p-5 shadow-sm backdrop-blur-sm sm:p-8">
                         <p className="text-sm font-medium uppercase tracking-[0.28em] text-primary/80">
                             Writing Range
                         </p>
-                        <h2 className="mt-3 text-3xl font-bold font-serif">这里不只写技术</h2>
+                        <h2 className="mt-3 text-2xl font-bold font-serif sm:text-3xl">这里不只写技术</h2>
                         <p className="mt-4 max-w-3xl text-sm leading-8 text-text-muted">
                             我希望这个站点既能放下工作里的技术问题，也能放下读书后的触动、生活中的小事和一些没有完全想明白的想法。
                             它不一定总是“有用”，但会尽量保持真诚。
@@ -117,7 +117,7 @@ export default async function Home() {
                         </p>
                         <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
                             <div>
-                                <h2 className="text-3xl font-bold font-serif">最新更新</h2>
+                                <h2 className="text-2xl font-bold font-serif sm:text-3xl">最新更新</h2>
                                 <p className="mt-2 text-sm leading-7 text-text-muted">
                                     这里会混合出现技术笔记、读书心得、生活记录和日常随笔。
                                     你不必先决定自己想看哪一类，先挑一篇当下愿意点开的就好。
@@ -132,7 +132,7 @@ export default async function Home() {
                         </div>
                     </div>
 
-                    <div className="flex flex-col gap-8 xl:flex-row">
+                    <div className="flex flex-col gap-6 xl:flex-row xl:gap-8">
                         <div className="flex-1 space-y-8">
                             {recentPosts.length > 0 ? (
                                 recentPosts.map((post, index) => (
@@ -142,7 +142,7 @@ export default async function Home() {
                                         title={post.title}
                                         summary={getArticleExcerpt(post.content, 150)}
                                         content={post.content}
-                                        cover={post.cover}
+                                        cover={post.cardCover || post.cover}
                                         createdAt={post.createdAt}
                                         category={post.category || post.categories?.[0]}
                                         tags={post.tags || []}
@@ -153,7 +153,7 @@ export default async function Home() {
                                     />
                                 ))
                             ) : (
-                                <div className="rounded-3xl border border-dashed border-card-border bg-card-bg/70 p-10 text-center text-text-muted">
+                                <div className="rounded-3xl border border-dashed border-card-border bg-card-bg/70 p-8 text-center text-text-muted sm:p-10">
                                     文章还在整理中，稍后这里会出现新的内容。
                                 </div>
                             )}
@@ -166,11 +166,11 @@ export default async function Home() {
                 </section>
 
                 <section className="grid gap-6 lg:grid-cols-[1.3fr_1fr]">
-                    <div className="rounded-[2rem] border border-card-border/80 bg-card-bg/80 p-8 shadow-sm backdrop-blur-sm">
+                    <div className="rounded-[2rem] border border-card-border/80 bg-card-bg/80 p-5 shadow-sm backdrop-blur-sm sm:p-8">
                         <p className="text-sm font-medium uppercase tracking-[0.28em] text-primary/80">
                             About This Blog
                         </p>
-                        <h2 className="mt-3 text-3xl font-bold font-serif">这是一个怎样的博客？</h2>
+                        <h2 className="mt-3 text-2xl font-bold font-serif sm:text-3xl">这是一个怎样的博客？</h2>
                         <p className="mt-4 text-sm leading-8 text-text-muted">
                             {siteProfile.description}
                         </p>

@@ -224,7 +224,7 @@ function LoginContent() {
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-gray-50 relative overflow-hidden font-sans">
+        <div className="relative flex min-h-[100svh] items-center justify-center overflow-hidden bg-gray-50 px-4 py-10 font-sans sm:min-h-screen">
             {/* Background */}
             <div
                 className="absolute inset-0 bg-cover bg-center z-0 blur-sm"
@@ -232,8 +232,8 @@ function LoginContent() {
             />
             <div className="absolute inset-0 bg-white/40 z-10" />
 
-            <div className="bg-white/90 backdrop-blur-md p-8 rounded-2xl shadow-xl w-full max-w-md z-20 animate-fade-in-up">
-                <h2 className="text-3xl font-bold text-center mb-8 text-gray-800">Welcome Back</h2>
+            <div className="z-20 w-full max-w-md rounded-2xl bg-white/90 p-5 shadow-xl backdrop-blur-md animate-fade-in-up sm:p-8">
+                <h2 className="mb-6 text-center text-2xl font-bold text-gray-800 sm:mb-8 sm:text-3xl">Welcome Back</h2>
 
                 <form onSubmit={handleLogin} className="space-y-6">
                     <div>
@@ -283,7 +283,7 @@ function LoginContent() {
                         <button
                             onClick={handleGithubLogin}
                             disabled={loading}
-                            className="p-3 bg-gray-800 text-white rounded-full hover:bg-black transition-all hover:scale-110 active:scale-95 shadow-md disabled:opacity-50"
+                            className="rounded-full bg-gray-800 p-3 text-white shadow-md transition-all hover:scale-110 hover:bg-black active:scale-95 disabled:opacity-50"
                             title="GitHub Login"
                         >
                             <FaGithub size={24} />

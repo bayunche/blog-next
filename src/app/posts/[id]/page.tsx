@@ -32,7 +32,7 @@ async function getArticle(id: string) {
 
 async function getCompanionArticles() {
     try {
-        const result = await articleApi.getList({ page: 1, pageSize: 100, preview: 1 });
+        const result = await articleApi.getList({ page: 1, pageSize: 100, preview: 1, type: true });
         return result.rows || [];
     } catch (error) {
         console.error('Failed to fetch companion articles:', error);
@@ -117,10 +117,10 @@ export default async function ArticlePage({ params }: { params: Promise<{ id: st
             </div>
 
             <div className="relative z-10">
-                <header className="relative flex min-h-[340px] items-end overflow-hidden text-white md:min-h-[400px]">
+                <header className="relative flex min-h-[300px] items-end overflow-hidden text-white md:min-h-[400px]">
                     <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/35 to-transparent z-0" />
 
-                    <div className="relative z-20 mx-auto w-full max-w-6xl space-y-5 px-4 pb-12 md:pb-14">
+                    <div className="relative z-20 mx-auto w-full max-w-6xl space-y-5 px-4 pb-10 md:pb-14">
                         <Link
                             href="/posts"
                             className="inline-flex items-center gap-2 text-sm text-white/85 transition-colors hover:text-white"
@@ -134,7 +134,7 @@ export default async function ArticlePage({ params }: { params: Promise<{ id: st
                         </div>
 
                         <div className="space-y-4 max-w-4xl">
-                            <h1 className="text-3xl font-bold font-serif leading-tight md:text-5xl">
+                            <h1 className="text-2xl font-bold font-serif leading-tight sm:text-3xl md:text-5xl">
                                 {article.title}
                             </h1>
                             <p className="text-sm leading-7 text-white/75 md:text-base">
@@ -175,10 +175,10 @@ export default async function ArticlePage({ params }: { params: Promise<{ id: st
                     </div>
                 </header>
 
-                <main className="mx-auto max-w-7xl px-4 py-8 md:py-12">
+                <main className="mx-auto max-w-7xl px-4 py-6 sm:py-8 md:py-12">
                     <div className="grid grid-cols-1 items-start gap-8 lg:grid-cols-[minmax(0,1fr)_280px]">
                         <article className="min-w-0 space-y-8">
-                            <section className="rounded-3xl border border-card-border/80 bg-card-bg/88 p-5 shadow-xl backdrop-blur-md sm:p-8 md:p-12">
+                            <section className="rounded-3xl border border-card-border/80 bg-card-bg/88 p-4 shadow-xl backdrop-blur-md sm:p-8 md:p-12">
                                 <div className="mb-6 flex flex-wrap items-center gap-3 border-b border-card-border/80 pb-5 text-sm text-text-muted">
                                     <p>发布于 {dayjs(article.createdAt).format('YYYY-MM-DD HH:mm')}</p>
                                     <span>·</span>
@@ -210,7 +210,7 @@ export default async function ArticlePage({ params }: { params: Promise<{ id: st
                             <RelatedPosts posts={relatedPosts} />
                             <PostNavigator previous={previous} next={next} />
 
-                            <section className="rounded-3xl border border-card-border/80 bg-card-bg/88 p-5 shadow-xl backdrop-blur-md sm:p-8">
+                            <section className="rounded-3xl border border-card-border/80 bg-card-bg/88 p-4 shadow-xl backdrop-blur-md sm:p-8">
                                 <div className="mb-6 border-b border-card-border/80 pb-4">
                                     <h2 className="text-2xl font-bold font-serif">评论区</h2>
                                     <p className="mt-2 text-sm text-text-muted">
@@ -229,7 +229,7 @@ export default async function ArticlePage({ params }: { params: Promise<{ id: st
                     </div>
                 </main>
 
-                <div className="lg:hidden px-4 pb-8">
+                <div className="px-4 pb-[calc(env(safe-area-inset-bottom)+7rem)] lg:hidden">
                     <TableOfContents content={article.content} />
                 </div>
             </div>

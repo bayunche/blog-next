@@ -14,17 +14,17 @@ import { siteProfile } from '@/shared/constants/siteProfile';
 export function Sidebar() {
     const { data: recentPosts, isLoading: postsLoading } = useQuery({
         queryKey: ['articles', 'recent-sidebar'],
-        queryFn: () => articleApi.getList({ page: 1, pageSize: 5, preview: 1 }),
+        queryFn: () => articleApi.getList({ page: 1, pageSize: 5, preview: 1, type: true }),
     });
 
     const { data: categories, isLoading: catsLoading } = useQuery({
         queryKey: ['categories', 'sidebar'],
-        queryFn: () => categoryApi.getList(),
+        queryFn: () => categoryApi.getPublicList(),
     });
 
     const { data: tags, isLoading: tagsLoading } = useQuery({
         queryKey: ['tags', 'sidebar'],
-        queryFn: () => tagApi.getList(),
+        queryFn: () => tagApi.getPublicList(),
     });
 
     const visibleCategories = useMemo(() => {
@@ -53,8 +53,8 @@ export function Sidebar() {
     };
 
     return (
-        <aside className="w-80 space-y-6">
-            <div className="rounded-3xl border border-card-border/80 bg-card-bg/80 p-6 text-center shadow-sm backdrop-blur-sm">
+        <aside className="w-full max-w-xl space-y-6 xl:w-80">
+            <div className="rounded-3xl border border-card-border/80 bg-card-bg/80 p-5 text-center shadow-sm backdrop-blur-sm sm:p-6">
                 <div className="relative mx-auto mb-4 h-24 w-24 overflow-hidden rounded-full border-2 border-primary/20">
                     <Image
                         src={siteProfile.author.avatar}
@@ -99,7 +99,7 @@ export function Sidebar() {
                 </div>
             </div>
 
-            <div className="rounded-3xl border border-card-border/80 bg-card-bg/80 p-6 shadow-sm backdrop-blur-sm">
+            <div className="rounded-3xl border border-card-border/80 bg-card-bg/80 p-5 shadow-sm backdrop-blur-sm sm:p-6">
                 <h3 className="mb-4 flex items-center gap-2 border-b border-card-border pb-3 font-bold">
                     <FaFire className="text-red-500" /> 最新文章
                 </h3>
@@ -132,7 +132,7 @@ export function Sidebar() {
                 )}
             </div>
 
-            <div className="rounded-3xl border border-card-border/80 bg-card-bg/80 p-6 shadow-sm backdrop-blur-sm">
+            <div className="rounded-3xl border border-card-border/80 bg-card-bg/80 p-5 shadow-sm backdrop-blur-sm sm:p-6">
                 <h3 className="mb-4 flex items-center gap-2 border-b border-card-border pb-3 font-bold">
                     <FaFolderOpen className="text-yellow-500" /> 分类
                 </h3>
@@ -164,7 +164,7 @@ export function Sidebar() {
                 )}
             </div>
 
-            <div className="rounded-3xl border border-card-border/80 bg-card-bg/80 p-6 shadow-sm backdrop-blur-sm">
+            <div className="rounded-3xl border border-card-border/80 bg-card-bg/80 p-5 shadow-sm backdrop-blur-sm sm:p-6">
                 <h3 className="mb-4 flex items-center gap-2 border-b border-card-border pb-3 font-bold">
                     <FaTags className="text-green-500" /> 高频标签
                 </h3>
@@ -190,7 +190,7 @@ export function Sidebar() {
                 )}
             </div>
 
-            <div className="rounded-3xl border border-card-border/80 bg-card-bg/80 p-6 shadow-sm backdrop-blur-sm">
+            <div className="rounded-3xl border border-card-border/80 bg-card-bg/80 p-5 shadow-sm backdrop-blur-sm sm:p-6">
                 <h3 className="mb-4 flex items-center gap-2 border-b border-card-border pb-3 font-bold">
                     <FaHeart className="text-pink-500" /> 最近想留下的东西
                 </h3>

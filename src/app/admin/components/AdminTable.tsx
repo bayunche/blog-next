@@ -1,14 +1,16 @@
 'use client';
 
-import { Button, Table, Space, Popconfirm } from 'antd';
-import { EditOutlined, DeleteOutlined, PlusOutlined } from '@ant-design/icons';
-import { useRouter } from 'next/navigation';
+import { Button, Popconfirm, Space, Table } from 'antd';
+import type { TableProps } from 'antd';
+import { DeleteOutlined, EditOutlined, PlusOutlined } from '@ant-design/icons';
 
-interface AdminTableProps<T> {
-    columns: any[];
+type AdminColumns<T extends object> = NonNullable<TableProps<T>['columns']>;
+
+interface AdminTableProps<T extends object> {
+    columns: AdminColumns<T>;
     dataSource: T[];
     loading?: boolean;
-    rowKey?: string;
+    rowKey?: TableProps<T>['rowKey'];
     onEdit?: (record: T) => void;
     onDelete?: (record: T) => void;
     onCreate?: () => void;
@@ -23,59 +25,63 @@ export default function AdminTable<T extends object>({
     onEdit,
     onDelete,
     onCreate,
-    headerTitle
+    headerTitle,
 }: AdminTableProps<T>) {
-
-    const actionColumn = {
-        title: '操作',
+    const actionColumn: AdminColumns<T>[number] = {
+        title: 'Actions',
         key: 'action',
-        render: (_: any, record: T) => (
-            <Space size="middle">
-                {onEdit && (
+        render: (_: unknown, record: T) => (
+            <Space size="small" wrap>
+                {onEdit ? (
                     <Button
                         type="primary"
+                        size="small"
                         icon={<EditOutlined />}
                         onClick={() => onEdit(record)}
-                        ghost // Wireframe style
+                        ghost
                     >
-                        编辑
+                        Edit
                     </Button>
-                )}
-                {onDelete && (
+                ) : null}
+
+                {onDelete ? (
                     <Popconfirm
-                        title="确定删除？"
-                        description="此操作不可撤销，确定要删除吗？"
+                        title="Delete item?"
+                        description="This action cannot be undone."
                         onConfirm={() => onDelete(record)}
-                        okText="确定"
-                        cancelText="取消"
+                        okText="Delete"
+                        cancelText="Cancel"
                     >
-                        <Button type="primary" danger icon={<DeleteOutlined />}>
-                            删除
+                        <Button type="primary" size="small" danger icon={<DeleteOutlined />}>
+                            Delete
                         </Button>
                     </Popconfirm>
-                )}
+                ) : null}
             </Space>
         ),
     };
 
-    const finalColumns = [...columns, actionColumn];
+    const finalColumns: AdminColumns<T> = [...columns, actionColumn];
 
     return (
-        <div className="bg-white/70 dark:bg-gray-800/70 backdrop-blur-md p-6 rounded-2xl shadow-xl border border-white/20 animate-fade-in-up">
-            <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-bold">{headerTitle || '列表'}</h2>
-                {onCreate && (
+        <div className="overflow-hidden rounded-2xl border border-white/20 bg-white/70 p-4 shadow-xl backdrop-blur-md animate-fade-in-up dark:bg-gray-800/70 sm:p-6">
+            <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <h2 className="text-xl font-bold">{headerTitle || 'List'}</h2>
+                {onCreate ? (
                     <Button type="primary" icon={<PlusOutlined />} onClick={onCreate}>
-                        新增
+                        Create
                     </Button>
-                )}
+                ) : null}
             </div>
+
             <Table
                 columns={finalColumns}
                 dataSource={dataSource}
                 loading={loading}
                 rowKey={rowKey}
-                pagination={{ pageSize: 10 }}
+                size="small"
+                scroll={{ x: 720 }}
+                pagination={{ pageSize: 10, responsive: true, showSizeChanger: false }}
             />
         </div>
     );

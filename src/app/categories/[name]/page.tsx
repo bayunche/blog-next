@@ -1,7 +1,8 @@
 import Link from 'next/link';
 import { FaChevronLeft, FaFolderOpen } from 'react-icons/fa';
 import { ArticleCard } from '@/features/article/components/ArticleCard';
-import { articleApi, Article } from '@/shared/api/article';
+import { Article } from '@/shared/api/article';
+import { categoryApi } from '@/shared/api/category';
 import { getCategoryMeta } from '@/shared/constants/categoryMeta';
 import { getArticleExcerpt } from '@/shared/utils/getArticleExcerpt';
 import { estimateReadingMinutes, getDisplayCategoryName } from '@/shared/utils/articleDisplay';
@@ -16,32 +17,38 @@ function decodeCategoryName(value: string) {
     }
 }
 
-async function getArticlesByCategory(categoryName: string) {
+async function getCategoryPageData(categoryName: string) {
     try {
-        return await articleApi.getList({
+        return await categoryApi.getPublicDetail(categoryName, {
             page: 1,
             pageSize: 50,
-            category: categoryName,
             preview: 1,
         });
     } catch (error) {
-        console.error('Failed to fetch category articles:', error);
-        return { rows: [], count: 0 };
+        console.error('Failed to fetch category page data:', error);
+        return {
+            category: { name: categoryName, displayName: categoryName, isUncategorized: false },
+            rows: [],
+            count: 0,
+            relatedTags: [],
+        };
     }
 }
 
 export default async function CategoryPage({ params }: { params: Promise<{ name: string }> }) {
     const { name } = await params;
     const categoryName = decodeCategoryName(name);
-    const displayCategoryName = getDisplayCategoryName(categoryName);
-    const categoryMeta = getCategoryMeta(categoryName);
-    const result = await getArticlesByCategory(categoryName);
+    const result = await getCategoryPageData(categoryName);
+    const canonicalCategoryName = result.category?.displayName || categoryName;
+    const displayCategoryName = getDisplayCategoryName(canonicalCategoryName);
+    const categoryMeta = getCategoryMeta(canonicalCategoryName);
     const articles = result.rows || [];
     const featuredArticle = articles[0];
+    const relatedTags = result.relatedTags || [];
 
     return (
-        <div className="min-h-screen pb-16 pt-20">
-            <div className={`bg-gradient-to-br ${categoryMeta.accentClass} py-16`}>
+        <div className="min-h-screen pb-12 pt-20 md:pb-16">
+            <div className={`bg-gradient-to-br ${categoryMeta.accentClass} py-14 sm:py-16`}>
                 <div className="container mx-auto max-w-6xl px-4 space-y-6">
                     <Link
                         href="/posts"
@@ -55,7 +62,7 @@ export default async function CategoryPage({ params }: { params: Promise<{ name:
                         <p className="text-sm font-medium uppercase tracking-[0.28em] text-primary/80">
                             Topic Page
                         </p>
-                        <h1 className="flex items-center gap-3 text-4xl font-bold font-serif">
+                        <h1 className="flex items-center gap-3 text-3xl font-bold font-serif sm:text-4xl">
                             <FaFolderOpen className="text-yellow-500" />
                             {displayCategoryName}
                         </h1>
@@ -67,8 +74,23 @@ export default async function CategoryPage({ params }: { params: Promise<{ name:
                         </p>
                     </div>
 
+                    {relatedTags.length > 0 ? (
+                        <div className="flex flex-wrap gap-3">
+                            <span className="text-sm text-text-muted">相关标签：</span>
+                            {relatedTags.map((tag) => (
+                                <Link
+                                    key={tag.name}
+                                    href={`/tags/${encodeURIComponent(tag.name)}`}
+                                    className="rounded-full border border-card-border px-3 py-1.5 text-sm text-text-muted transition-colors hover:border-primary/30 hover:text-primary"
+                                >
+                                    #{tag.name}
+                                </Link>
+                            ))}
+                        </div>
+                    ) : null}
+
                     {featuredArticle ? (
-                        <div className="rounded-[2rem] border border-card-border/80 bg-card-bg/75 p-6 shadow-sm backdrop-blur-sm">
+                        <div className="rounded-[2rem] border border-card-border/80 bg-card-bg/75 p-5 shadow-sm backdrop-blur-sm sm:p-6">
                             <p className="text-xs font-medium uppercase tracking-[0.24em] text-primary/80">
                                 推荐先看
                             </p>
@@ -97,7 +119,7 @@ export default async function CategoryPage({ params }: { params: Promise<{ name:
                                 title={article.title}
                                 summary={getArticleExcerpt(article.content, 150)}
                                 content={article.content}
-                                cover={article.cover}
+                                cover={article.cardCover || article.cover}
                                 createdAt={article.createdAt}
                                 category={article.category || article.categories?.[0]}
                                 tags={article.tags}
@@ -109,9 +131,9 @@ export default async function CategoryPage({ params }: { params: Promise<{ name:
                         ))}
                     </div>
                 ) : (
-                    <div className="rounded-3xl border border-dashed border-card-border bg-card-bg/70 px-6 py-16 text-center">
+                    <div className="rounded-3xl border border-dashed border-card-border bg-card-bg/70 px-6 py-12 text-center sm:py-16">
                         <div className="mb-4 text-6xl">📁</div>
-                        <h3 className="text-xl font-bold mb-2">这个专题下还没有文章</h3>
+                        <h3 className="mb-2 text-xl font-bold">这个专题下还没有文章</h3>
                         <p className="text-text-muted">可以先返回文章列表，或者看看首页的推荐阅读。</p>
                     </div>
                 )}

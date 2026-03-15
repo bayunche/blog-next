@@ -5,7 +5,7 @@ import { siteProfile } from '@/shared/constants/siteProfile';
 
 export function AuthorCard() {
     return (
-        <section className="rounded-3xl border border-card-border/80 bg-card-bg/85 p-6 shadow-sm backdrop-blur-sm">
+        <section className="rounded-3xl border border-card-border/80 bg-card-bg/85 p-5 shadow-sm backdrop-blur-sm sm:p-6">
             <div className="flex flex-col gap-5 md:flex-row md:items-center">
                 <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-full border border-primary/20">
                     <Image
@@ -21,7 +21,7 @@ export function AuthorCard() {
                         <p className="text-sm font-medium uppercase tracking-[0.28em] text-primary/80">
                             Writer · Recorder
                         </p>
-                        <h3 className="mt-2 text-2xl font-bold font-serif">{siteProfile.author.name}</h3>
+                        <h3 className="mt-2 text-xl font-bold font-serif sm:text-2xl">{siteProfile.author.name}</h3>
                         <p className="mt-1 text-sm text-text-muted">
                             {siteProfile.author.role} · {siteProfile.author.location}
                         </p>

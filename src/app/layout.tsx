@@ -1,7 +1,6 @@
 import type { Metadata } from 'next';
 import './globals.css';
 import QueryProvider from '@/shared/providers/QueryProvider';
-import { ThemeProvider } from '@/shared/providers/ThemeProvider';
 import { AppChrome } from '@/shared/components/AppChrome';
 import { siteProfile } from '@/shared/constants/siteProfile';
 
@@ -17,13 +16,11 @@ export default function RootLayout({
     children: React.ReactNode;
 }>) {
     return (
-        <html lang="zh-CN" suppressHydrationWarning>
+        <html lang="zh-CN" className="dark" data-theme="dark">
             <body className="font-sans bg-background text-foreground transition-colors duration-300">
-                <ThemeProvider>
-                    <QueryProvider>
-                        <AppChrome>{children}</AppChrome>
-                    </QueryProvider>
-                </ThemeProvider>
+                <QueryProvider>
+                    <AppChrome>{children}</AppChrome>
+                </QueryProvider>
             </body>
         </html>
     );

@@ -31,18 +31,18 @@ export function TopicGrid({ categories }: TopicGridProps) {
                         <Link
                             key={topic.rawName}
                             href={topic.href}
-                            className="group rounded-3xl border border-card-border/80 bg-card-bg/70 p-6 shadow-sm transition-all motion-transition hover:-translate-y-1 hover:border-primary/30 hover:shadow-xl"
+                            className="group rounded-3xl border border-card-border/80 bg-card-bg/70 p-5 shadow-sm transition-all motion-transition hover:-translate-y-1 hover:border-primary/30 hover:shadow-xl sm:p-6"
                         >
-                            <div className="mb-4 flex items-start justify-between gap-4">
+                            <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
                                 <div>
-                                    <h3 className="text-xl font-semibold transition-colors group-hover:text-primary">
+                                    <h3 className="text-lg font-semibold transition-colors group-hover:text-primary sm:text-xl">
                                         {topic.displayName}
                                     </h3>
                                     <p className="mt-2 text-sm leading-7 text-text-muted">
                                         {topic.description}
                                     </p>
                                 </div>
-                                <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
+                                <span className="self-start rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
                                     {topic.count} 篇
                                 </span>
                             </div>

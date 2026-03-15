@@ -14,7 +14,7 @@ export function Footer() {
     useEffect(() => {
         let cancelled = false;
 
-        categoryApi.getList()
+        categoryApi.getPublicList()
             .then((result) => {
                 if (cancelled) return;
                 setCategories(result || []);

@@ -28,7 +28,7 @@ export default function PostsPage() {
     const [sortMode, setSortMode] = useState<SortMode>('latest');
 
     useEffect(() => {
-        categoryApi.getList().then(setCategories).catch(() => setCategories([]));
+        categoryApi.getPublicList().then(setCategories).catch(() => setCategories([]));
     }, []);
 
     useEffect(() => {
@@ -36,13 +36,20 @@ export default function PostsPage() {
             setLoading(true);
 
             try {
-                const res = await articleApi.getList({
-                    page: currentPage,
-                    pageSize: PAGE_SIZE,
-                    keyword: searchQuery || undefined,
-                    category: selectedCategory || undefined,
-                    preview: 1,
-                });
+                const res = selectedCategory
+                    ? await categoryApi.getPublicDetail(selectedCategory, {
+                        page: currentPage,
+                        pageSize: PAGE_SIZE,
+                        keyword: searchQuery || undefined,
+                        preview: 1,
+                    })
+                    : await articleApi.getList({
+                        page: currentPage,
+                        pageSize: PAGE_SIZE,
+                        keyword: searchQuery || undefined,
+                        preview: 1,
+                        type: true,
+                    });
                 setArticles(res.rows || []);
                 setTotalCount(res.count || 0);
             } catch (error) {
@@ -107,14 +114,14 @@ export default function PostsPage() {
     };
 
     return (
-        <div className="min-h-screen pb-16 pt-20">
-            <div className="bg-gradient-to-br from-primary/10 via-pink-100/20 to-purple-100/10 py-16 dark:from-primary/5 dark:via-purple-900/10 dark:to-transparent">
+        <div className="min-h-screen pb-12 pt-20 md:pb-16">
+            <div className="bg-gradient-to-br from-primary/10 via-pink-100/20 to-purple-100/10 py-14 dark:from-primary/5 dark:via-purple-900/10 dark:to-transparent sm:py-16">
                 <div className="container mx-auto max-w-6xl px-4 space-y-6">
                     <div className="space-y-3 text-center">
                         <p className="text-sm font-medium uppercase tracking-[0.28em] text-primary/80">
                             Content Index
                         </p>
-                        <h1 className="text-4xl font-bold font-serif">文章索引</h1>
+                        <h1 className="text-3xl font-bold font-serif sm:text-4xl">文章索引</h1>
                         <p className="mx-auto max-w-3xl text-sm leading-7 text-text-muted">
                             不只是按时间堆文章，而是尽量让你更快判断：这篇是在写技术、读书、生活还是日常，现在哪一篇最适合你打开。
                         </p>
@@ -125,18 +132,18 @@ export default function PostsPage() {
                         </p>
                     </div>
 
-                    <form onSubmit={handleSearch} className="relative mx-auto max-w-2xl">
+                    <form onSubmit={handleSearch} className="mx-auto max-w-2xl sm:relative">
                         <input
                             type="text"
                             value={searchInput}
                             onChange={(event) => setSearchInput(event.target.value)}
                             placeholder="搜索文章标题、内容，或者你此刻关心的主题..."
-                            className="w-full rounded-2xl border border-card-border bg-white/80 px-6 py-4 pl-12 shadow-lg backdrop-blur-sm transition-all focus:outline-none focus:ring-2 focus:ring-primary/50 dark:bg-gray-800/80"
+                            className="w-full rounded-2xl border border-card-border bg-white/80 px-6 py-4 pl-12 pr-4 shadow-lg backdrop-blur-sm transition-all focus:outline-none focus:ring-2 focus:ring-primary/50 dark:bg-gray-800/80 sm:pr-28"
                         />
                         <FaSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-text-muted" />
                         <button
                             type="submit"
-                            className="absolute right-2 top-1/2 -translate-y-1/2 rounded-xl bg-primary px-6 py-2 text-white transition-colors hover:bg-primary/90"
+                            className="mt-3 w-full rounded-xl bg-primary px-6 py-2 text-white transition-colors hover:bg-primary/90 sm:absolute sm:right-2 sm:top-1/2 sm:mt-0 sm:w-auto sm:-translate-y-1/2"
                         >
                             搜索
                         </button>
@@ -228,7 +235,7 @@ export default function PostsPage() {
                                 title={article.title}
                                 summary={getArticleExcerpt(article.content, 150)}
                                 content={article.content}
-                                cover={article.cover}
+                                cover={article.cardCover || article.cover}
                                 createdAt={article.createdAt}
                                 category={article.category || article.categories?.[0]}
                                 tags={article.tags}
@@ -257,7 +264,7 @@ export default function PostsPage() {
                 )}
 
                 {totalPages > 1 ? (
-                    <div className="mt-12 flex justify-center items-center gap-2">
+                    <div className="mt-12 flex flex-wrap items-center justify-center gap-2">
                         <button
                             onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}
                             disabled={currentPage === 1}

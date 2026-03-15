@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useCallback, useEffect, useEffectEvent, useState, useSyncExternalStore } from 'react';
 import { FaList, FaTimes } from 'react-icons/fa';
 import { clsx } from 'clsx';
 import { createHeadingIdResolver } from '@/shared/utils/headingId';
@@ -37,18 +37,40 @@ export const TableOfContents = ({ content, contentSelector = '#article-content' 
     const [headings, setHeadings] = useState<TocItem[]>([]);
     const [activeId, setActiveId] = useState<string>('');
     const [isOpen, setIsOpen] = useState(false);
-    const [isMobile, setIsMobile] = useState(false);
+    const syncHeadings = useEffectEvent((items: TocItem[]) => {
+        setHeadings(items);
+    });
+    const isMobile = useSyncExternalStore(
+        (onStoreChange) => {
+            if (typeof window === 'undefined') {
+                return () => undefined;
+            }
+
+            const mediaQuery = window.matchMedia('(max-width: 1023px)');
+            const handleChange = () => onStoreChange();
+
+            mediaQuery.addEventListener('change', handleChange);
+            return () => {
+                mediaQuery.removeEventListener('change', handleChange);
+            };
+        },
+        () => typeof window !== 'undefined' && window.matchMedia('(max-width: 1023px)').matches,
+        () => false
+    );
 
     // 提取标题
     useEffect(() => {
         // 如果提供了 content，从 Markdown 提取标题
         if (content) {
             const items = extractHeadingsFromMarkdown(content);
-            setHeadings(items);
+            syncHeadings(items);
         } else {
             // 否则从 DOM 提取
             const contentElement = document.querySelector(contentSelector);
-            if (!contentElement) return;
+            if (!contentElement) {
+                syncHeadings([]);
+                return;
+            }
 
             const headingElements = contentElement.querySelectorAll('h1, h2, h3, h4');
             const items: TocItem[] = [];
@@ -66,14 +88,8 @@ export const TableOfContents = ({ content, contentSelector = '#article-content' 
                 });
             });
 
-            setHeadings(items);
+            syncHeadings(items);
         }
-
-        // 检测移动端
-        const checkMobile = () => setIsMobile(window.innerWidth < 1024);
-        checkMobile();
-        window.addEventListener('resize', checkMobile);
-        return () => window.removeEventListener('resize', checkMobile);
     }, [content, contentSelector]);
 
     // 滚动监听，高亮当前标题
@@ -128,7 +144,7 @@ export const TableOfContents = ({ content, contentSelector = '#article-content' 
                 {/* 浮动按钮 */}
                 <button
                     onClick={() => setIsOpen(!isOpen)}
-                    className="fixed right-4 bottom-32 z-40 p-3 bg-primary text-white rounded-full shadow-lg hover:scale-110 transition-transform motion-transition"
+                    className="fixed left-4 bottom-[calc(env(safe-area-inset-bottom)+5rem)] z-40 rounded-full bg-primary p-3 text-white shadow-lg transition-transform motion-transition hover:scale-110"
                     title="文章目录"
                 >
                     {isOpen ? <FaTimes size={18} /> : <FaList size={18} />}
@@ -137,7 +153,7 @@ export const TableOfContents = ({ content, contentSelector = '#article-content' 
                 {/* 目录面板 */}
                 <div
                     className={clsx(
-                        'fixed right-4 bottom-48 z-40 w-64 max-h-80 bg-card-bg/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-card-border overflow-hidden transition-all motion-transition',
+                        'fixed inset-x-4 bottom-[calc(env(safe-area-inset-bottom)+9rem)] z-40 max-h-[min(24rem,55vh)] overflow-hidden rounded-2xl border border-card-border bg-card-bg/95 backdrop-blur-xl shadow-2xl transition-all motion-transition',
                         isOpen ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 pointer-events-none'
                     )}
                 >
@@ -147,13 +163,13 @@ export const TableOfContents = ({ content, contentSelector = '#article-content' 
                             文章目录
                         </h4>
                     </div>
-                    <nav className="max-h-60 overflow-y-auto p-2">
+                    <nav className="max-h-[min(20rem,45vh)] overflow-y-auto p-2">
                         {headings.map((heading) => (
                             <button
                                 key={heading.id}
                                 onClick={() => scrollToHeading(heading.id)}
                                 className={clsx(
-                                    'w-full text-left px-3 py-2 text-sm rounded-lg transition-colors motion-transition truncate',
+                                    'w-full rounded-lg px-3 py-2 text-left text-sm transition-colors motion-transition',
                                     activeId === heading.id
                                         ? 'bg-primary/10 text-primary font-medium'
                                         : 'text-text-muted hover:bg-card-border/50 hover:text-foreground'

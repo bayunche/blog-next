@@ -1,13 +1,16 @@
 const Router = require('koa-router')
+
 const router = new Router({ prefix: '/upload' })
 
 const {
   uploadImage,
-  uploadImages
+  uploadImages,
+  uploadLocalImage,
 } = require('../controllers/upload')
 
 router
-  .post('/image', uploadImage) // 上传单张图片
-  .post('/images', uploadImages) // 批量上传图片
+  .post('/image', uploadImage)
+  .post('/image/local', uploadLocalImage)
+  .post('/images', uploadImages)
 
 module.exports = router

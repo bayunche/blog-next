@@ -51,7 +51,14 @@ services:
       GITHUB_CLIENT_SECRET: ${GITHUB_CLIENT_SECRET:-}
       ADMIN_GITHUB_LOGIN_NAME: ${ADMIN_GITHUB_LOGIN_NAME:-}
       GITHUB_REDIRECT_URI: ${NEXT_PUBLIC_GITHUB_REDIRECT_URI:-http://localhost/api/conn/github/callback}
-      IMAGE_BED_TYPE: ${IMAGE_BED_TYPE:-chevereto}
+      IMAGE_BED_TYPE: ${IMAGE_BED_TYPE:-picui}
+      IMAGE_BED_PUBLIC_URL: ${IMAGE_BED_PUBLIC_URL:-https://free.picui.cn}
+      PICUI_API_URL: ${PICUI_API_URL:-https://picui.cn/api/v1}
+      PICUI_TOKEN: ${PICUI_TOKEN:-}
+      PICUI_STRATEGY_ID: ${PICUI_STRATEGY_ID:-9}
+      PICUI_PERMISSION: ${PICUI_PERMISSION:-}
+      PICUI_ALBUM_ID: ${PICUI_ALBUM_ID:-}
+      PICUI_EXPIRED_AT: ${PICUI_EXPIRED_AT:-}
       CHEVERETO_URL: ${CHEVERETO_URL:-}
       CHEVERETO_API_KEY: ${CHEVERETO_API_KEY:-}
     volumes:
@@ -78,6 +85,7 @@ services:
         NEXT_PUBLIC_REMARK42_SITE_ID: ${NEXT_PUBLIC_REMARK42_SITE_ID:-sakurairo}
         NEXT_PUBLIC_GITHUB_CLIENT_ID: ${NEXT_PUBLIC_GITHUB_CLIENT_ID:-}
         NEXT_PUBLIC_GITHUB_REDIRECT_URI: ${NEXT_PUBLIC_GITHUB_REDIRECT_URI:-http://localhost/api/conn/github/callback}
+        IMAGE_BED_PUBLIC_URL: ${IMAGE_BED_PUBLIC_URL:-https://free.picui.cn}
         CHEVERETO_URL: ${CHEVERETO_URL:-}
     container_name: sakurairo-web-dev
     restart: unless-stopped
@@ -92,6 +100,8 @@ services:
       NEXT_PUBLIC_REMARK42_SITE_ID: ${NEXT_PUBLIC_REMARK42_SITE_ID:-sakurairo}
       NEXT_PUBLIC_GITHUB_CLIENT_ID: ${NEXT_PUBLIC_GITHUB_CLIENT_ID:-}
       NEXT_PUBLIC_GITHUB_REDIRECT_URI: ${NEXT_PUBLIC_GITHUB_REDIRECT_URI:-http://localhost/api/conn/github/callback}
+      IMAGE_BED_PUBLIC_URL: ${IMAGE_BED_PUBLIC_URL:-https://free.picui.cn}
+      NEXT_PUBLIC_IMAGE_BED_URL: ${IMAGE_BED_PUBLIC_URL:-https://free.picui.cn}
       CHEVERETO_URL: ${CHEVERETO_URL:-}
     depends_on:
       - server

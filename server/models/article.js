@@ -1,5 +1,5 @@
 const moment = require('moment')
-// article 表
+// article 鐞?
 module.exports = (sequelize, dataTypes) => {
   const Article = sequelize.define(
     'article',
@@ -7,14 +7,15 @@ module.exports = (sequelize, dataTypes) => {
       id: { type: dataTypes.INTEGER(11), primaryKey: true, autoIncrement: true },
       title: { type: dataTypes.STRING(255), allowNull: false, unique: true },
       content: { type: dataTypes.TEXT },
-      cover: { type: dataTypes.STRING(500), allowNull: true }, // 封面图片URL
-      description: { type: dataTypes.STRING(500), allowNull: true }, // 文章描述
-      viewCount: { type: dataTypes.INTEGER(11), defaultValue: 0 }, // 阅读数
-      likeCount: { type: dataTypes.INTEGER(11), defaultValue: 0 }, // 点赞数
-      type: { type: dataTypes.BOOLEAN, defaultValue: true }, // 是否私密
+      cardCover: { type: dataTypes.STRING(500), allowNull: true },
+      cover: { type: dataTypes.STRING(500), allowNull: true }, // 鐏忎線娼伴崶鍓уURL
+      description: { type: dataTypes.STRING(500), allowNull: true }, // 閺傚洨鐝烽幓蹇氬牚
+      viewCount: { type: dataTypes.INTEGER(11), defaultValue: 0 }, // 闂冨懓顕伴弫?
+      likeCount: { type: dataTypes.INTEGER(11), defaultValue: 0 }, // 閻愮绂愰弫?
+      type: { type: dataTypes.BOOLEAN, defaultValue: true }, // 閺勵垰鎯佺粔浣哥槕
       top: { type: dataTypes.BOOLEAN, defaultValue: false },
-      musicId: { type: dataTypes.STRING(50), allowNull: true }, // 背景音乐 ID
-      musicName: { type: dataTypes.STRING(255), allowNull: true }, // 背景音乐名称
+      musicId: { type: dataTypes.STRING(50), allowNull: true }, // 閼冲本娅欓棅鍏呯 ID
+      musicName: { type: dataTypes.STRING(255), allowNull: true }, // 閼冲本娅欓棅鍏呯閸氬秶袨
       uuid: {
         type: dataTypes.STRING(32),
         allowNull: true,

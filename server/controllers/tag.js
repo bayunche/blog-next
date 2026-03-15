@@ -1,7 +1,13 @@
 // import models
-const { tag: TagModel, category: CategoryModel, sequelize } = require('../models')
-
-const normalizeName = value => String(value || '').trim().replace(/\s+/g, ' ')
+const { tag: TagModel, category: CategoryModel } = require('../models')
+const {
+  buildNormalizedWhere,
+  getPublicCategoryDetail,
+  getPublicCategorySummaries,
+  getPublicTagDetail,
+  getPublicTagSummaries,
+  normalizeName,
+} = require('../utils/taxonomy')
 
 const aggregateNameList = rows => {
   const merged = new Map()
@@ -27,15 +33,6 @@ const aggregateNameList = rows => {
   return Array.from(merged.values()).sort((left, right) => right.count - left.count || left.name.localeCompare(right.name, 'zh-Hans-CN'))
 }
 
-const buildNormalizedWhere = value => {
-  const normalized = normalizeName(value).toLowerCase()
-
-  return sequelize.where(
-    sequelize.fn('LOWER', sequelize.fn('TRIM', sequelize.col('name'))),
-    normalized
-  )
-}
-
 class TagController {
   static async getTagList(ctx) {
     const data = await TagModel.findAll({
@@ -49,6 +46,10 @@ class TagController {
     ctx.body = aggregateNameList(data)
   }
 
+  static async getPublicTagList(ctx) {
+    ctx.body = await getPublicTagSummaries()
+  }
+
   static async getCategoryList(ctx) {
     const data = await CategoryModel.findAll({
       attributes: ['name'],
@@ -59,6 +60,18 @@ class TagController {
     })
 
     ctx.body = aggregateNameList(data)
+  }
+
+  static async getPublicCategoryList(ctx) {
+    ctx.body = await getPublicCategorySummaries()
+  }
+
+  static async getPublicTagDetail(ctx) {
+    ctx.body = await getPublicTagDetail(ctx.params.name, ctx.query)
+  }
+
+  static async getPublicCategoryDetail(ctx) {
+    ctx.body = await getPublicCategoryDetail(ctx.params.name, ctx.query)
   }
 
   static async deleteTag(ctx) {

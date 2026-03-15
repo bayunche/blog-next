@@ -9,7 +9,7 @@ export const dynamic = 'force-dynamic';
 
 async function getRepresentativePosts() {
     try {
-        const result = await articleApi.getList({ page: 1, pageSize: 12, preview: 1 });
+        const result = await articleApi.getList({ page: 1, pageSize: 12, preview: 1, type: true });
         return [...(result.rows || [])]
             .sort((left, right) => (right.viewCount || 0) - (left.viewCount || 0))
             .slice(0, 3);
@@ -27,7 +27,7 @@ export default async function AboutPage() {
             <div className="absolute left-0 right-0 top-0 -z-10 h-96 bg-gradient-to-br from-primary/20 via-pink-200/30 to-purple-200/20 dark:from-primary/10 dark:via-purple-900/20 dark:to-transparent" />
 
             <div className="container mx-auto max-w-6xl px-4 py-12 space-y-10">
-                <section className="rounded-[2rem] border border-card-border bg-card-bg/85 p-8 shadow-xl backdrop-blur-sm md:p-10">
+                <section className="rounded-[2rem] border border-card-border bg-card-bg/85 p-5 shadow-xl backdrop-blur-sm sm:p-8 md:p-10">
                     <div className="flex flex-col gap-8 md:flex-row md:items-center">
                         <div className="relative h-32 w-32 overflow-hidden rounded-full border-4 border-white shadow-xl dark:border-gray-700">
                             <Image
@@ -43,7 +43,7 @@ export default async function AboutPage() {
                                 About Me
                             </p>
                             <div>
-                                <h1 className="bg-gradient-to-r from-primary to-pink-500 bg-clip-text text-3xl font-bold font-serif text-transparent md:text-4xl">
+                                <h1 className="bg-gradient-to-r from-primary to-pink-500 bg-clip-text text-2xl font-bold font-serif text-transparent sm:text-3xl md:text-4xl">
                                     {siteProfile.author.name}
                                 </h1>
                                 <p className="mt-2 flex items-center gap-2 text-sm text-text-muted">
@@ -82,8 +82,8 @@ export default async function AboutPage() {
                 </section>
 
                 <section className="grid gap-6 lg:grid-cols-[1.2fr_1fr]">
-                    <div className="rounded-[2rem] border border-card-border bg-card-bg/85 p-8 shadow-sm backdrop-blur-sm">
-                        <h2 className="flex items-center gap-3 text-2xl font-bold font-serif">
+                    <div className="rounded-[2rem] border border-card-border bg-card-bg/85 p-5 shadow-sm backdrop-blur-sm sm:p-8">
+                        <h2 className="flex items-center gap-3 text-xl font-bold font-serif sm:text-2xl">
                             <FaCode className="text-primary" />
                             我会写什么
                         </h2>
@@ -133,8 +133,8 @@ export default async function AboutPage() {
                     </div>
                 </section>
 
-                <section className="rounded-[2rem] border border-card-border bg-card-bg/85 p-8 shadow-sm backdrop-blur-sm">
-                    <h2 className="text-2xl font-bold font-serif">写作之外</h2>
+                <section className="rounded-[2rem] border border-card-border bg-card-bg/85 p-5 shadow-sm backdrop-blur-sm sm:p-8">
+                    <h2 className="text-xl font-bold font-serif sm:text-2xl">写作之外</h2>
                     <p className="mt-4 max-w-3xl text-sm leading-8 text-text-muted">
                         除了工作和技术，我也想保留一些“不必证明价值”的内容：最近读到的句子、一次散步后的情绪、某段时间的节奏变化，或者只是一个普通却想记住的夜晚。
                     </p>
@@ -151,10 +151,10 @@ export default async function AboutPage() {
                     </div>
                 </section>
 
-                <section className="rounded-[2rem] border border-card-border bg-card-bg/85 p-8 shadow-sm backdrop-blur-sm">
+                <section className="rounded-[2rem] border border-card-border bg-card-bg/85 p-5 shadow-sm backdrop-blur-sm sm:p-8">
                     <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
                         <div>
-                            <h2 className="flex items-center gap-3 text-2xl font-bold font-serif">
+                            <h2 className="flex items-center gap-3 text-xl font-bold font-serif sm:text-2xl">
                                 <FaStar className="text-primary" />
                                 代表作 / 建议先看
                             </h2>

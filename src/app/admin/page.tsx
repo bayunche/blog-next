@@ -328,20 +328,20 @@ export default function AdminDashboard() {
         <div className="space-y-6 animate-fade-in-up">
             <h2 className="text-2xl font-bold">欢迎回来，{user?.username}</h2>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-lg border border-slate-200 dark:border-slate-700 transition-transform text-slate-800 dark:text-slate-100">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-3 md:gap-6">
+                <div className="rounded-2xl border border-slate-200 bg-white p-5 text-slate-800 shadow-lg transition-transform dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 sm:p-6">
                     <h3 className="text-slate-500 dark:text-slate-400 text-sm font-medium">文章总数</h3>
                     <p className="text-3xl font-bold mt-2 bg-gradient-to-r from-pink-500 to-pink-400 bg-clip-text text-transparent">
                         {loading ? '...' : formatCount(stats.articleCount)}
                     </p>
                 </div>
-                <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-lg border border-slate-200 dark:border-slate-700 transition-transform text-slate-800 dark:text-slate-100">
+                <div className="rounded-2xl border border-slate-200 bg-white p-5 text-slate-800 shadow-lg transition-transform dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 sm:p-6">
                     <h3 className="text-slate-500 dark:text-slate-400 text-sm font-medium">评论总数</h3>
                     <p className="text-3xl font-bold mt-2 bg-gradient-to-r from-purple-500 to-purple-400 bg-clip-text text-transparent">
                         {loading ? '...' : formatCount(stats.commentCount)}
                     </p>
                 </div>
-                <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-lg border border-slate-200 dark:border-slate-700 transition-transform text-slate-800 dark:text-slate-100">
+                <div className="rounded-2xl border border-slate-200 bg-white p-5 text-slate-800 shadow-lg transition-transform dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 sm:p-6">
                     <h3 className="text-slate-500 dark:text-slate-400 text-sm font-medium">访问总量</h3>
                     <p className="text-3xl font-bold mt-2 bg-gradient-to-r from-blue-500 to-blue-400 bg-clip-text text-transparent">
                         {loading ? '...' : formatCount(stats.viewCount)}
@@ -349,7 +349,7 @@ export default function AdminDashboard() {
                 </div>
             </div>
 
-            <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-lg border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 space-y-5">
+            <div className="space-y-5 rounded-2xl border border-slate-200 bg-white p-5 text-slate-800 shadow-lg dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 sm:p-6">
                 <div className="flex items-center justify-between flex-wrap gap-2">
                     <h3 className="text-lg font-semibold">网易云播放配置（管理员）</h3>
                     <span className={`text-xs px-2 py-1 rounded-full ${musicStatus.loggedIn ? 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300' : 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-300'}`}>
@@ -365,7 +365,7 @@ export default function AdminDashboard() {
                     {musicStatus.error ? <p className="text-red-500">状态检查错误：{musicStatus.error}</p> : null}
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
                     <div className="space-y-2">
                         <label className="text-sm font-medium">手动粘贴网易云 Cookie</label>
                         <textarea
@@ -435,7 +435,7 @@ export default function AdminDashboard() {
                     </div>
 
                     {displayQrImage ? (
-                        <div className="w-48 h-48 bg-white rounded-xl border border-slate-200 dark:border-slate-700 p-2">
+                        <div className="h-48 w-full max-w-48 rounded-xl border border-slate-200 bg-white p-2 dark:border-slate-700">
                             <img src={displayQrImage} alt="网易云扫码登录二维码" className="w-full h-full object-contain" />
                         </div>
                     ) : null}

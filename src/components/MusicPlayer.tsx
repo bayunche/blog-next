@@ -366,7 +366,7 @@ export const MusicPlayer = () => {
                 {audioElement}
                 <button
                     onClick={() => setMinimized(false)}
-                    className="fixed right-20 bottom-4 z-40 p-4 bg-gradient-to-br from-pink-400 via-purple-400 to-indigo-400 text-white rounded-full shadow-xl hover:scale-110 hover:shadow-pink-300/50 transition-all motion-transition animate-pulse-slow font-sans"
+                    className="fixed left-4 bottom-[calc(env(safe-area-inset-bottom)+1rem)] z-40 rounded-full bg-gradient-to-br from-pink-400 via-purple-400 to-indigo-400 p-3.5 font-sans text-white shadow-xl transition-all motion-transition animate-pulse-slow hover:scale-110 hover:shadow-pink-300/50 sm:bottom-4 sm:left-auto sm:right-20 sm:p-4"
                     title="打开音乐播放器"
                 >
                     <FaMusic size={20} />
@@ -380,7 +380,7 @@ export const MusicPlayer = () => {
 
     // 渲染歌词视图
     const renderLyricsView = () => (
-        <div className="h-48 font-sans">
+        <div className="h-44 font-sans sm:h-48">
             <div className="flex items-center justify-between px-4 py-2 border-b border-pink-200/50 dark:border-purple-700/50">
                 <span className="text-xs font-medium text-text-muted">歌词</span>
                 <button
@@ -392,7 +392,7 @@ export const MusicPlayer = () => {
             </div>
             <div
                 ref={lyricsContainerRef}
-                className="h-40 overflow-y-auto px-4 py-2 scrollbar-hide"
+                className="h-36 overflow-y-auto px-4 py-2 scrollbar-hide sm:h-40"
             >
                 {loadingLyrics ? (
                     <div className="flex items-center justify-center h-full text-text-muted text-sm">
@@ -424,7 +424,7 @@ export const MusicPlayer = () => {
 
     // 渲染播放列表视图
     const renderPlaylistView = () => (
-        <div className="max-h-48 overflow-y-auto border-t border-pink-200/50 dark:border-purple-700/50 font-sans">
+        <div className="max-h-44 overflow-y-auto border-t border-pink-200/50 font-sans dark:border-purple-700/50 sm:max-h-48">
             <div className="flex items-center justify-between px-4 py-2 sticky top-0 bg-inherit z-10">
                 <span className="text-xs font-medium text-text-muted">
                     播放列表 ({playlist.length} 首)
@@ -436,7 +436,7 @@ export const MusicPlayer = () => {
                     key={`${track.id}-${index}`}
                     onClick={() => playTrack(index)}
                     className={clsx(
-                        "w-full flex items-center gap-3 px-4 py-2 text-left hover:bg-purple-100/50 dark:hover:bg-purple-900/30 transition-colors motion-transition",
+                        "flex w-full items-center gap-3 px-4 py-2 text-left transition-colors motion-transition hover:bg-purple-100/50 dark:hover:bg-purple-900/30",
                         index === currentIndex && "bg-purple-100/50 dark:bg-purple-900/30"
                     )}
                 >
@@ -471,17 +471,17 @@ export const MusicPlayer = () => {
     return (
         <>
         {audioElement}
-        <div className="fixed right-4 bottom-4 z-40 w-80 bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 overflow-hidden text-gray-900 dark:text-gray-100 font-sans">
+        <div className="fixed inset-x-4 bottom-[calc(env(safe-area-inset-bottom)+1rem)] z-40 overflow-hidden rounded-2xl border border-gray-200 bg-white/95 font-sans text-gray-900 shadow-2xl backdrop-blur-xl dark:border-gray-700 dark:bg-gray-900/95 dark:text-gray-100 sm:inset-x-auto sm:right-4 sm:bottom-4 sm:w-80">
 
             {/* 头部 */}
-            <div className="relative h-28 overflow-hidden bg-gradient-to-br from-purple-500 to-pink-500">
+            <div className="relative h-24 overflow-hidden bg-gradient-to-br from-purple-500 to-pink-500 sm:h-28">
                 <div
                     className="absolute inset-0 bg-cover bg-center blur-xl scale-110 opacity-60"
                     style={{ backgroundImage: `url(${currentTrack?.cover})` }}
                 />
                 <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/40" />
 
-                <div className="absolute left-4 top-3 w-20 h-20 rounded-xl overflow-hidden shadow-lg ring-2 ring-white/20">
+                <div className="absolute left-4 top-3 h-16 w-16 overflow-hidden rounded-xl shadow-lg ring-2 ring-white/20 sm:h-20 sm:w-20">
                     <img
                         src={currentTrack?.cover}
                         alt={currentTrack?.name}
@@ -492,7 +492,7 @@ export const MusicPlayer = () => {
                     />
                 </div>
 
-                <div className="absolute left-28 top-3 right-4">
+                <div className="absolute left-24 right-4 top-3 sm:left-28">
                     <h4 className="text-sm font-bold text-white truncate drop-shadow-lg">
                         {currentTrack?.name}
                     </h4>
@@ -551,7 +551,7 @@ export const MusicPlayer = () => {
                         </div>
                     </div>
 
-                    <div className="flex items-center justify-center gap-4 py-2">
+                    <div className="flex items-center justify-center gap-2 px-2 py-2 sm:gap-4">
                         <button
                             onClick={() => setShuffle(!shuffle)}
                             className={clsx(
@@ -571,7 +571,7 @@ export const MusicPlayer = () => {
                         </button>
                         <button
                             onClick={togglePlay}
-                            className="p-4 bg-gradient-to-br from-pink-400 via-purple-400 to-indigo-400 text-white rounded-full shadow-lg hover:scale-110 hover:shadow-purple-300/50 transition-all motion-transition"
+                            className="rounded-full bg-gradient-to-br from-pink-400 via-purple-400 to-indigo-400 p-3.5 text-white shadow-lg transition-all motion-transition hover:scale-110 hover:shadow-purple-300/50 sm:p-4"
                             title={playing ? "暂停" : "播放"}
                         >
                             {playing ? <FaPause size={18} /> : <FaPlay size={18} className="ml-0.5" />}
@@ -598,7 +598,7 @@ export const MusicPlayer = () => {
                         </button>
                     </div>
 
-                    <div className="flex items-center justify-between px-4 py-2 border-t border-pink-200/50 dark:border-purple-700/50">
+                    <div className="flex flex-wrap items-center justify-between gap-3 border-t border-pink-200/50 px-4 py-2 dark:border-purple-700/50">
                         <div className="flex items-center gap-2">
                             <button
                                 onClick={toggleMute}

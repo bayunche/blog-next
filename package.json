@@ -7,7 +7,10 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test:music:smoke": "node scripts/music_playback_smoke.js"
+    "test:music:smoke": "node scripts/music_playback_smoke.js",
+    "openspec:list": "openspec list",
+    "openspec:status": "openspec status",
+    "openspec:validate": "openspec validate --all"
   },
   "dependencies": {
     "@ant-design/icons": "^6.1.0",
@@ -37,6 +40,7 @@
     "zustand": "^5.0.10"
   },
   "devDependencies": {
+    "@fission-ai/openspec": "^1.2.0",
     "@tailwindcss/postcss": "^4",
     "@types/crypto-js": "^4.2.2",
     "@types/node": "^20",

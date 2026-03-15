@@ -8,6 +8,7 @@ export interface Article {
     updatedAt: string
     viewCount: number
     cover?: string
+    cardCover?: string
     description?: string
     music?: unknown
     musicId?: string | null
@@ -48,6 +49,7 @@ export interface ArchiveArticle {
     title: string
     description?: string
     cover?: string
+    cardCover?: string
     viewCount: number
     likeCount?: number
     commentCount: number

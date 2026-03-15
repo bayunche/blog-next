@@ -14,7 +14,7 @@ export default function TagListPage() {
         try {
             const res = await tagApi.getList();
             setTags(res);
-        } catch (error) {
+        } catch {
             message.error('获取标签失败');
         } finally {
             setLoading(false);
@@ -30,7 +30,7 @@ export default function TagListPage() {
             await tagApi.delete(record.name);
             message.success('标签删除成功');
             fetchTags();
-        } catch (error) {
+        } catch {
             message.error('标签删除失败');
         }
     };
@@ -46,7 +46,7 @@ export default function TagListPage() {
                     await tagApi.update(record.name, newName);
                     message.success('标签已更新');
                     fetchTags();
-                } catch (err) {
+                } catch {
                     message.error('标签更新失败');
                 }
             }

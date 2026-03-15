@@ -6,6 +6,11 @@ const ARTICLE_COLUMNS = {
     allowNull: true,
     comment: 'cover image url',
   },
+  cardCover: {
+    type: Sequelize.STRING(500),
+    allowNull: true,
+    comment: 'article card image url',
+  },
   description: {
     type: Sequelize.STRING(500),
     allowNull: true,

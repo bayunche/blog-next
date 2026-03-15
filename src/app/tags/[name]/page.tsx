@@ -1,7 +1,8 @@
 import Link from 'next/link';
 import { FaChevronLeft, FaTags } from 'react-icons/fa';
 import { ArticleCard } from '@/features/article/components/ArticleCard';
-import { articleApi, Article } from '@/shared/api/article';
+import { Article } from '@/shared/api/article';
+import { tagApi } from '@/shared/api/tag';
 import { getTagMeta } from '@/shared/constants/tagMeta';
 import { getArticleExcerpt } from '@/shared/utils/getArticleExcerpt';
 import { estimateReadingMinutes, getPrimaryCategory } from '@/shared/utils/articleDisplay';
@@ -16,58 +17,40 @@ function decodeTagName(value: string) {
     }
 }
 
-async function getArticlesByTag(tagName: string) {
+async function getTagPageData(tagName: string) {
     try {
-        return await articleApi.getList({
+        return await tagApi.getPublicDetail(tagName, {
             page: 1,
             pageSize: 50,
-            tag: tagName,
             preview: 1,
         });
     } catch (error) {
-        console.error('Failed to fetch tag articles:', error);
-        return { rows: [], count: 0 };
+        console.error('Failed to fetch tag page data:', error);
+        return {
+            tag: { name: tagName, displayName: tagName },
+            rows: [],
+            count: 0,
+            relatedTags: [],
+            relatedCategories: [],
+        };
     }
-}
-
-function buildRelatedTags(tagName: string, articles: Article[]): string[] {
-    const current = tagName.trim().toLowerCase();
-    const counter = new Map<string, { name: string; count: number }>();
-
-    for (const article of articles) {
-        for (const tag of article.tags || []) {
-            const normalizedName = String(tag?.name || '').trim();
-            if (!normalizedName || normalizedName.toLowerCase() === current) continue;
-
-            const key = normalizedName.toLowerCase();
-            const existing = counter.get(key);
-
-            if (existing) {
-                existing.count += 1;
-            } else {
-                counter.set(key, { name: normalizedName, count: 1 });
-            }
-        }
-    }
-
-    return Array.from(counter.values())
-        .sort((left, right) => right.count - left.count || left.name.localeCompare(right.name, 'zh-Hans-CN'))
-        .slice(0, 6)
-        .map((item) => item.name);
 }
 
 export default async function TagPage({ params }: { params: Promise<{ name: string }> }) {
     const { name } = await params;
     const tagName = decodeTagName(name);
-    const result = await getArticlesByTag(tagName);
+    const result = await getTagPageData(tagName);
     const articles = result.rows || [];
-    const tagMeta = getTagMeta(tagName);
-    const relatedTags = buildRelatedTags(tagName, articles);
-    const displayRelatedTags = relatedTags.length > 0 ? relatedTags : tagMeta.relatedTags;
+    const canonicalTagName = result.tag?.displayName || tagName;
+    const tagMeta = getTagMeta(canonicalTagName);
+    const displayRelatedTags = (result.relatedTags || []).length > 0
+        ? result.relatedTags.map((item) => item.name)
+        : tagMeta.relatedTags;
+    const relatedCategories = result.relatedCategories || [];
 
     return (
-        <div className="min-h-screen pb-16 pt-20">
-            <div className="bg-gradient-to-br from-green-100/30 via-white to-primary/10 py-16 dark:from-gray-900/20 dark:via-gray-900/10 dark:to-primary/10">
+        <div className="min-h-screen pb-12 pt-20 md:pb-16">
+            <div className="bg-gradient-to-br from-green-100/30 via-white to-primary/10 py-14 dark:from-gray-900/20 dark:via-gray-900/10 dark:to-primary/10 sm:py-16">
                 <div className="container mx-auto max-w-6xl px-4 space-y-6">
                     <Link
                         href="/posts"
@@ -81,9 +64,9 @@ export default async function TagPage({ params }: { params: Promise<{ name: stri
                         <p className="text-sm font-medium uppercase tracking-[0.28em] text-primary/80">
                             Keyword Collection
                         </p>
-                        <h1 className="flex items-center gap-3 text-4xl font-bold font-serif">
+                        <h1 className="flex items-center gap-3 text-3xl font-bold font-serif sm:text-4xl">
                             <FaTags className="text-green-500" />
-                            #{tagName}
+                            #{canonicalTagName}
                         </h1>
                         <p className="max-w-3xl text-sm leading-7 text-text-muted">
                             {tagMeta.description}
@@ -107,6 +90,21 @@ export default async function TagPage({ params }: { params: Promise<{ name: stri
                             ))}
                         </div>
                     ) : null}
+
+                    {relatedCategories.length > 0 ? (
+                        <div className="flex flex-wrap gap-3">
+                            <span className="text-sm text-text-muted">相关分类：</span>
+                            {relatedCategories.map((category) => (
+                                <Link
+                                    key={category.name}
+                                    href={`/categories/${encodeURIComponent(category.name)}`}
+                                    className="rounded-full border border-card-border px-3 py-1.5 text-sm text-text-muted transition-colors hover:border-primary/30 hover:text-primary"
+                                >
+                                    {category.name}
+                                </Link>
+                            ))}
+                        </div>
+                    ) : null}
                 </div>
             </div>
 
@@ -120,7 +118,7 @@ export default async function TagPage({ params }: { params: Promise<{ name: stri
                                 title={article.title}
                                 summary={getArticleExcerpt(article.content, 150)}
                                 content={article.content}
-                                cover={article.cover}
+                                cover={article.cardCover || article.cover}
                                 createdAt={article.createdAt}
                                 category={getPrimaryCategory(article)}
                                 tags={article.tags}
@@ -132,7 +130,7 @@ export default async function TagPage({ params }: { params: Promise<{ name: stri
                         ))}
                     </div>
                 ) : (
-                    <div className="rounded-3xl border border-dashed border-card-border bg-card-bg/70 px-6 py-16 text-center">
+                    <div className="rounded-3xl border border-dashed border-card-border bg-card-bg/70 px-6 py-12 text-center sm:py-16">
                         <div className="mb-4 text-6xl">🏷️</div>
                         <h3 className="mb-2 text-xl font-bold">这个标签下还没有文章</h3>
                         <p className="text-text-muted">试试相关标签，或者先去首页看看推荐阅读。</p>

@@ -28,7 +28,7 @@ export function FeaturedPosts({ posts }: FeaturedPostsProps) {
                 </div>
                 <Link
                     href="/posts"
-                    className="inline-flex items-center gap-2 text-sm font-medium text-primary transition-colors hover:text-primary/80"
+                    className="inline-flex self-start items-center gap-2 text-sm font-medium text-primary transition-colors hover:text-primary/80"
                 >
                     查看全部文章
                     <FaArrowRight size={12} />

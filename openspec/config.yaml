@@ -1,0 +1,29 @@
+schema: spec-driven
+context: |
+  Repository shape:
+  - Public site: Next.js 16 App Router in `src/` with React 19, Tailwind 4, TanStack Query, and Zustand.
+  - Backoffice: admin pages inside the same Next.js application.
+  - Backend API: Koa + Sequelize 5 service in `server/`, reached through Next.js rewrites from `/api/*`.
+  - Data/runtime: MySQL, upload serving from `/public/uploads/*`, GitHub OAuth, optional image bed integration, and a music-related API/service.
+
+  Current audit findings that must inform future proposals:
+  - `openclaw.json` is tracked and contains secret-like local configuration values.
+  - `npm run lint` currently fails because linting scans active code together with legacy server JavaScript, vendor bundles, and temporary artifacts.
+  - `npm run build` currently fails because the local dependency install is missing the Windows native `lightningcss` binary.
+  - The repository often contains user worktree changes; avoid overwriting unrelated modifications.
+  - `.spec-workflow/` exists as legacy planning state, but OpenSpec is the canonical planning system for this repository.
+
+rules:
+  proposal:
+    - Write every proposal from an architecture-owner perspective, not as a single-file patch list.
+    - Evaluate impact across frontend, backoffice, backend API, database schema, uploads/media, auth, deployment, observability, docs, and tests.
+    - Call out untouched capabilities explicitly so the blast radius is clear.
+    - Do not move into implementation until the user has reviewed the proposal package.
+  design:
+    - Document at least one alternative that was considered and why it was rejected.
+    - Include migration, rollback, compatibility, dependency, and security implications when relevant.
+    - Surface operational risks, monitoring gaps, and runtime constraints explicitly.
+  tasks:
+    - Split work by impacted domain when a change crosses frontend, backend, data, or deployment boundaries.
+    - Include validation work for lint, build, tests, or explain why a check cannot run.
+    - Keep tasks small enough to review and approve incrementally.
