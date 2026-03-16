@@ -3,6 +3,14 @@
 ### Requirement: Runtime delivery provides a canonical production entrypoint
 The repository SHALL provide one canonical production delivery workflow that can build runtime images, start the production compose stack, and export the built production images without requiring operators to choose between divergent script implementations.
 
+#### Scenario: Choose the execution branch interactively with no flags
+- **WHEN** an operator runs the canonical delivery script without any flags
+- **THEN** the script presents an interactive selection flow so the operator can choose the target environment and whether to start services or export images after the build
+
+#### Scenario: Keep explicit flags non-interactive
+- **WHEN** an operator supplies explicit flags to the canonical delivery script
+- **THEN** the script executes the requested branch directly without entering the interactive selection flow
+
 #### Scenario: Build and start the production stack
 - **WHEN** an operator runs the canonical production delivery workflow in deploy mode
 - **THEN** the workflow uses the production env file and production compose overlay, builds the required runtime images, and starts the production services

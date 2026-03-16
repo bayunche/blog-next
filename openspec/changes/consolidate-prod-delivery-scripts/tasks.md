@@ -18,6 +18,11 @@
 - [x] 4.1 Run targeted validation for the canonical production deploy path, the build-without-start path, and the export path.
 - [x] 4.2 Run practical syntax or dry-run validation for any retained Bash and PowerShell wrappers plus compose resolution, and document residual risk from the repository's known global lint/build issues.
 
+## 5. Interactive Default Mode
+
+- [x] 5.1 Update `build.sh` so running it without flags enters an interactive selection flow for environment and post-build action, while explicit flags remain non-interactive.
+- [x] 5.2 Update deployment documentation and validation notes to cover the interactive no-flag workflow for both dev and prod branches.
+
 ## Validation Notes
 
 - `bash build.sh --help` prints the canonical production/development entrypoint help text.
@@ -26,4 +31,5 @@
 - PowerShell parser validation passes for `build_docker_prod.ps1` and `package_offline_docker.ps1`.
 - `docker compose --env-file .env.prod.template -f docker-compose.yml -f docker-compose.prod.yml config` and `docker compose -f docker-compose.dev.yml config` both pass after introducing explicit image names and removing obsolete Compose `version` fields.
 - A fake Docker harness was used to exercise `build.sh -e prod`, `build.sh -e prod --no-start`, and `build.sh -e prod --no-start --save`, verifying that the canonical script selects the production compose stack, suppresses startup for build-only mode, and exports the tagged `blog-sakurairo-*` images including `blog-sakurairo-db-backup`.
+- A no-flag interactive fake Docker harness was used to verify three guided branches: `prod` build+start with export enabled, `dev` build-only with clean build enabled, and `prod` stop-services mode. Explicit flag-driven export behavior remained non-interactive.
 - Residual repository risk remains unchanged: full application `npm run build` and `npm run lint` were not used as acceptance gates for this runtime-script change because the repository still carries known unrelated build/lint issues.

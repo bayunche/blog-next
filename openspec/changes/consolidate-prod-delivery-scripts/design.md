@@ -19,6 +19,7 @@ That means the problem is larger than duplicate shell code. Operators do not hav
 **Goals**
 
 - Provide one canonical production delivery entrypoint for build/deploy/export behavior.
+- Let operators who run `build.sh` without flags choose the desired branch of execution interactively.
 - Remove duplicated production deployment logic from legacy scripts.
 - Define stable runtime image references that all delivery workflows can share.
 - Keep Linux/macOS and Windows operators supported without maintaining independent orchestration logic.
@@ -51,6 +52,29 @@ Implementation direction:
 
 - consolidate the production logic into a single canonical script
 - if Windows needs a dedicated entrypoint, keep it as a thin wrapper around the same behavior model instead of a separate implementation tree
+
+### Decision: Make the no-flag invocation interactive and keep flagged invocations non-interactive
+
+When an operator runs `build.sh` with no flags, the script should present a guided selection flow that lets the operator choose:
+
+- target environment: `dev` or `prod`
+- follow-up action after build: start services, build only, or build and export
+- optional clean build behavior where appropriate
+
+When explicit flags are provided, the script should preserve direct non-interactive execution.
+
+Why:
+
+- this satisfies the operator requirement that the script can switch branches of handling at runtime without requiring memorized flags
+- it preserves scriptability for users who still want deterministic flag-driven invocations
+- it keeps one entrypoint for both guided and automated local use instead of reintroducing parallel scripts
+
+Implementation direction:
+
+- detect the zero-argument case before normal flag parsing exits into the default flow
+- present a minimal text-based menu in Bash
+- map the selected branch back onto the same internal execution path used by explicit flags
+- avoid interactive prompts when any meaningful flag is supplied
 
 ### Decision: Make runtime image names explicit in compose-managed services
 
@@ -99,6 +123,10 @@ Why:
 
 Rejected because documentation alone does not fix the current image-naming inconsistency or prevent the scripts from drifting further.
 
+### Alternative: Keep `build.sh` flag-only and add a second interactive helper script
+
+Rejected because it would split the canonical entrypoint again. The repository already has too many overlapping entry scripts, and the new requirement is specifically about `build.sh` itself supporting branch selection at runtime.
+
 ### Alternative: Merge deployment and offline packaging into one all-purpose script
 
 Rejected for this scope because offline packaging has materially different operator intent and output structure. It should share contract and helper logic, not become the default deploy path.
@@ -115,6 +143,7 @@ Rejected because the repository already has workable shell-based tooling. The im
 
 - [Operator habit breakage] Users familiar with legacy script names may need to switch to the canonical entrypoint. Mitigation: update docs clearly and use thin wrappers when appropriate.
 - [Windows parity risk] If Windows keeps a wrapper rather than a separate implementation, the wrapper contract must still cover the same production behaviors. Mitigation: validate the wrapper invocation paths explicitly.
+- [Interactive automation risk] A default interactive mode could block scripted usage if it triggers when callers expected a silent default. Mitigation: only enter the menu when no meaningful flags are supplied and preserve explicit flag behavior unchanged.
 - [Image-name migration risk] Changing to explicit image names may affect local caches or any external notes that referenced implicit compose images. Mitigation: document the new names and keep them stable.
 - [Secondary workflow compatibility] Offline packaging must be updated enough to consume the same image names, even if it is not otherwise redesigned. Mitigation: include compatibility validation in the implementation tasks.
 - [Validation limits] Full repository `npm run build` and `npm run lint` remain noisy or blocked for unrelated reasons. Mitigation: run targeted script and compose validation plus any shell/PowerShell syntax checks that are practical in the local environment.
@@ -124,8 +153,9 @@ Rejected because the repository already has workable shell-based tooling. The im
 1. Define the canonical production delivery behavior and explicit runtime image names in the relevant scripts and compose manifests.
 2. Converge legacy production script logic onto the canonical entrypoint.
 3. Adjust export and any compatible secondary packaging flow to resolve the shared explicit image references.
-4. Update deployment documentation to point at the canonical workflow and clearly separate offline packaging guidance.
-5. Run targeted validation for production deploy, build-only, and export behavior without modifying application features.
+4. Add the no-flag interactive selection path while preserving flagged non-interactive execution.
+5. Update deployment documentation to point at the canonical workflow and clearly separate offline packaging guidance.
+6. Run targeted validation for production deploy, development build, interactive selection, build-only, and export behavior without modifying application features.
 
 Rollback strategy:
 
@@ -141,5 +171,6 @@ Rollback strategy:
 - MySQL/data: intentionally unaffected.
 - Uploads/media/music integrations: intentionally unaffected functionally.
 - Build/test/runtime/Docker: directly affected in script orchestration, compose image identity, export behavior, and documentation.
+- Operator UX: directly affected because no-flag entry now becomes an intentional interactive branch selector.
 - Security/secrets: no new secrets are introduced; production env handling must remain explicit.
 - Observability/docs: documentation changes are required; no new telemetry surface is planned.

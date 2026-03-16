@@ -2,11 +2,14 @@
 # =============================================================================
 # Sakurairo Blog Docker unified build script
 # =============================================================================
-# Usage: ./build.sh [options]
+# Usage:
+#   ./build.sh                 Interactive mode when no flags are provided
+#   ./build.sh [options]       Direct non-interactive execution
 #
-#   -e, --env <dev|prod>      Select target environment, defaults to prod
+# Options:
+#   -e, --env <dev|prod>      Select target environment
 #   -c, --clean               Build without Docker cache
-#   -s, --save [dir]          Export built images to ./dist by default
+#   -s, --save [dir]          Export built images, default output is ./dist
 #   -p, --push <registry>     Push tagged images to the target registry
 #   -t, --tag <tag>           Override the generated image tag
 #       --no-start            Build and export only, do not start services
@@ -36,86 +39,169 @@ die() {
 }
 
 show_help() {
-    sed -n '2,14p' "$0" | sed 's/^# \{0,1\}//'
+    cat <<'EOF'
+=============================================================================
+Sakurairo Blog Docker unified build script
+=============================================================================
+Usage:
+  ./build.sh                 Interactive mode when no flags are provided
+  ./build.sh [options]       Direct non-interactive execution
+
+Options:
+  -e, --env <dev|prod>      Select target environment
+  -c, --clean               Build without Docker cache
+  -s, --save [dir]          Export built images, default output is ./dist
+  -p, --push <registry>     Push tagged images to the target registry
+  -t, --tag <tag>           Override the generated image tag
+      --no-start            Build and export only, do not start services
+  -d, --down                Stop the selected environment stack
+  -l, --logs                Follow service logs after startup
+  -h, --help                Show help
+
+Examples:
+  ./build.sh
+  ./build.sh -e prod
+  ./build.sh -e dev --no-start
+  ./build.sh -e prod --save
+  ./build.sh -e prod --no-start --save ./dist/prod-images
+  ./build.sh -e prod --down
+=============================================================================
+EOF
 }
 
-ENVIRONMENT="prod"
-CLEAN=false
-SAVE=false
-SAVE_DIR="./dist"
-PUSH=false
-PUSH_REGISTRY=""
-NO_START=false
-DOWN=false
-FOLLOW_LOGS=false
-TAG="$(date +"%Y%m%d-%H%M")"
+prompt_yes_no() {
+    local prompt="$1"
+    local default="$2"
+    local answer=""
 
-while [[ $# -gt 0 ]]; do
-    case "$1" in
-        -e|--env)
-            ENVIRONMENT="${2:-}"
-            [[ "$ENVIRONMENT" == "dev" || "$ENVIRONMENT" == "prod" ]] || die "--env only accepts dev or prod, got: $ENVIRONMENT"
-            shift 2
-            ;;
-        -c|--clean)
+    while true; do
+        if [[ "$default" == "y" ]]; then
+            read -r -p "$prompt [Y/n]: " answer
+            answer="${answer:-y}"
+        else
+            read -r -p "$prompt [y/N]: " answer
+            answer="${answer:-n}"
+        fi
+
+        case "${answer,,}" in
+            y|yes)
+                return 0
+                ;;
+            n|no)
+                return 1
+                ;;
+            *)
+                log_warn "Please answer y or n."
+                ;;
+        esac
+    done
+}
+
+interactive_setup() {
+    local env_choice=""
+    local action_choice=""
+    local export_dir=""
+
+    log_step "No flags detected. Entering interactive mode"
+
+    while true; do
+        echo "Select environment:"
+        echo "  1) prod"
+        echo "  2) dev"
+        echo "  q) quit"
+        read -r -p "Choice [1]: " env_choice
+        env_choice="${env_choice:-1}"
+
+        case "${env_choice,,}" in
+            1)
+                ENVIRONMENT="prod"
+                break
+                ;;
+            2)
+                ENVIRONMENT="dev"
+                break
+                ;;
+            q)
+                exit 0
+                ;;
+            *)
+                log_warn "Invalid choice. Select 1, 2, or q."
+                ;;
+        esac
+    done
+
+    echo
+    while true; do
+        echo "Select action:"
+        echo "  1) Build and start services"
+        echo "  2) Build only"
+        echo "  3) Stop services"
+        echo "  q) quit"
+        read -r -p "Choice [1]: " action_choice
+        action_choice="${action_choice:-1}"
+
+        case "${action_choice,,}" in
+            1)
+                DOWN=false
+                NO_START=false
+                break
+                ;;
+            2)
+                DOWN=false
+                NO_START=true
+                break
+                ;;
+            3)
+                DOWN=true
+                NO_START=true
+                SAVE=false
+                FOLLOW_LOGS=false
+                CLEAN=false
+                break
+                ;;
+            q)
+                exit 0
+                ;;
+            *)
+                log_warn "Invalid choice. Select 1, 2, 3, or q."
+                ;;
+        esac
+    done
+
+    if ! $DOWN; then
+        if prompt_yes_no "Use clean build?" "n"; then
             CLEAN=true
-            shift
-            ;;
-        -s|--save)
+        fi
+
+        if prompt_yes_no "Export images after build?" "n"; then
             SAVE=true
-            if [[ -n "${2:-}" && "${2:0:1}" != "-" ]]; then
-                SAVE_DIR="$2"
-                shift
+            read -r -p "Export directory [./dist]: " export_dir
+            SAVE_DIR="${export_dir:-./dist}"
+        fi
+
+        if ! $NO_START; then
+            if prompt_yes_no "Follow logs after startup?" "n"; then
+                FOLLOW_LOGS=true
             fi
-            shift
-            ;;
-        -p|--push)
-            PUSH=true
-            PUSH_REGISTRY="${2:-}"
-            [[ -n "$PUSH_REGISTRY" ]] || die "--push requires a registry"
-            shift 2
-            ;;
-        -t|--tag)
-            TAG="${2:-}"
-            [[ -n "$TAG" ]] || die "--tag cannot be empty"
-            shift 2
-            ;;
-        --no-start)
-            NO_START=true
-            shift
-            ;;
-        -d|--down)
-            DOWN=true
-            shift
-            ;;
-        -l|--logs)
-            FOLLOW_LOGS=true
-            shift
-            ;;
-        -h|--help)
-            show_help
-            exit 0
-            ;;
-        *)
-            die "Unknown argument: $1"
-            ;;
-    esac
-done
+        fi
+    fi
 
-PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-cd "$PROJECT_ROOT"
-
-if ! command -v docker >/dev/null 2>&1; then
-    die "docker is required"
-fi
-
-if docker compose version >/dev/null 2>&1; then
-    DOCKER_COMPOSE=(docker compose)
-elif command -v docker-compose >/dev/null 2>&1; then
-    DOCKER_COMPOSE=(docker-compose)
-else
-    die "docker compose or docker-compose is required"
-fi
+    echo
+    log_info "Interactive selection complete"
+    log_info "Environment: $ENVIRONMENT"
+    if $DOWN; then
+        log_info "Action: stop services"
+    elif $NO_START; then
+        log_info "Action: build only"
+    else
+        log_info "Action: build and start services"
+    fi
+    log_info "Clean build: $CLEAN"
+    log_info "Export images: $SAVE"
+    if $SAVE; then
+        log_info "Export dir: $SAVE_DIR"
+    fi
+}
 
 resolve_prod_env_file() {
     if [[ -f ".env.prod" ]]; then
@@ -179,6 +265,90 @@ configure_runtime_contract() {
 compose() {
     "${DOCKER_COMPOSE[@]}" "${COMPOSE_ARGS[@]}" "$@"
 }
+
+ORIGINAL_ARG_COUNT=$#
+
+ENVIRONMENT="prod"
+CLEAN=false
+SAVE=false
+SAVE_DIR="./dist"
+PUSH=false
+PUSH_REGISTRY=""
+NO_START=false
+DOWN=false
+FOLLOW_LOGS=false
+TAG="$(date +"%Y%m%d-%H%M")"
+
+if [[ "$ORIGINAL_ARG_COUNT" -eq 0 ]]; then
+    interactive_setup
+else
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            -e|--env)
+                ENVIRONMENT="${2:-}"
+                [[ "$ENVIRONMENT" == "dev" || "$ENVIRONMENT" == "prod" ]] || die "--env only accepts dev or prod, got: $ENVIRONMENT"
+                shift 2
+                ;;
+            -c|--clean)
+                CLEAN=true
+                shift
+                ;;
+            -s|--save)
+                SAVE=true
+                if [[ -n "${2:-}" && "${2:0:1}" != "-" ]]; then
+                    SAVE_DIR="$2"
+                    shift
+                fi
+                shift
+                ;;
+            -p|--push)
+                PUSH=true
+                PUSH_REGISTRY="${2:-}"
+                [[ -n "$PUSH_REGISTRY" ]] || die "--push requires a registry"
+                shift 2
+                ;;
+            -t|--tag)
+                TAG="${2:-}"
+                [[ -n "$TAG" ]] || die "--tag cannot be empty"
+                shift 2
+                ;;
+            --no-start)
+                NO_START=true
+                shift
+                ;;
+            -d|--down)
+                DOWN=true
+                shift
+                ;;
+            -l|--logs)
+                FOLLOW_LOGS=true
+                shift
+                ;;
+            -h|--help)
+                show_help
+                exit 0
+                ;;
+            *)
+                die "Unknown argument: $1"
+                ;;
+        esac
+    done
+fi
+
+PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "$PROJECT_ROOT"
+
+if ! command -v docker >/dev/null 2>&1; then
+    die "docker is required"
+fi
+
+if docker compose version >/dev/null 2>&1; then
+    DOCKER_COMPOSE=(docker compose)
+elif command -v docker-compose >/dev/null 2>&1; then
+    DOCKER_COMPOSE=(docker-compose)
+else
+    die "docker compose or docker-compose is required"
+fi
 
 log_step "Checking runtime prerequisites"
 log_ok "Docker: $(docker --version | awk '{print $3}' | tr -d ',')"

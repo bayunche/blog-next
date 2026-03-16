@@ -1,30 +1,98 @@
-# Sakurairo Blog Docker 部署说明
+# Sakurairo Docker 部署说明
 
-## 1. 当前约定
+## 统一入口
 
-生产环境构建、部署、导出镜像的统一入口已经收敛到：
+项目的统一构建入口是：
+
+```bash
+./build.sh
+```
+
+现在有两种使用方式：
+
+1. 不带参数运行  
+   进入交互式模式，在运行中选择：
+   - 目标环境：`prod` / `dev`
+   - 操作类型：构建并启动、仅构建、停止服务
+   - 是否使用无缓存构建
+   - 是否在构建完成后导出镜像
+
+2. 带参数运行  
+   继续保持非交互模式，适合脚本化执行。
+
+## 常见命令
+
+### 生产环境
 
 ```bash
 ./build.sh -e prod
+./build.sh -e prod --no-start
+./build.sh -e prod --save
+./build.sh -e prod --no-start --save
+./build.sh -e prod --down
 ```
 
-这个脚本同时负责：
-- 选择生产环境 compose 组合：`docker-compose.yml + docker-compose.prod.yml`
-- 检查并准备 `.env.prod`
-- 构建本地业务镜像
-- 按需启动服务、导出镜像、推送镜像
+### 开发环境
 
-兼容包装层仍然保留，但不再是首选入口：
-- `build_docker_prod.sh`
-- `build_docker_prod.ps1`
+```bash
+./build.sh -e dev
+./build.sh -e dev --no-start
+./build.sh -e dev --save
+./build.sh -e dev --no-start --save
+./build.sh -e dev --down
+```
 
-它们现在只负责转发到 `build.sh -e prod`。
+## 导出镜像
 
-离线交付仍然是独立流程，请看 [OFFLINE_DOCKER_GUIDE.md](./OFFLINE_DOCKER_GUIDE.md)。
+`--save` 表示在构建完成后导出镜像。
 
-## 2. 稳定镜像名
+它和是否启动服务是两个独立维度：
 
-在线部署与镜像导出共用以下显式镜像名：
+- `./build.sh -e prod --save`
+  - 构建
+  - 导出镜像
+  - 启动服务
+
+- `./build.sh -e prod --no-start --save`
+  - 构建
+  - 导出镜像
+  - 不启动服务
+
+默认导出目录是 `./dist`，文件名类似：
+
+```text
+blog-sakurairo-prod-20260316-1200.tar.gz
+blog-sakurairo-dev-20260316-1200.tar.gz
+```
+
+如果要指定目录：
+
+```bash
+./build.sh -e prod --save ./dist/prod-images
+./build.sh -e dev --save ./dist/dev-images
+```
+
+## 交互模式说明
+
+直接运行：
+
+```bash
+./build.sh
+```
+
+脚本会提示你依次选择：
+
+- 环境
+- 操作类型
+- 是否 clean build
+- 是否导出镜像
+- 如果需要启动，是否跟随日志
+
+这样即使不记参数，也能在运行中切换到不同处理分支。
+
+## 稳定镜像名
+
+生产环境业务镜像：
 
 ```text
 blog-sakurairo-server
@@ -33,7 +101,7 @@ blog-sakurairo-music-api
 blog-sakurairo-db-backup
 ```
 
-开发环境使用独立镜像名，避免与生产镜像互相覆盖：
+开发环境业务镜像：
 
 ```text
 blog-sakurairo-server-dev
@@ -41,127 +109,66 @@ blog-sakurairo-web-dev
 blog-sakurairo-music-api-dev
 ```
 
-## 3. 环境文件
+离线打包脚本也复用这组镜像命名约定。
 
-生产环境需要 `.env.prod`。
+## 环境文件
 
-如果项目根目录不存在 `.env.prod`，`build.sh -e prod` 会尝试从 `.env.prod.template` 复制出一份模板并终止执行，等待你填入真实配置。
+### 生产环境
 
-常见需要确认的配置：
-- `MYSQL_ROOT_PASSWORD`
-- `MYSQL_PASSWORD`
-- `TOKEN_SECRET`
-- GitHub OAuth 相关 `*_PROD` 变量
-- Remark42、图床等生产环境变量
+生产环境依赖 `.env.prod`。
 
-## 4. 生产环境常用命令
+如果文件不存在，脚本会尝试从 `.env.prod.template` 复制出模板，然后提示你补齐真实配置后重新执行。
 
-### 4.1 构建并启动生产环境
+### 开发环境
 
-```bash
-./build.sh -e prod
-```
+开发环境优先使用 `.env`。
 
-### 4.2 只构建，不启动
+如果 `.env` 不存在但 `.env.docker` 存在，脚本会自动复制一份 `.env`。
 
-```bash
-./build.sh -e prod --no-start
-```
+## 兼容包装层
 
-### 4.3 构建并导出生产镜像
+以下脚本仍然保留，但已经不再维护独立逻辑，只负责转发：
 
-```bash
-./build.sh -e prod --no-start --save
-```
+- `build_docker_prod.sh`
+- `build_docker_prod.ps1`
 
-默认导出目录为 `./dist`，导出文件名类似：
+推荐直接使用 `build.sh`。
 
-```text
-dist/blog-sakurairo-prod-20260316-1200.tar.gz
-```
+## Windows 说明
 
-### 4.4 无缓存重建
-
-```bash
-./build.sh -e prod --clean
-```
-
-### 4.5 推送到远端 Registry
-
-```bash
-./build.sh -e prod --push ghcr.io/your-org
-```
-
-### 4.6 停止生产环境
-
-```bash
-./build.sh -e prod --down
-```
-
-### 4.7 启动后跟随日志
-
-```bash
-./build.sh -e prod --logs
-```
-
-## 5. 开发环境入口
-
-如果只是本地开发环境构建，可以继续使用：
-
-```bash
-./build.sh -e dev
-```
-
-项目中原有的开发辅助脚本仍可保留使用，但生产环境的推荐入口不再是 `build_docker_prod.*`。
-
-## 6. Windows 使用方式
-
-推荐使用 Git Bash、WSL 或其他带 Bash 的终端，直接执行：
+PowerShell 下推荐：
 
 ```powershell
-bash ./build.sh -e prod
+bash ./build.sh
+bash ./build.sh -e prod --save
 ```
 
-兼容包装层仍可使用：
+也可以继续使用兼容包装层：
 
 ```powershell
 ./build_docker_prod.ps1
 ```
 
-它会尝试查找本机的 `bash` 并转发到统一脚本。如果系统没有 Bash，请先安装 Git for Windows 或改用 WSL。
+它会尝试自动找到本机可用的 `bash`。
 
-## 7. 手动 compose 命令
+## 离线打包
 
-如果你需要手动执行 compose，生产环境对应的组合是：
+离线交付仍然是单独流程，不和在线部署混用。
 
-```bash
-docker compose --env-file .env.prod -f docker-compose.yml -f docker-compose.prod.yml up -d --build
-```
+请参考：
 
-查看状态：
+- [OFFLINE_DOCKER_GUIDE.md](./OFFLINE_DOCKER_GUIDE.md)
 
-```bash
-docker compose --env-file .env.prod -f docker-compose.yml -f docker-compose.prod.yml ps
-```
+## 建议验证
 
-查看日志：
+建议至少验证以下几种场景：
 
 ```bash
-docker compose --env-file .env.prod -f docker-compose.yml -f docker-compose.prod.yml logs -f
+./build.sh
+./build.sh -e prod
+./build.sh -e dev --no-start
+./build.sh -e prod --save
+./build.sh -e dev --no-start --save
+docker compose --env-file .env.prod.template -f docker-compose.yml -f docker-compose.prod.yml config
+docker compose -f docker-compose.dev.yml config
 ```
-
-停止服务：
-
-```bash
-docker compose --env-file .env.prod -f docker-compose.yml -f docker-compose.prod.yml down
-```
-
-## 8. 验证建议
-
-生产环境交付脚本调整后，建议至少验证：
-- `./build.sh -e prod --help`
-- `./build.sh -e prod --no-start`
-- `./build.sh -e prod --no-start --save`
-- `docker compose --env-file .env.prod.template -f docker-compose.yml -f docker-compose.prod.yml config`
-
-如果要做离线交付验证，请使用 `package_offline_docker.sh` 或 `package_offline_docker.ps1`，不要把离线打包与在线部署混在同一条流程里。

@@ -4,6 +4,7 @@ Production delivery now has overlapping script entrypoints with no stable contra
 
 - `build_docker_prod.sh` and `build_docker_prod.ps1` perform a production `docker compose up -d --build` flow.
 - `build.sh` already covers production-vs-development selection, build-only execution, image export, image push, and service startup.
+- The canonical script still assumes operators will always pass flags up front, which leaves no guided path when they just run `./build.sh` and want to choose an environment and follow-up action interactively.
 - Documentation still points operators at the older script names, so the repository presents multiple "official" ways to do the same production build/deploy work.
 - The image-export path is not backed by one shared image-naming contract. `build.sh` assumes `sakurairo-*` image names, while the offline packaging flow and offline compose manifest assume `blog-sakurairo-*`, and the main compose manifest does not currently define explicit image names for the built services.
 
@@ -12,6 +13,7 @@ This needs to be treated as one runtime-operations change rather than as ad hoc 
 ## What Changes
 
 - Define one canonical production delivery entrypoint that supports the production build/deploy flow and the production build/export flow.
+- Add a no-flag interactive mode so operators can choose dev/prod and follow-up actions at runtime instead of having to remember flags first.
 - Converge redundant production script logic onto that canonical entrypoint and reduce remaining OS-specific scripts to thin wrappers only when they are still required for operator ergonomics.
 - Make runtime image references explicit and shared so deployment, export, and related packaging workflows resolve the same built images.
 - Update runtime-operations requirements and operator documentation so the supported production workflow is unambiguous.
@@ -38,6 +40,7 @@ This needs to be treated as one runtime-operations change rather than as ad hoc 
 - MySQL schema, seeds, and migrations: intentionally unaffected. No schema, data, or migration work is required.
 - Asset uploads, image bed integration, and music-related integrations: intentionally unaffected at the feature level. Only runtime image/build orchestration is touched.
 - Build, lint, test, Docker, and runtime environment behavior: directly affected. Compose image naming, script entrypoints, and operator docs change. Validation must focus on script behavior and compose resolution, while the repository's known `npm run build` and `npm run lint` issues remain separate baseline risks.
+- Operator UX changes materially because a no-flag invocation will now enter an interactive branch-selection path while explicit flags continue to support non-interactive automation.
 - Security, secrets handling, rollback, observability, and documentation:
   - No new secret source is introduced, but production env-file handling must stay explicit so script consolidation does not accidentally broaden where credentials are copied or exported.
   - Rollback is a script/documentation rollback only; no application data rollback is required.
@@ -49,3 +52,4 @@ This needs to be treated as one runtime-operations change rather than as ad hoc 
 - The main repository concern is not simply "too many files"; it is that script responsibilities and image names have already drifted. The approved implementation should fix the contract first, then remove duplication.
 - The consolidation target is the production deploy/export path. Full redesign of the offline bundle generator is not part of this request, although that workflow must remain compatible with the shared image-reference contract.
 - The existing `build.sh` is the natural candidate for the canonical production entrypoint because it already exposes production selection, non-starting build behavior, and export/push flags. The design phase will define whether the final user-facing name stays `build.sh` or moves to a renamed canonical wrapper.
+- The default no-flag experience should become interactive rather than silently assuming one environment or one action, but explicit flags must remain available for scripted and CI-adjacent local usage.
