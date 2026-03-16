@@ -1,23 +1,70 @@
-if (-not (Get-Command docker -ErrorAction SilentlyContinue)) {
-    Write-Host "错误: 找不到 Docker。请先安装 Docker Desktop。" -ForegroundColor Red
-    exit 1
-}
+$ErrorActionPreference = 'Stop'
 
-if (-not (Test-Path ".env.prod")) {
-    if (Test-Path ".env.prod.template") {
-        Copy-Item ".env.prod.template" ".env.prod"
-        Write-Host "提示: 已生成 .env.prod，请先填写真实生产凭据后重试。" -ForegroundColor Yellow
-        Write-Host "编辑命令: notepad .env.prod" -ForegroundColor Cyan
-    } else {
-        Write-Host "错误: 未找到 .env.prod 与 .env.prod.template。" -ForegroundColor Red
+function Resolve-Bash {
+    $gitCandidates = @(
+        (Join-Path $env:ProgramFiles 'Git\bin\bash.exe'),
+        (Join-Path ${env:ProgramFiles(x86)} 'Git\bin\bash.exe'),
+        (Join-Path $env:ProgramFiles 'Git\usr\bin\bash.exe'),
+        (Join-Path ${env:ProgramFiles(x86)} 'Git\usr\bin\bash.exe')
+    ) | Where-Object { $_ }
+
+    foreach ($candidate in $gitCandidates) {
+        if (Test-Path $candidate) {
+            return @{
+                Path = $candidate
+                PathStyle = 'git'
+            }
+        }
     }
-    exit 1
+
+    $bashCommand = Get-Command bash -ErrorAction SilentlyContinue
+    if ($bashCommand) {
+        $pathStyle = 'git'
+        if ($bashCommand.Source -match 'System32\\bash.exe' -or $bashCommand.Source -match 'wsl.exe') {
+            $pathStyle = 'wsl'
+        }
+
+        return @{
+            Path = $bashCommand.Source
+            PathStyle = $pathStyle
+        }
+    }
+
+    return $null
 }
 
-Write-Host "使用 .env.prod + docker-compose.prod.yml 启动生产部署..." -ForegroundColor Cyan
-docker compose --env-file .env.prod -f docker-compose.yml -f docker-compose.prod.yml up -d --build
+function Convert-ToBashPath {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$WindowsPath,
+        [Parameter(Mandatory = $true)]
+        [string]$PathStyle
+    )
 
-if ($?) {
-    Write-Host "✅ 生产部署已启动" -ForegroundColor Green
-    docker compose --env-file .env.prod -f docker-compose.yml -f docker-compose.prod.yml ps
+    $normalized = $WindowsPath -replace '\\', '/'
+    if ($normalized -match '^(?<drive>[A-Za-z]):(?<rest>/.*)$') {
+        $drive = $Matches.drive.ToLower()
+        $rest = $Matches.rest
+        if ($PathStyle -eq 'wsl') {
+            return "/mnt/$drive$rest"
+        }
+        return "/$drive$rest"
+    }
+
+    return $normalized
 }
+
+$scriptRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
+$buildScript = Join-Path $scriptRoot 'build.sh'
+$bashInfo = Resolve-Bash
+
+if (-not $bashInfo) {
+    throw 'bash is required. Install Git Bash or use WSL to run bash ./build.sh -e prod.'
+}
+
+$bashScriptPath = Convert-ToBashPath -WindowsPath $buildScript -PathStyle $bashInfo.PathStyle
+
+Write-Host 'build_docker_prod.ps1 is now a compatibility wrapper. Prefer bash ./build.sh -e prod' -ForegroundColor Yellow
+
+& $bashInfo.Path $bashScriptPath '-e' 'prod' @args
+exit $LASTEXITCODE

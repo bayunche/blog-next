@@ -8,6 +8,11 @@
 - 需要在**无法联网**的服务器或内网环境中部署项目。
 - 需要将本地已经构建好的镜像、初始化 SQL 和运行目录一并打包后交付。
 
+补充说明：
+- 在线生产部署的统一入口是 `build.sh -e prod`。
+- 离线打包不是在线部署的别名，而是独立交付流程。
+- 两条流程现在共享同一组业务镜像名约定，避免导出和导入时出现镜像名漂移。
+
 ---
 
 ## 2. 当前离线包包含内容
@@ -33,6 +38,11 @@
 - 打包脚本会把 `server/db/prod_full_import.sql` 复制到离线包中的 `docker/mysql/init/99-prod_full_import.sql`。
 - 这意味着离线环境首次启动 MySQL 时，会自动执行完整初始化导入。
 - 如果某些本地目录不可读（例如个别挂载目录权限异常），脚本会记录 warning 并跳过，不再直接中断整个打包过程。
+- 业务镜像统一使用以下名称：
+  - `blog-sakurairo-server`
+  - `blog-sakurairo-web`
+  - `blog-sakurairo-music-api`
+  - `blog-sakurairo-db-backup`
 
 ---
 

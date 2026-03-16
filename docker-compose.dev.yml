@@ -1,10 +1,4 @@
-version: '3.8'
-
-# 开发/测试环境简化版 Docker Compose
-# 统一通过 Nginx 80 端口访问前端、API 与评论系统
-
 services:
-  # MySQL 数据库
   mysql:
     image: mysql:8.0
     container_name: sakurairo-mysql-dev
@@ -22,15 +16,15 @@ services:
       - ./docker/mysql/init:/docker-entrypoint-initdb.d
     command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
     healthcheck:
-      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost" ]
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
       interval: 10s
       timeout: 5s
       retries: 5
     networks:
       - sakurairo-dev
 
-  # 后端服务
   server:
+    image: blog-sakurairo-server-dev
     build:
       context: ./server
       dockerfile: Dockerfile
@@ -71,8 +65,8 @@ services:
     networks:
       - sakurairo-dev
 
-  # 前端服务
   web:
+    image: blog-sakurairo-web-dev
     build:
       context: .
       dockerfile: Dockerfile.frontend
@@ -108,7 +102,6 @@ services:
     networks:
       - sakurairo-dev
 
-  # Remark42 评论系统
   remark42:
     image: umputun/remark42:latest
     container_name: sakurairo-remark42-dev
@@ -125,8 +118,8 @@ services:
     networks:
       - sakurairo-dev
 
-  # 缃戞槗浜戦煶涔?API 鏈嶅姟
   music-api:
+    image: blog-sakurairo-music-api-dev
     build: ./server/netease_api
     container_name: sakurairo-music-api-dev
     restart: unless-stopped
@@ -135,7 +128,6 @@ services:
     networks:
       - sakurairo-dev
 
-  # Nginx
   nginx:
     image: nginx:alpine
     container_name: sakurairo-nginx-dev
@@ -156,7 +148,6 @@ services:
 
 volumes:
   mysql_data_dev:
-
 
 networks:
   sakurairo-dev:

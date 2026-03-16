@@ -31,6 +31,7 @@ require_cmd() {
 copy_if_exists() {
   local source_path="$1"
   local target_path="$2"
+
   if [[ -e "$source_path" ]]; then
     mkdir -p "$(dirname "$target_path")"
     if ! cp -R "$source_path" "$target_path" 2>/dev/null; then
