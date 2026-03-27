@@ -2,11 +2,21 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { useCallback, useEffect, useEffectEvent, useState } from 'react';
+import { useCallback, useEffect, useEffectEvent, useRef, useState } from 'react';
 import { clsx } from 'clsx';
 import { usePathname } from 'next/navigation';
-import { FaBars, FaGithub, FaSearch, FaTimes } from 'react-icons/fa';
+import {
+    FaBars,
+    FaDesktop,
+    FaGithub,
+    FaMoon,
+    FaSearch,
+    FaSun,
+    FaTimes,
+} from 'react-icons/fa';
 import { SearchModal } from './SearchModal';
+import { useTheme } from '@/shared/providers/ThemeProvider';
+import { ThemePreference } from '@/shared/theme/theme';
 import { siteLinks, siteProfile } from '@/shared/constants/siteProfile';
 
 const navItems = [
@@ -22,9 +32,16 @@ export function Navbar() {
     const [scrolled, setScrolled] = useState(false);
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const [searchOpen, setSearchOpen] = useState(false);
+    const [themeMenuOpen, setThemeMenuOpen] = useState(false);
     const pathname = usePathname();
+    const themeMenuRef = useRef<HTMLDivElement | null>(null);
+    const { preference, resolvedTheme, setPreference } = useTheme();
+
     const closeMobileMenu = useEffectEvent(() => {
         setMobileMenuOpen(false);
+    });
+    const closeThemeMenu = useEffectEvent(() => {
+        setThemeMenuOpen(false);
     });
 
     useEffect(() => {
@@ -34,10 +51,15 @@ export function Navbar() {
     }, []);
 
     useEffect(() => {
-        const handleKeyDown = (e: KeyboardEvent) => {
-            if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
-                e.preventDefault();
+        const handleKeyDown = (event: KeyboardEvent) => {
+            if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
+                event.preventDefault();
                 setSearchOpen(true);
+                return;
+            }
+
+            if (event.key === 'Escape') {
+                setThemeMenuOpen(false);
             }
         };
 
@@ -47,6 +69,7 @@ export function Navbar() {
 
     useEffect(() => {
         closeMobileMenu();
+        closeThemeMenu();
     }, [pathname]);
 
     useEffect(() => {
@@ -60,8 +83,49 @@ export function Navbar() {
         };
     }, [mobileMenuOpen]);
 
+    useEffect(() => {
+        if (!themeMenuOpen) {
+            return;
+        }
+
+        const handlePointerDown = (event: MouseEvent) => {
+            if (!themeMenuRef.current?.contains(event.target as Node)) {
+                setThemeMenuOpen(false);
+            }
+        };
+
+        document.addEventListener('mousedown', handlePointerDown);
+        return () => document.removeEventListener('mousedown', handlePointerDown);
+    }, [themeMenuOpen]);
+
     const closeSearch = useCallback(() => setSearchOpen(false), []);
     const githubLink = siteProfile.socialLinks[0]?.href;
+
+    const themeOptions: Array<{
+        value: ThemePreference;
+        label: string;
+        description: string;
+        icon: typeof FaDesktop;
+    }> = [
+        {
+            value: 'system',
+            label: '跟随系统',
+            description: `当前${resolvedTheme === 'dark' ? '暗黑' : '明亮'}`,
+            icon: FaDesktop,
+        },
+        {
+            value: 'light',
+            label: '明亮模式',
+            description: '始终使用浅色界面',
+            icon: FaSun,
+        },
+        {
+            value: 'dark',
+            label: '暗黑模式',
+            description: '始终使用深色界面',
+            icon: FaMoon,
+        },
+    ];
 
     const isActive = (path: string) => {
         if (path === '/') {
@@ -75,6 +139,12 @@ export function Navbar() {
         return pathname?.startsWith(path);
     };
 
+    const ThemeIcon = preference === 'system'
+        ? FaDesktop
+        : preference === 'light'
+          ? FaSun
+          : FaMoon;
+
     if (pathname?.startsWith('/admin')) {
         return null;
     }
@@ -85,8 +155,8 @@ export function Navbar() {
                 className={clsx(
                     'fixed left-0 right-0 top-0 z-50 transition-all motion-transition-slow',
                     scrolled
-                        ? 'border-b border-gray-200/20 bg-white/90 shadow-lg backdrop-blur-xl dark:border-gray-700/20 dark:bg-gray-900/90'
-                        : 'bg-gradient-to-b from-black/25 to-transparent'
+                        ? 'border-b border-gray-200/50 bg-white/88 shadow-lg backdrop-blur-xl dark:border-gray-700/20 dark:bg-gray-900/90'
+                        : 'bg-gradient-to-b from-black/25 via-black/10 to-transparent'
                 )}
             >
                 <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
@@ -131,6 +201,67 @@ export function Navbar() {
                     </div>
 
                     <div className="flex items-center gap-2">
+                        <div className="relative" ref={themeMenuRef}>
+                            <button
+                                type="button"
+                                onClick={() => setThemeMenuOpen((prev) => !prev)}
+                                aria-label="切换主题"
+                                aria-expanded={themeMenuOpen}
+                                aria-haspopup="menu"
+                                className={clsx(
+                                    'rounded-full p-2.5 transition-all motion-transition',
+                                    scrolled
+                                        ? 'text-foreground hover:bg-primary/10 hover:text-primary'
+                                        : 'text-white hover:bg-white/15'
+                                )}
+                            >
+                                <ThemeIcon size={16} />
+                            </button>
+
+                            <div
+                                className={clsx(
+                                    'absolute right-0 top-[calc(100%+0.75rem)] w-52 rounded-2xl border border-card-border/80 bg-card-bg/95 p-2 shadow-2xl backdrop-blur-xl transition-all motion-transition',
+                                    themeMenuOpen
+                                        ? 'pointer-events-auto translate-y-0 opacity-100'
+                                        : 'pointer-events-none -translate-y-2 opacity-0'
+                                )}
+                                role="menu"
+                                aria-label="主题模式"
+                            >
+                                {themeOptions.map(({ value, label, description, icon: OptionIcon }) => (
+                                    <button
+                                        key={value}
+                                        type="button"
+                                        onClick={() => {
+                                            setPreference(value);
+                                            setThemeMenuOpen(false);
+                                        }}
+                                        className={clsx(
+                                            'flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-colors motion-transition',
+                                            preference === value
+                                                ? 'bg-primary text-white'
+                                                : 'text-foreground hover:bg-card-border/60 hover:text-primary'
+                                        )}
+                                        role="menuitemradio"
+                                        aria-checked={preference === value}
+                                    >
+                                        <OptionIcon size={15} className="shrink-0" />
+                                        <span className="min-w-0">
+                                            <span className="block text-sm font-medium">{label}</span>
+                                            <span
+                                                className={clsx(
+                                                    'block text-xs',
+                                                    preference === value ? 'text-white/80' : 'text-text-muted'
+                                                )}
+                                            >
+                                                {description}
+                                            </span>
+                                        </span>
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
                         <button
                             onClick={() => setSearchOpen(true)}
                             aria-label="打开搜索"
@@ -205,7 +336,44 @@ export function Navbar() {
                             >
                                 {item.name}
                             </Link>
+                        ))}
+
+                        <div className="mt-8 rounded-2xl border border-card-border/80 bg-background/45 p-3">
+                            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-text-subtle">
+                                主题
+                            </p>
+                            <div className="mt-3 grid gap-2">
+                                {themeOptions.map(({ value, label, description, icon: OptionIcon }) => (
+                                    <button
+                                        key={value}
+                                        type="button"
+                                        onClick={() => {
+                                            setPreference(value);
+                                            setMobileMenuOpen(false);
+                                        }}
+                                        className={clsx(
+                                            'flex items-center gap-3 rounded-xl px-3 py-3 text-left transition-colors motion-transition',
+                                            preference === value
+                                                ? 'bg-primary text-white'
+                                                : 'bg-card-border/60 text-foreground hover:text-primary'
+                                        )}
+                                    >
+                                        <OptionIcon size={17} className="shrink-0" />
+                                        <span className="min-w-0">
+                                            <span className="block text-sm font-medium">{label}</span>
+                                            <span
+                                                className={clsx(
+                                                    'block text-xs',
+                                                    preference === value ? 'text-white/80' : 'text-text-muted'
+                                                )}
+                                            >
+                                                {description}
+                                            </span>
+                                        </span>
+                                    </button>
                                 ))}
+                            </div>
+                        </div>
 
                         <div className="mt-8 flex flex-wrap gap-4 border-t border-card-border pt-4">
                             {githubLink ? (

@@ -11,7 +11,7 @@ const {
 
 router.get('/public', getPublicCategoryList)
 router.get('/public/:name', getPublicCategoryDetail)
-router.get('/', getCategoryList) // 鑾峰彇鍒嗙被鍒楄〃
+router.get('/', getCategoryList) // 获取分类列表
 router.delete('/:name', deleteCategory)
 router.put('/:name', updateCategory)
 

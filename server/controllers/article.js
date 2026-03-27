@@ -13,10 +13,17 @@ const {
 } = require('../models')
 
 const fs = require('fs')
+const archiver = require('archiver')
+const send = require('koa-send')
+const { v4: uuidv4 } = require('uuid')
 const { uploadPath, outputPath, findOrCreateFilePath, decodeFile, generateFile } = require('../utils/file')
-const archiver = require('archiver') // 閹垫挸瀵?zip
-const send = require('koa-send') // 閺傚洣娆㈡稉瀣祰
-const { v4: uuidv4, stringify } = require('uuid')
+
+const ABOUT_PAGE_TITLE = '\u5173\u4e8e\u9875\u9762'
+const ABOUT_PAGE_PLACEHOLDER = '\u5173\u4e8e\u9875\u9762\u5360\u4f4d\u5185\u5bb9\uff0c\u8bf7\u52ff\u5220\u9664\u3002'
+const CREATE_ARTICLE_EXISTS_MESSAGE = '\u521b\u5efa\u5931\u8d25\uff0c\u8be5\u6587\u7ae0\u5df2\u5b58\u5728\uff01'
+const IMPORT_ARTICLES_SUCCESS_MESSAGE = '\u5bfc\u5165\u6587\u7ae0\u6210\u529f'
+const GET_ARCHIVES_ERROR_MESSAGE = '\u83b7\u53d6\u5f52\u6863\u6570\u636e\u5931\u8d25'
+const PREVIEW_LENGTH = 1000
 
 const normalizeName = value => String(value || '').trim().replace(/\s+/g, ' ')
 
@@ -45,9 +52,11 @@ const normalizeRelationItems = items => {
       const raw = typeof item.toJSON === 'function' ? item.toJSON() : { ...item }
       const name = normalizeName(raw.name)
       if (!name) return null
+
       const key = name.toLowerCase()
-      if (seen.has(key)) return null
+      if (seen.has(key)) return false
       seen.add(key)
+
       return { ...raw, name }
     })
     .filter(Boolean)
@@ -59,9 +68,13 @@ const normalizeArticlePayload = article => {
   const raw = typeof article.toJSON === 'function' ? article.toJSON() : { ...article }
   const categories = normalizeRelationItems(raw.categories)
   const tags = normalizeRelationItems(raw.tags)
-  const directCategoryName = normalizeName(raw.category && raw.category.name)
+  const rawCategory = raw.category
+  const directCategoryName = normalizeName(rawCategory && rawCategory.name)
   const category = directCategoryName
-    ? { ...(typeof raw.category?.toJSON === 'function' ? raw.category.toJSON() : raw.category), name: directCategoryName }
+    ? {
+        ...(rawCategory && typeof rawCategory.toJSON === 'function' ? rawCategory.toJSON() : rawCategory),
+        name: directCategoryName,
+      }
     : categories[0] || null
 
   return {
@@ -82,20 +95,110 @@ const buildNormalizedIncludeWhere = value => {
   )
 }
 
+const buildTagInclude = where => {
+  const include = {
+    model: TagModel,
+    attributes: ['id', 'name'],
+    required: !!where,
+  }
+
+  if (where) include.where = where
+  return include
+}
+
+const buildCategoryInclude = where => {
+  const include = {
+    model: CategoryModel,
+    attributes: ['id', 'name'],
+    required: !!where,
+  }
+
+  if (where) include.where = where
+  return include
+}
+
+const buildCommentSummaryInclude = () => ({
+  model: CommentModel,
+  attributes: ['id'],
+  required: false,
+  include: [{ model: ReplyModel, attributes: ['id'], required: false }],
+})
+
+const buildDetailCommentInclude = () => ({
+  model: CommentModel,
+  attributes: ['id', 'content', 'createdAt'],
+  include: [
+    {
+      model: ReplyModel,
+      attributes: ['id', 'content', 'createdAt'],
+      include: [{ model: UserModel, as: 'user', attributes: { exclude: ['updatedAt', 'password'] } }],
+    },
+    { model: UserModel, as: 'user', attributes: { exclude: ['updatedAt', 'password'] } },
+  ],
+  row: true,
+})
+
+const parseGithubProfile = user => {
+  if (!user || typeof user.github !== 'string') return
+
+  try {
+    user.github = JSON.parse(user.github)
+  } catch (error) {
+    user.github = null
+  }
+}
+
+const hydrateCommentUsers = comments => {
+  const source = Array.isArray(comments) ? comments : []
+
+  source.forEach(comment => {
+    parseGithubProfile(comment.user)
+
+    const replies = Array.isArray(comment.replies) ? comment.replies : []
+    replies.forEach(reply => {
+      parseGithubProfile(reply.user)
+    })
+  })
+}
+
+const parsePreviewFlag = value => {
+  return String(value ?? '1') === '1'
+}
+
+const parseBooleanQuery = value => {
+  if (typeof value === 'boolean') return value
+  if (typeof value === 'number') {
+    if (value === 1) return true
+    if (value === 0) return false
+    return null
+  }
+
+  if (typeof value === 'string') {
+    const normalized = value.trim().toLowerCase()
+    if (normalized === 'true' || normalized === '1') return true
+    if (normalized === 'false' || normalized === '0') return false
+  }
+
+  return null
+}
+
+const parseNumberQuery = (value, fallback) => {
+  const parsed = parseInt(value, 10)
+  return Number.isFinite(parsed) ? parsed : fallback
+}
+
 class ArticleController {
-  // 閸掓繂顫愰崠鏍ㄦ殶閹?閸忓厖绨い鐢告桨閿涘牏鏁ゆ禍搴ょ槑鐠佸搫鍙ч懕鏃撶礆
   static async initAboutPage() {
     const result = await ArticleModel.findOne({ where: { id: -1 } })
     if (!result) {
-      ArticleModel.create({
+      await ArticleModel.create({
         id: -1,
-        title: '閸忓厖绨い鐢告桨',
-        content: '閸忓厖绨い鐢告桨鐎涙ɑ銆傞敍灞藉瑏閸?,
+        title: ABOUT_PAGE_TITLE,
+        content: ABOUT_PAGE_PLACEHOLDER,
       })
     }
   }
 
-  // 閸掓稑缂撻弬鍥╃彿
   static async create(ctx) {
     const validator = ctx.validate(ctx.request.body, {
       authorId: Joi.number().required(),
@@ -113,72 +216,73 @@ class ArticleController {
     })
 
     if (validator) {
-      const { title, content, cover, cardCover, description, categoryList = [], tagList = [], authorId, type, top, musicId, musicName } = ctx.request.body
+      const {
+        title,
+        content,
+        cover,
+        cardCover,
+        description,
+        categoryList = [],
+        tagList = [],
+        authorId,
+        type,
+        top,
+        musicId,
+        musicName,
+      } = ctx.request.body
       const result = await ArticleModel.findOne({ where: { title } })
+
       if (result) {
-        ctx.throw(403, '閸掓稑缂撴径杈Е閿涘矁顕氶弬鍥╃彿瀹告彃鐡ㄩ崷顭掔磼')
-      } else {
-        const tags = normalizeNameList(tagList).map(t => ({ name: t }))
-        const categories = normalizeNameList(categoryList).map(c => ({ name: c }))
-        const uuid = uuidv4().toString().replace(/-/g, '')
-        const data = await ArticleModel.create(
-          { title, content, cover, cardCover, description, authorId, tags, categories, type, top, uuid, musicId, musicName },
-          { include: [TagModel, CategoryModel] }
-        )
-        ctx.body = normalizeArticlePayload(data)
+        ctx.throw(403, CREATE_ARTICLE_EXISTS_MESSAGE)
+        return
       }
+
+      const tags = normalizeNameList(tagList).map(name => ({ name }))
+      const categories = normalizeNameList(categoryList).map(name => ({ name }))
+      const uuid = uuidv4().replace(/-/g, '')
+      const data = await ArticleModel.create(
+        { title, content, cover, cardCover, description, authorId, tags, categories, type, top, uuid, musicId, musicName },
+        { include: [TagModel, CategoryModel] }
+      )
+
+      ctx.body = normalizeArticlePayload(data)
     }
   }
 
-  // 閼惧嘲褰囬弬鍥╃彿鐠囷附鍎?  static async findById(ctx) {
+  static async findById(ctx) {
     const validator = ctx.validate(
       { ...ctx.params, ...ctx.query },
       {
         id: Joi.number().required(),
-        type: Joi.number(), // type 閻劋绨崠鍝勫瀻閺勵垰鎯佹晶鐐插濞村繗顫嶅▎鈩冩殶 1 閺傛澘顤冨ù蹇氼潔濞嗏剝鏆?0 娑撳秵鏌婃晶?      }
+        type: Joi.number(),
+      }
     )
+
     if (validator) {
       const data = await ArticleModel.findOne({
         where: { id: ctx.params.id },
         include: [
-          // 閺屻儲澹?閸掑棛琚?閺嶅洨顒?鐠囧嫯顔?閸ョ偛顦?..
-          { model: TagModel, attributes: ['id', 'name'] },
-          { model: CategoryModel, attributes: ['id', 'name'] },
-          {
-            model: CommentModel,
-            attributes: ['id', 'content', 'createdAt'],
-            include: [
-              {
-                model: ReplyModel,
-                attributes: ['id', 'content', 'createdAt'],
-                include: [{ model: UserModel, as: 'user', attributes: { exclude: ['updatedAt', 'password'] } }],
-              },
-              { model: UserModel, as: 'user', attributes: { exclude: ['updatedAt', 'password'] } },
-            ],
-            row: true,
-          },
+          buildTagInclude(),
+          buildCategoryInclude(),
+          buildDetailCommentInclude(),
         ],
-        order: [[CommentModel, 'createdAt', 'DESC'], [[CommentModel, ReplyModel, 'createdAt', 'ASC']]], // comment model order
+        order: [[CommentModel, 'createdAt', 'DESC'], [[CommentModel, ReplyModel, 'createdAt', 'ASC']]],
         row: true,
       })
 
-      const { type = 1 } = ctx.query
-      // viewer count ++
-      type === 1 && ArticleModel.update({ viewCount: ++data.viewCount }, { where: { id: ctx.params.id } })
-      // 濮ｅ繋閲滃ù蹇氼潔鐠佹澘缍嶉柈钘夌摠娑撯偓娑撶尰tamp閿涘矁绻栭弽宄版倵缂侇叀鍏樻径鐔烘箙閸戠儤鏋冪粩鐘垫畱闂冨懓顕扮搾瀣◢閺傞€涚┒閹恒劏宕?      type === 1 && RecordModel.create({ articleId: ctx.params.id })
-      // JSON.parse(github)
-      data.comments.forEach(comment => {
-        comment.user.github = JSON.parse(comment.user.github)
-        comment.replies.forEach(reply => {
-          reply.user.github = JSON.parse(reply.user.github)
-        })
-      })
-      console.log(data.uuid)
-      if (data.type) {
-        ctx.body = normalizeArticlePayload(data)
-      } else {
+      if (!data) {
         ctx.body = null
+        return
       }
+
+      const viewType = parseNumberQuery(ctx.query.type, 1)
+      if (viewType === 1) {
+        await ArticleModel.update({ viewCount: Number(data.viewCount || 0) + 1 }, { where: { id: ctx.params.id } })
+        await RecordModel.create({ articleId: ctx.params.id })
+      }
+
+      hydrateCommentUsers(data.comments)
+      ctx.body = data.type ? normalizeArticlePayload(data) : null
     }
   }
 
@@ -189,49 +293,40 @@ class ArticleController {
         uuid: Joi.string().required(),
       }
     )
+
     if (validator) {
-      let data = await ArticleModel.findOne({
+      const data = await ArticleModel.findOne({
         where: { uuid: ctx.params.uuid },
         include: [
-          // 閺屻儲澹?閸掑棛琚?閺嶅洨顒?鐠囧嫯顔?閸ョ偛顦?..
-          { model: TagModel, attributes: ['id', 'name'] },
-          { model: CategoryModel, attributes: ['id', 'name'] },
-          {
-            model: CommentModel,
-            attributes: ['id', 'content', 'createdAt'],
-            include: [
-              {
-                model: ReplyModel,
-                attributes: ['id', 'content', 'createdAt'],
-                include: [{ model: UserModel, as: 'user', attributes: { exclude: ['updatedAt', 'password'] } }],
-              },
-              { model: UserModel, as: 'user', attributes: { exclude: ['updatedAt', 'password'] } },
-            ],
-            row: true,
-          },
+          buildTagInclude(),
+          buildCategoryInclude(),
+          buildDetailCommentInclude(),
         ],
-
         row: true,
       })
-      const { type = 1 } = ctx.query
-      // viewer count ++
-      type === 1 && ArticleModel.update({ viewCount: ++data.viewCount }, { where: { id: data.id } })
-      // 濮ｅ繋閲滃ù蹇氼潔鐠佹澘缍嶉柈钘夌摠娑撯偓娑撶尰tamp閿涘矁绻栭弽宄版倵缂侇叀鍏樻径鐔烘箙閸戠儤鏋冪粩鐘垫畱闂冨懓顕扮搾瀣◢閺傞€涚┒閹恒劏宕?      type === 1 && RecordModel.create({ articleId: data.id })
-      // JSON.parse(github)
-      data.comments.forEach(comment => {
-        comment.user.github = JSON.parse(comment.user.github)
-        comment.replies.forEach(reply => {
-          reply.user.github = JSON.parse(reply.user.github)
-        })
-      })
+
+      if (!data) {
+        ctx.body = null
+        return
+      }
+
+      const viewType = parseNumberQuery(ctx.query.type, 1)
+      if (viewType === 1) {
+        await ArticleModel.update({ viewCount: Number(data.viewCount || 0) + 1 }, { where: { id: data.id } })
+        await RecordModel.create({ articleId: data.id })
+      }
+
+      hydrateCommentUsers(data.comments)
       ctx.body = normalizeArticlePayload(data)
     }
   }
-  // 閼惧嘲褰囬弬鍥╃彿閸掓銆?  static async getList(ctx) {
+
+  static async getList(ctx) {
     const validator = ctx.validate(ctx.query, {
       page: Joi.string(),
       pageSize: Joi.number(),
-      keyword: Joi.string().allow(''), // 閸忔娊鏁€涙鐓＄拠?      category: Joi.string(),
+      keyword: Joi.string().allow(''),
+      category: Joi.string(),
       tag: Joi.string(),
       preview: Joi.number(),
       order: Joi.string(),
@@ -239,114 +334,68 @@ class ArticleController {
     })
 
     if (validator) {
-      const { page = 1, pageSize = 10, preview = 1, keyword = '', tag, category, order, type = null } = ctx.query
+      const { page = 1, pageSize = 10, preview = 1, keyword = '', tag, category, order } = ctx.query
+      const pageValue = parseNumberQuery(page, 1)
+      const pageSizeValue = parseNumberQuery(pageSize, 10)
+      const previewEnabled = parsePreviewFlag(preview)
       const tagFilter = buildNormalizedIncludeWhere(tag)
       const categoryFilter = buildNormalizedIncludeWhere(category)
+      const typeValue = parseBooleanQuery(ctx.query.type)
 
       let articleOrder = [['createdAt', 'DESC']]
       if (order) {
-        articleOrder = [order.split(' ')]
+        articleOrder = [String(order).split(' ')]
       }
-      if (type != null) {
-        const data = await ArticleModel.findAndCountAll({
-          where: {
-            id: {
-              $not: -1, // 鏉╁洦鎶ら崗鍏呯艾妞ょ敻娼伴惃鍕閺?            },
-            $and: {
-              type: {
-                $eq: JSON.parse(type),
-              },
-            },
-            $or: {
-              title: {
-                $like: `%${keyword}%`,
-              },
-              content: {
-                $like: `%${keyword}%`,
-              },
-            },
+
+      const where = {
+        id: {
+          $not: -1,
+        },
+        $or: {
+          title: {
+            $like: `%${keyword}%`,
           },
-          include: [
-            {
-              model: TagModel,
-              attributes: ['id', 'name'],
-              ...(tagFilter ? { where: tagFilter } : {}),
-              required: !!tagFilter
-            },
-            {
-              model: CategoryModel,
-              attributes: ['id', 'name'],
-              ...(categoryFilter ? { where: categoryFilter } : {}),
-              required: !!categoryFilter
-            },
-            {
-              model: CommentModel,
-              attributes: ['id'],
-              required: false,
-              include: [{ model: ReplyModel, attributes: ['id'], required: false }],
-            },
-          ],
-          offset: (page - 1) * pageSize,
-          limit: parseInt(pageSize),
-          order: articleOrder,
-          row: true,
-          distinct: true, // count 鐠侊紕鐣?        })
-        if (preview === 1) {
-          data.rows.forEach(d => {
-            d.content = d.content.slice(0, 1000) // 閸欘亝妲搁懢宄板絿妫板嫯顫嶉敍灞藉櫤鐏忔垶澧︽禍鍡欐畱閺佺増宓佹导鐘虹翻閵嗗倶鈧倶鈧?          })
-        }
-        data.rows = data.rows.map(normalizeArticlePayload).sort((a, b) => b.top - a.top)
-        ctx.body = data
-      } else {
-        const data = await ArticleModel.findAndCountAll({
-          where: {
-            id: {
-              $not: -1, // 鏉╁洦鎶ら崗鍏呯艾妞ょ敻娼伴惃鍕閺?            },
-            $or: {
-              title: {
-                $like: `%${keyword}%`,
-              },
-              content: {
-                $like: `%${keyword}%`,
-              },
-            },
+          content: {
+            $like: `%${keyword}%`,
           },
-          include: [
-            {
-              model: TagModel,
-              attributes: ['id', 'name'],
-              ...(tagFilter ? { where: tagFilter } : {}),
-              required: !!tagFilter
-            },
-            {
-              model: CategoryModel,
-              attributes: ['id', 'name'],
-              ...(categoryFilter ? { where: categoryFilter } : {}),
-              required: !!categoryFilter
-            },
-            {
-              model: CommentModel,
-              attributes: ['id'],
-              required: false,
-              include: [{ model: ReplyModel, attributes: ['id'], required: false }],
-            },
-          ],
-          offset: (page - 1) * pageSize,
-          limit: parseInt(pageSize),
-          order: articleOrder,
-          row: true,
-          distinct: true, // count 鐠侊紕鐣?        })
-        if (preview === 1) {
-          data.rows.forEach(d => {
-            d.content = d.content.slice(0, 1000) // 閸欘亝妲搁懢宄板絿妫板嫯顫嶉敍灞藉櫤鐏忔垶澧︽禍鍡欐畱閺佺増宓佹导鐘虹翻閵嗗倶鈧倶鈧?          })
-        }
-        data.rows = data.rows.map(normalizeArticlePayload).sort((a, b) => b.top - a.top)
-        ctx.body = data
+        },
       }
+
+      if (typeValue !== null) {
+        where.$and = {
+          type: {
+            $eq: typeValue,
+          },
+        }
+      }
+
+      const data = await ArticleModel.findAndCountAll({
+        where,
+        include: [
+          buildTagInclude(tagFilter),
+          buildCategoryInclude(categoryFilter),
+          buildCommentSummaryInclude(),
+        ],
+        offset: (pageValue - 1) * pageSizeValue,
+        limit: pageSizeValue,
+        order: articleOrder,
+        row: true,
+        distinct: true,
+      })
+
+      if (previewEnabled) {
+        data.rows.forEach(item => {
+          if (item && typeof item.content === 'string') {
+            item.content = item.content.slice(0, PREVIEW_LENGTH)
+          }
+        })
+      }
+
+      data.rows = data.rows.map(normalizeArticlePayload).sort((left, right) => Number(right.top || 0) - Number(left.top || 0))
+      ctx.body = data
     }
   }
 
-  // 娣囶喗鏁奸弬鍥╃彿
   static async update(ctx) {
     const validator = ctx.validate(
       {
@@ -368,25 +417,39 @@ class ArticleController {
         musicName: Joi.string().allow('', null),
       }
     )
+
     if (validator) {
-      const { title, content, cover, cardCover, description, categories = [], tags = [], type, top, musicId, musicName } = ctx.request.body
-      const articleId = parseInt(ctx.params.id)
-      const tagList = normalizeNameList(tags).map(tag => ({ name: tag, articleId }))
-      const categoryList = normalizeNameList(categories).map(cate => ({ name: cate, articleId }))
+      const {
+        title,
+        content,
+        cover,
+        cardCover,
+        description,
+        categories = [],
+        tags = [],
+        type,
+        top,
+        musicId,
+        musicName,
+      } = ctx.request.body
+      const articleId = parseInt(ctx.params.id, 10)
+      const tagList = normalizeNameList(tags).map(name => ({ name, articleId }))
+      const categoryList = normalizeNameList(categories).map(name => ({ name, articleId }))
+
       await ArticleModel.update({ title, content, cover, cardCover, description, type, top, musicId, musicName }, { where: { id: articleId } })
       await TagModel.destroy({ where: { articleId } })
       await TagModel.bulkCreate(tagList)
       await CategoryModel.destroy({ where: { articleId } })
       await CategoryModel.bulkCreate(categoryList)
-      ctx.body = { type: type }
+      ctx.body = { type }
     }
   }
 
-  // 閸掔娀娅庨弬鍥╃彿
   static async delete(ctx) {
     const validator = ctx.validate(ctx.params, {
       id: Joi.number().required(),
     })
+
     if (validator) {
       const articleId = ctx.params.id
       await sequelize.query(
@@ -402,7 +465,7 @@ class ArticleController {
     }
   }
 
-  // 閸掔娀娅庢径姘嚋閺傚洨鐝?  static async delList(ctx) {
+  static async delList(ctx) {
     const validator = ctx.validate(ctx.params, {
       list: Joi.string().required(),
     })
@@ -422,24 +485,19 @@ class ArticleController {
     }
   }
 
-  /**
-   * 绾喛顓婚弬鍥╃彿閺勵垰鎯佺€涙ê婀?   *
-   * @response existList: 閺佺増宓佹惔鎾茶厬瀹告彃鐡ㄩ崷銊︽箒閻ㄥ嫭鏋冪粩鐙呯礄閸栧懎鎯堥弬鍥╃彿閻ㄥ嫬鍙挎担鎾冲敶鐎圭櫢绱?   * @response noExistList: 鐟欙絾鐎?md 閺傚洣娆?楠炴湹绗栨潻鏂挎礀閺佺増宓佹惔鎾茶厬娑撳秴鐡ㄩ崷銊ф畱 閸忚渹缍嬮張澶嬫瀮娴犺泛鎮?鐟欙絾鐎介崥搴ｆ畱閺傚洣娆㈤弽鍥暯
-   */
   static async checkExist(ctx) {
     const validator = ctx.validate(ctx.request.body, {
       fileNameList: Joi.array().required(),
     })
-    console.log(ctx.request.body)
 
     if (validator) {
       const { fileNameList } = ctx.request.body
-      console.log(fileNameList)
       const list = await Promise.all(
         fileNameList.map(async fileName => {
           const filePath = `${uploadPath}/${fileName}`
           const file = decodeFile(filePath)
           const title = file.title || fileName.replace(/\.md/, '')
+
           try {
             const article = await ArticleModel.findOne({ where: { title }, attributes: ['id'] })
             const result = { fileName, title }
@@ -449,68 +507,64 @@ class ArticleController {
             }
             return result
           } catch (error) {
-            console.log(error)
+            return null
           }
         })
       )
 
-      ctx.body = list
+      ctx.body = list.filter(Boolean)
     }
   }
 
-  // 娑撳﹣绱堕弬鍥╃彿
   static async upload(ctx) {
-    const file = ctx.request.files.file // 閼惧嘲褰囨稉濠佺炊閺傚洣娆?
-    await findOrCreateFilePath(uploadPath) // 閸掓稑缂撻弬鍥︽閻╊喖缍?    const upload = file => {
-      const reader = fs.createReadStream(file.path) // 閸掓稑缂撻崣顖濐嚢濞?      const fileName = file.name
+    const file = ctx.request.files.file
+
+    await findOrCreateFilePath(uploadPath)
+    const upload = currentFile => {
+      const reader = fs.createReadStream(currentFile.path)
+      const fileName = currentFile.name
       const filePath = `${uploadPath}/${fileName}`
       const upStream = fs.createWriteStream(filePath)
       reader.pipe(upStream)
-
-      reader.on('end', function () {
-        console.log('娑撳﹣绱堕幋鎰')
-      })
     }
-    Array.isArray(file) ? file.forEach(it => upload(it)) : upload(file)
+
+    Array.isArray(file) ? file.forEach(item => upload(item)) : upload(file)
     ctx.status = 204
   }
 
-  // 绾喛顓婚幓鎺戝弳閺傚洨鐝?  static async uploadConfirm(ctx) {
+  static async uploadConfirm(ctx) {
     const validator = ctx.validate(ctx.request.body, {
       authorId: Joi.number(),
       uploadList: Joi.array(),
     })
+
     if (validator) {
       const { uploadList, authorId } = ctx.request.body
-      await findOrCreateFilePath(uploadPath) // 濡偓閺屻儳娲拌ぐ?      // const insertList = []
-      // const updateList = []
-      // uploadList.forEach(file => {
-      //   file.exist ? updateList.push(file) : insertList.push(file)
-      // })
+      await findOrCreateFilePath(uploadPath)
 
-      const _parseList = list => {
+      const parseList = list => {
         return list.map(item => {
           const filePath = `${uploadPath}/${item.fileName}`
           const result = decodeFile(filePath)
           const { title, date, categories = [], tags = [], content } = result
           const data = {
             title: title || item.fileName.replace(/\.md/, ''),
-            categories: categories.map(d => ({ name: d })),
-            tags: tags.map(d => ({ name: d })),
+            categories: categories.map(name => ({ name })),
+            tags: tags.map(name => ({ name })),
             content,
             authorId,
           }
+
           if (date) data.createdAt = date
           if (item.articleId) data.articleId = item.articleId
           return data
         })
       }
 
-      const list = _parseList(uploadList)
-      const updateList = list.filter(d => !!d.articleId)
-      const insertList = list.filter(d => !d.articleId)
+      const list = parseList(uploadList)
+      const updateList = list.filter(item => !!item.articleId)
+      const insertList = list.filter(item => !item.articleId)
 
-      // 閹绘帒鍙嗛弬鍥╃彿
       const insertResultList = await Promise.all(
         insertList.map(data => ArticleModel.create(data, { include: [TagModel, CategoryModel] }))
       )
@@ -527,11 +581,10 @@ class ArticleController {
         })
       )
 
-      ctx.body = { message: '鐎电厧鍙嗛弬鍥╃彿閹存劕濮?, insertList: insertResultList, updateList: updateResultList }
+      ctx.body = { message: IMPORT_ARTICLES_SUCCESS_MESSAGE, insertList: insertResultList, updateList: updateResultList }
     }
   }
 
-  // 鐎电厧鍤弬鍥╃彿
   static async output(ctx) {
     const validator = ctx.validate(ctx.params, {
       id: Joi.number().required(),
@@ -541,12 +594,12 @@ class ArticleController {
       const article = await ArticleModel.findOne({
         where: { id: ctx.params.id },
         include: [
-          // 閺屻儲澹?閸掑棛琚?          { model: TagModel, attributes: ['id', 'name'] },
-          { model: CategoryModel, attributes: ['id', 'name'] },
+          buildTagInclude(),
+          buildCategoryInclude(),
         ],
       })
 
-      const { filePath, fileName } = await generateFile(article)
+      const { fileName } = await generateFile(article)
       ctx.attachment(decodeURI(fileName))
       await send(ctx, fileName, { root: outputPath })
     }
@@ -556,30 +609,29 @@ class ArticleController {
     const validator = ctx.validate(ctx.params, {
       list: Joi.string().required(),
     })
+
     if (validator) {
       const articleList = ctx.params.list.split(',')
-
       const list = await ArticleModel.findAll({
         where: {
           id: articleList,
         },
         include: [
-          // 閺屻儲澹?閸掑棛琚?          { model: TagModel, attributes: ['id', 'name'] },
-          { model: CategoryModel, attributes: ['id', 'name'] },
+          buildTagInclude(),
+          buildCategoryInclude(),
         ],
       })
 
-      // const filePath = await generateFile(list[0])
       await Promise.all(list.map(article => generateFile(article)))
 
-      // 閹垫挸瀵橀崢瀣級 ...
       const zipName = 'mdFiles.zip'
       const zipStream = fs.createWriteStream(`${outputPath}/${zipName}`)
       const zip = archiver('zip')
       zip.pipe(zipStream)
       list.forEach(item => {
         zip.append(fs.createReadStream(`${outputPath}/${item.title}.md`), {
-          name: `${item.title}.md`, // 閸樺缂夐弬鍥︽閸?        })
+          name: `${item.title}.md`,
+        })
       })
       await zip.finalize()
 
@@ -592,25 +644,25 @@ class ArticleController {
     const list = await ArticleModel.findAll({
       where: {
         id: {
-          $not: -1, // 鏉╁洦鎶ら崗鍏呯艾妞ょ敻娼伴惃鍕閺?        },
+          $not: -1,
+        },
       },
       include: [
-        // 閺屻儲澹?閸掑棛琚?        { model: TagModel, attributes: ['id', 'name'] },
-        { model: CategoryModel, attributes: ['id', 'name'] },
+        buildTagInclude(),
+        buildCategoryInclude(),
       ],
     })
 
-    // const filePath = await generateFile(list[0])
     await Promise.all(list.map(article => generateFile(article)))
 
-    // 閹垫挸瀵橀崢瀣級 ...
     const zipName = 'mdFiles.zip'
     const zipStream = fs.createWriteStream(`${outputPath}/${zipName}`)
     const zip = archiver('zip')
     zip.pipe(zipStream)
     list.forEach(item => {
       zip.append(fs.createReadStream(`${outputPath}/${item.title}.md`), {
-        name: `${item.title}.md`, // 閸樺缂夐弬鍥︽閸?      })
+        name: `${item.title}.md`,
+      })
     })
     await zip.finalize()
 
@@ -618,31 +670,33 @@ class ArticleController {
     await send(ctx, zipName, { root: outputPath })
   }
 
-  // 閼惧嘲褰囪ぐ鎺撱€傞弫鐗堝祦
   static async getArchives(ctx) {
     try {
-      // 閺屻儴顕楅幍鈧張澶婂嚒閸欐垵绔烽惃鍕瀮缁旂媴绱濋幐澶婂灡瀵ょ儤妞傞梻鏉戔偓鎺戠碍閹烘帒鍨?      const articles = await ArticleModel.findAll({
+      const rawArticles = await ArticleModel.findAll({
         where: {
           id: {
-            $not: -1, // 鏉╁洦鎶ら崗鍏呯艾妞ょ敻娼伴惃鍕閺?          },
-          type: true, // 閸欘亝鐓＄拠銏犲嚒閸欐垵绔烽惃鍕瀮缁?        },
+            $not: -1,
+          },
+          type: true,
+        },
         attributes: ['id', 'title', 'description', 'cover', 'cardCover', 'viewCount', 'likeCount', 'createdAt', 'updatedAt'],
         include: [
-          { model: TagModel, attributes: ['id', 'name'] },
-          { model: CategoryModel, attributes: ['id', 'name'] },
-          { model: CommentModel, attributes: ['id'] },
+          buildTagInclude(),
+          buildCategoryInclude(),
+          { model: CommentModel, attributes: ['id'], required: false },
         ],
         order: [['createdAt', 'DESC']],
       })
 
-      // 閹稿鍕鹃張鍫濆瀻缂?      const archiveMap = new Map()
+      const articles = rawArticles.map(normalizeArticlePayload)
+      const archiveMap = new Map()
 
       articles.forEach(article => {
         const date = new Date(article.createdAt)
         const year = date.getFullYear()
         const month = date.getMonth() + 1
 
-        // 閸掓繂顫愰崠鏍у嬀娴犺姤鏆熼幑?        if (!archiveMap.has(year)) {
+        if (!archiveMap.has(year)) {
           archiveMap.set(year, {
             year,
             count: 0,
@@ -651,9 +705,9 @@ class ArticleController {
         }
 
         const yearData = archiveMap.get(year)
-        yearData.count++
+        yearData.count += 1
 
-        // 閸掓繂顫愰崠鏍ㄦ箑娴犺姤鏆熼幑?        if (!yearData.months.has(month)) {
+        if (!yearData.months.has(month)) {
           yearData.months.set(month, {
             month,
             count: 0,
@@ -662,10 +716,8 @@ class ArticleController {
         }
 
         const monthData = yearData.months.get(month)
-        monthData.count++
-
-        // 鏉烆剚宕查弬鍥╃彿閺佺増宓侀弽鐓庣础
-        const articleData = {
+        monthData.count += 1
+        monthData.articles.push({
           id: article.id,
           title: article.title,
           description: article.description,
@@ -673,17 +725,15 @@ class ArticleController {
           cardCover: article.cardCover,
           viewCount: article.viewCount,
           likeCount: article.likeCount,
-          commentCount: article.comments?.length || 0,
-          category: article.categories?.[0] || null,
-          tags: article.tags || [],
+          commentCount: Array.isArray(article.comments) ? article.comments.length : 0,
+          category: Array.isArray(article.categories) ? article.categories[0] || null : null,
+          tags: Array.isArray(article.tags) ? article.tags : [],
           createdAt: article.createdAt,
           updatedAt: article.updatedAt,
-        }
-
-        monthData.articles.push(articleData)
+        })
       })
 
-      // 鏉烆剚宕叉稉鐑樻殶缂佸嫭鐗稿?      const years = Array.from(archiveMap.values()).map(yearData => ({
+      ctx.body = Array.from(archiveMap.values()).map(yearData => ({
         year: yearData.year,
         count: yearData.count,
         months: Array.from(yearData.months.values()).map(monthData => ({
@@ -692,14 +742,11 @@ class ArticleController {
           articles: monthData.articles,
         })),
       }))
-
-      ctx.body = years
     } catch (error) {
-      console.error('閼惧嘲褰囪ぐ鎺撱€傞弫鐗堝祦婢惰精瑙?', error)
-      ctx.throw(500, '閼惧嘲褰囪ぐ鎺撱€傞弫鐗堝祦婢惰精瑙?)
+      console.error(GET_ARCHIVES_ERROR_MESSAGE, error)
+      ctx.throw(500, GET_ARCHIVES_ERROR_MESSAGE)
     }
   }
-
 }
 
 module.exports = ArticleController

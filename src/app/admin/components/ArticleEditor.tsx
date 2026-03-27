@@ -326,7 +326,7 @@ export default function ArticleEditor({ articleId }: ArticleEditorProps) {
         }
     }, [form]);
 
-    const uploadArticleImageFile = useCallback(async (file: File, maxRetries = 2): Promise<ArticleImageUploadResult> => {
+    async function uploadArticleImageFile(file: File, maxRetries = 2): Promise<ArticleImageUploadResult> {
         let imageBedError: unknown;
         try {
             const providerFormData = new FormData();
@@ -376,7 +376,7 @@ export default function ArticleEditor({ articleId }: ArticleEditorProps) {
         const imageBedDetail = getErrorDetail(imageBedError, '图床上传失败');
         const localDetail = getErrorDetail(lastError, '本地上传失败');
         throw new Error(`${imageBedDetail}；${localDetail}`);
-    }, []);
+    }
 
     // 文件上传处理
     const handleUpload = async (options: UploadRequestOptions) => {
@@ -389,13 +389,13 @@ export default function ArticleEditor({ articleId }: ArticleEditorProps) {
             const { url, source } = await uploadArticleImageFile(uploadFile, 2);
             setCoverUrl(url);
             form.setFieldValue('cover', url);
-            onSuccess(url);
+            onSuccess?.(url);
             message.success(getUploadSuccessMessage(source, '封面图片'));
             return url;
         } catch (err) {
             const detail = getErrorDetail(err, '封面图片上传失败');
             setUploadError(detail);
-            onError(err);
+            onError?.(err as Error);
             message.error(`封面图片上传失败：${detail}`);
         } finally {
             setUploadingCover(false);
@@ -413,13 +413,13 @@ export default function ArticleEditor({ articleId }: ArticleEditorProps) {
             const { url, source } = await uploadArticleImageFile(uploadFile, 2);
             setCardCoverUrl(url);
             form.setFieldValue('cardCover', url);
-            onSuccess(url);
+            onSuccess?.(url);
             message.success(getUploadSuccessMessage(source, '卡片图片'));
             return url;
         } catch (err) {
             const detail = getErrorDetail(err, '卡片图片上传失败');
             setCardUploadError(detail);
-            onError(err);
+            onError?.(err as Error);
             message.error(`卡片图片上传失败：${detail}`);
         } finally {
             setUploadingCardCover(false);

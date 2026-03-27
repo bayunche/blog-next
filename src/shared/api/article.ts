@@ -25,6 +25,14 @@ export interface Article {
     // Add other fields as needed based on backend response
 }
 
+export interface ArticleWritePayload extends Partial<Omit<Article, 'category' | 'categories' | 'tags'>> {
+    categoryList?: string[]
+    tagList?: string[]
+    categories?: string[]
+    tags?: string[]
+    authorId?: number
+}
+
 export interface ArticleListParams {
     page?: number
     pageSize?: number
@@ -80,11 +88,11 @@ export const articleApi = {
         return request.get<unknown, Article>(`/article/${id}`)
     },
 
-    create: (data: Partial<Article>) => {
+    create: (data: ArticleWritePayload) => {
         return request.post<unknown, Article>('/article', data)
     },
 
-    update: (id: number | string, data: Partial<Article>) => {
+    update: (id: number | string, data: ArticleWritePayload) => {
         return request.put<unknown, Article>(`/article/${id}`, data)
     },
 

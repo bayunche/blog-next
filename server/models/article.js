@@ -1,5 +1,5 @@
 const moment = require('moment')
-// article 鐞?
+
 module.exports = (sequelize, dataTypes) => {
   const Article = sequelize.define(
     'article',
@@ -8,14 +8,14 @@ module.exports = (sequelize, dataTypes) => {
       title: { type: dataTypes.STRING(255), allowNull: false, unique: true },
       content: { type: dataTypes.TEXT },
       cardCover: { type: dataTypes.STRING(500), allowNull: true },
-      cover: { type: dataTypes.STRING(500), allowNull: true }, // 鐏忎線娼伴崶鍓уURL
-      description: { type: dataTypes.STRING(500), allowNull: true }, // 閺傚洨鐝烽幓蹇氬牚
-      viewCount: { type: dataTypes.INTEGER(11), defaultValue: 0 }, // 闂冨懓顕伴弫?
-      likeCount: { type: dataTypes.INTEGER(11), defaultValue: 0 }, // 閻愮绂愰弫?
-      type: { type: dataTypes.BOOLEAN, defaultValue: true }, // 閺勵垰鎯佺粔浣哥槕
-      top: { type: dataTypes.BOOLEAN, defaultValue: false },
-      musicId: { type: dataTypes.STRING(50), allowNull: true }, // 閼冲本娅欓棅鍏呯 ID
-      musicName: { type: dataTypes.STRING(255), allowNull: true }, // 閼冲本娅欓棅鍏呯閸氬秶袨
+      cover: { type: dataTypes.STRING(500), allowNull: true }, // 封面图片 URL
+      description: { type: dataTypes.STRING(500), allowNull: true }, // 文章摘要
+      viewCount: { type: dataTypes.INTEGER(11), defaultValue: 0 }, // 浏览量
+      likeCount: { type: dataTypes.INTEGER(11), defaultValue: 0 }, // 点赞量
+      type: { type: dataTypes.BOOLEAN, defaultValue: true }, // 是否公开发布
+      top: { type: dataTypes.BOOLEAN, defaultValue: false }, // 是否置顶
+      musicId: { type: dataTypes.STRING(50), allowNull: true }, // 背景音乐 ID
+      musicName: { type: dataTypes.STRING(255), allowNull: true }, // 背景音乐名称
       uuid: {
         type: dataTypes.STRING(32),
         allowNull: true,

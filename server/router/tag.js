@@ -11,7 +11,7 @@ const {
 
 router.get('/public', getPublicTagList)
 router.get('/public/:name', getPublicTagDetail)
-router.get('/', getTagList) // 鑾峰彇鏍囩鍒楄〃
+router.get('/', getTagList) // 获取标签列表
 router.delete('/:name', deleteTag)
 router.put('/:name', updateTag)
 

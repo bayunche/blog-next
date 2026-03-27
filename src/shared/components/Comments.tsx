@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { usePathname } from 'next/navigation';
+import { useTheme } from '@/shared/providers/ThemeProvider';
 
 declare global {
     interface Window {
@@ -52,6 +53,7 @@ export default function Comments() {
     const [loadError, setLoadError] = useState(false);
     const pathname = usePathname();
     const containerRef = useRef<HTMLDivElement | null>(null);
+    const { resolvedTheme } = useTheme();
 
     useEffect(() => {
         const useProxy = process.env.NEXT_PUBLIC_REMARK42_USE_PROXY !== 'false';
@@ -69,7 +71,7 @@ export default function Comments() {
             host,
             site_id: siteId,
             components: ['embed'],
-            theme: 'dark',
+            theme: resolvedTheme,
             locale: 'zh',
             show_email_subscription: false,
         };
@@ -107,7 +109,7 @@ export default function Comments() {
             }
             container.innerHTML = '';
         };
-    }, [pathname]);
+    }, [pathname, resolvedTheme]);
 
     return (
         <div className="w-full mt-10 animate-fade-in-up">
