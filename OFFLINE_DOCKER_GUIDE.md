@@ -99,6 +99,8 @@ bash ./package_offline_docker.sh ./dist/offline-bundle-custom
 ### 4.3 打包脚本做了什么
 
 脚本会自动完成以下动作：
+- 在导出镜像前执行后端 API 测试门禁：`npm --prefix server run test:api`。
+- 如果后端 API 测试失败，打包流程会立即终止，不会继续导出离线镜像包。
 - 基于当前项目源码构建本地业务镜像。
 - 检查并准备基础镜像：`mysql:8.0`、`nginx:alpine`、`umputun/remark42:latest`。
 - 复制离线运行所需目录与配置文件。

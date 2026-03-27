@@ -1495,7 +1495,8 @@ SET FOREIGN_KEY_CHECKS = 1;
 -- Add article extension columns to align newer app schema
 ALTER TABLE `article`
   ADD COLUMN `cover` varchar(500) DEFAULT NULL COMMENT 'cover image url' AFTER `content`,
-  ADD COLUMN `description` varchar(500) DEFAULT NULL COMMENT 'article description' AFTER `cover`,
+  ADD COLUMN `cardCover` varchar(500) DEFAULT NULL COMMENT 'article card image url' AFTER `cover`,
+  ADD COLUMN `description` varchar(500) DEFAULT NULL COMMENT 'article description' AFTER `cardCover`,
   ADD COLUMN `likeCount` int DEFAULT '0' COMMENT 'like count' AFTER `viewCount`,
   ADD COLUMN `musicId` varchar(50) DEFAULT NULL COMMENT 'background music id' AFTER `top`,
   ADD COLUMN `musicName` varchar(255) DEFAULT NULL COMMENT 'background music name' AFTER `musicId`;

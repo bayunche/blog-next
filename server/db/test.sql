@@ -26,6 +26,7 @@ CREATE TABLE `article` (
   `title` varchar(255) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NOT NULL,
   `content` text CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci,
   `cover` varchar(500) DEFAULT NULL COMMENT '封面图片URL',
+  `cardCover` varchar(500) DEFAULT NULL COMMENT '文章卡片封面URL',
   `description` varchar(500) DEFAULT NULL COMMENT '文章描述',
   `viewCount` int DEFAULT '0' COMMENT '浏览数',
   `likeCount` int DEFAULT '0' COMMENT '点赞数',

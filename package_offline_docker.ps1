@@ -60,6 +60,12 @@ New-Item -ItemType Directory -Force -Path (Join-Path $outputDir 'docker/mysql') 
 New-Item -ItemType Directory -Force -Path (Join-Path $outputDir 'server') | Out-Null
 
 Write-Log 'Building local images'
+Write-Log 'Running backend API test gate'
+npm --prefix server run test:api
+
+Write-Log 'Backend API test gate passed'
+
+Write-Log 'Building local images'
 docker compose -f docker-compose.yml build server web music-api db-backup
 
 foreach ($image in @('mysql:8.0', 'nginx:alpine', 'umputun/remark42:latest')) {

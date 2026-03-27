@@ -34,6 +34,13 @@ copy_if_exists() {
 
   if [[ -e "$source_path" ]]; then
     mkdir -p "$(dirname "$target_path")"
+    if [[ -d "$source_path" ]]; then
+      mkdir -p "$target_path"
+      if ! cp -R "$source_path"/. "$target_path"/ 2>/dev/null; then
+        log "Warning: skip unreadable path $source_path"
+      fi
+      return
+    fi
     if ! cp -R "$source_path" "$target_path" 2>/dev/null; then
       log "Warning: skip unreadable path $source_path"
     fi
@@ -54,6 +61,11 @@ if [[ ! -f .env && -f .env.docker ]]; then
 fi
 
 mkdir -p "$OUTPUT_DIR/images" "$OUTPUT_DIR/docker/mysql" "$OUTPUT_DIR/docker" "$OUTPUT_DIR/server"
+
+log "Running backend API test gate"
+npm --prefix server run test:api
+
+log "Backend API test gate passed"
 
 log "Building local images"
 docker compose -f docker-compose.yml build server web music-api db-backup
@@ -79,7 +91,10 @@ copy_if_exists "docker/mysql/backup" "$OUTPUT_DIR/docker/mysql/backup"
 copy_if_exists "server/data" "$OUTPUT_DIR/server/data"
 copy_if_exists "server/db" "$OUTPUT_DIR/server/db"
 
-if [[ -f "server/db/prod_full_import.sql" ]]; then
+if [[ -f "server/db/prod_full_init.sql" ]]; then
+  mkdir -p "$OUTPUT_DIR/docker/mysql/init"
+  cp "server/db/prod_full_init.sql" "$OUTPUT_DIR/docker/mysql/init/99-prod_full_init.sql"
+elif [[ -f "server/db/prod_full_import.sql" ]]; then
   mkdir -p "$OUTPUT_DIR/docker/mysql/init"
   cp "server/db/prod_full_import.sql" "$OUTPUT_DIR/docker/mysql/init/99-prod_full_import.sql"
 fi
@@ -130,6 +145,83 @@ docker compose -f (Join-Path $root 'docker-compose.offline.yml') up -d
 docker compose -f (Join-Path $root 'docker-compose.offline.yml') ps
 EOF
 
+cat > "$OUTPUT_DIR/import-sql.sh" <<'EOF'
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+COMPOSE_FILE="${ROOT_DIR}/docker-compose.offline.yml"
+DEFAULT_SQL_FILE="${ROOT_DIR}/server/db/prod_full_init.sql"
+ENV_FILE="${ROOT_DIR}/.env"
+
+if [[ ! -f "${ENV_FILE}" ]]; then
+  ENV_FILE="${ROOT_DIR}/.env.offline"
+fi
+
+if [[ $# -gt 1 ]]; then
+  echo "Usage: ./import-sql.sh [sql-file]" >&2
+  exit 1
+fi
+
+SQL_INPUT="${1:-${DEFAULT_SQL_FILE}}"
+if [[ "${SQL_INPUT}" = /* ]]; then
+  SQL_FILE="${SQL_INPUT}"
+else
+  SQL_FILE="${ROOT_DIR}/${SQL_INPUT#./}"
+fi
+
+if ! command -v docker >/dev/null 2>&1; then
+  echo "docker is required" >&2
+  exit 1
+fi
+
+if ! docker compose version >/dev/null 2>&1; then
+  echo "docker compose is required" >&2
+  exit 1
+fi
+
+if [[ ! -f "${COMPOSE_FILE}" ]]; then
+  echo "Offline compose file not found: ${COMPOSE_FILE}" >&2
+  exit 1
+fi
+
+if [[ ! -f "${ENV_FILE}" ]]; then
+  echo "Runtime env file not found. Expected ${ROOT_DIR}/.env or ${ROOT_DIR}/.env.offline" >&2
+  exit 1
+fi
+
+if [[ ! -f "${SQL_FILE}" ]]; then
+  echo "SQL file not found: ${SQL_FILE}" >&2
+  exit 1
+fi
+
+echo "Using env file: ${ENV_FILE}"
+echo "Using SQL file: ${SQL_FILE}"
+
+docker compose --env-file "${ENV_FILE}" -f "${COMPOSE_FILE}" up -d mysql
+
+echo "Waiting for MySQL to become ready..."
+READY=0
+for _ in $(seq 1 60); do
+  if docker compose --env-file "${ENV_FILE}" -f "${COMPOSE_FILE}" exec -T mysql sh -lc 'mysqladmin ping -h localhost -uroot -p"$MYSQL_ROOT_PASSWORD" --silent' >/dev/null 2>&1; then
+    READY=1
+    break
+  fi
+  sleep 2
+done
+
+if [[ "${READY}" != "1" ]]; then
+  echo "MySQL did not become ready in time" >&2
+  exit 1
+fi
+
+echo "Importing SQL dump into the running MySQL service..."
+docker compose --env-file "${ENV_FILE}" -f "${COMPOSE_FILE}" exec -T mysql sh -lc 'MYSQL_PWD="$MYSQL_ROOT_PASSWORD" mysql -uroot "$MYSQL_DATABASE"' < "${SQL_FILE}"
+
+echo "SQL import completed successfully."
+EOF
+chmod +x "$OUTPUT_DIR/import-sql.sh"
+
 cat > "$OUTPUT_DIR/README-OFFLINE.md" <<'EOF'
 # Sakurairo Offline Bundle
 
@@ -145,6 +237,14 @@ cat > "$OUTPUT_DIR/README-OFFLINE.md" <<'EOF'
 ### Linux / macOS
 
 `./import-offline.sh`
+
+Manual SQL import:
+
+`./import-sql.sh`
+
+Or specify another dump:
+
+`./import-sql.sh ./server/db/prod_full_init.sql`
 
 ### Windows PowerShell
 
